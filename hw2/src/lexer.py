@@ -2,22 +2,22 @@ class Lexer:
 	lexer = None
 
 	def __init__(self):
-		tokens = ('PRINT','INT','PLUS','ASSIGN','NEGATE','FUNC', 'NAME', 'END_STMT', 'R_PAREN', 'L_PAREN')
-
-		# FIX: All PRINTs turn into NAMEs
-		t_PRINT = r'print'
+		reserved = {'print' : 'PRINT'}
+		
+		tokens = ['INT','PLUS','ASSIGN','NEGATE','FUNC', 'NAME', 'END_STMT', 'R_PAREN', 'L_PAREN'] + list(reserved.values())
+	
 		t_PLUS  = r'\+'
 		t_ASSIGN= r'='
 		t_NEGATE= r'-'
 		t_END_STMT= r';'
 		t_R_PAREN= r'\)'
 		t_L_PAREN= r'\('
-		t_NAME= r'[a-zA-Z_]*'
-
-	#	def t_NAME(t):
-	#		r'[A-Za-z_][\w_]*'
-	#		t.type = reserved_map.get(t.value,"NAME")
-	#		return t
+		
+		# Taken from the PLY documentation: http://www.dabeaz.com/ply/ply.html#ply_nn6
+		def t_NAME(t):
+			r'[a-zA-Z_][a-zA-Z_0-9]*'
+			t.type = reserved.get(t.value,'NAME')    # Check for reserved words
+			return t
 
 		def t_FUNC(t):
 			r'[a-zA-Z]+\(\)'

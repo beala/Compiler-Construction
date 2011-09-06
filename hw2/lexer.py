@@ -4,6 +4,7 @@ class Lexer:
 	def __init__(self):
 		tokens = ('PRINT','INT','PLUS','ASSIGN','NEGATE','FUNC', 'NAME', 'END_STMT', 'R_PAREN', 'L_PAREN')
 
+		# FIX: All PRINTs turn into NAMEs
 		t_PRINT = r'print'
 		t_PLUS  = r'\+'
 		t_ASSIGN= r'='
@@ -11,7 +12,12 @@ class Lexer:
 		t_END_STMT= r';'
 		t_R_PAREN= r'\)'
 		t_L_PAREN= r'\('
-		t_NAME= r'[a-zA-Z]+[a-zA-Z-_]*'
+		t_NAME= r'[a-zA-Z_]*'
+
+	#	def t_NAME(t):
+	#		r'[A-Za-z_][\w_]*'
+	#		t.type = reserved_map.get(t.value,"NAME")
+	#		return t
 
 		def t_FUNC(t):
 			r'[a-zA-Z]+\(\)'

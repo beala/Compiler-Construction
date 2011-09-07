@@ -1,10 +1,10 @@
 class Lexer:
 	lexer = None
-
+	tokens = None
 	def __init__(self):
 		reserved = {'print' : 'PRINT'}
 		
-		tokens = ['INT','PLUS','ASSIGN','NEGATE','FUNC', 'NAME', 'R_PAREN', 'L_PAREN'] + list(reserved.values())
+		self.tokens = ['INT','PLUS','ASSIGN','NEGATE','FUNC', 'NAME', 'R_PAREN', 'L_PAREN'] + list(reserved.values())
 	
 		t_PLUS  = r'\+'
 		t_ASSIGN= r'='
@@ -53,4 +53,5 @@ class Lexer:
 			if not tok: break
 			print tok
 			
-			
+	def getTokens(self):
+		return self.tokens		

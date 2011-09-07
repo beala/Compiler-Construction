@@ -1,3 +1,4 @@
+import lexer
 class Parser:	
 	parser = None
 	#this is our grammar in P0++
@@ -14,7 +15,8 @@ class Parser:
 	#                          | "input" "(" ")"
 	def __init__(self):
 		from compiler.ast import Printnl, Add, Const, UnarySub, CallFunc, Assign, AssName
-		
+		lex = lexer.Lexer()
+		tokens = lex.getTokens()
 		#define precedence
 		precedence = (
 			('right','ASSIGN'),

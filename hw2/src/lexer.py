@@ -4,14 +4,14 @@ class Lexer:
 	def __init__(self):
 		reserved = {'print' : 'PRINT'}
 		
-		tokens = ['INT','PLUS','ASSIGN','NEGATE','FUNC', 'NAME', 'END_STMT', 'R_PAREN', 'L_PAREN'] + list(reserved.values())
+		tokens = ['INT','PLUS','ASSIGN','NEGATE','FUNC', 'NAME', 'R_PAREN', 'L_PAREN'] + list(reserved.values())
 	
 		t_PLUS  = r'\+'
 		t_ASSIGN= r'='
 		t_NEGATE= r'-'
-		t_END_STMT= r';'
 		t_R_PAREN= r'\)'
 		t_L_PAREN= r'\('
+		t_ignore_COMMENT = r'\#.*' #ignore comments
 		
 		# Taken from the PLY documentation: http://www.dabeaz.com/ply/ply.html#ply_nn6
 		def t_NAME(t):
@@ -45,10 +45,12 @@ class Lexer:
 
 		import ply.lex as lex
 		self.lexer = lex.lex()
-
+		
 	def test_lex(self, to_lex):
 		self.lexer.input(to_lex)
 		while True:
 			tok = self.lexer.token()
 			if not tok: break
 			print tok
+			
+			

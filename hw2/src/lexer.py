@@ -5,7 +5,7 @@ class Lexer:
 	def __init__(self):
 		reserved = {'print' : 'PRINT'}
 		
-		self.tokens = ['INT','PLUS','ASSIGN','NEGATE','FUNC', 'NAME', 'R_PAREN', 'L_PAREN'] + list(reserved.values())
+		tokens = ['INT','PLUS','ASSIGN','NEGATE','FUNC', 'NAME', 'R_PAREN', 'L_PAREN'] + list(reserved.values())
 	
 		t_PLUS  = r'\+'
 		t_ASSIGN= r'='
@@ -49,9 +49,8 @@ class Lexer:
 		
 		#------------- PARSER
 		
-		from compiler.ast import Printnl, Add, Const, UnarySub, CallFunc, Assign, AssName
-		lex = lexer.Lexer()
-		tokens = lex.getTokens()
+		from compiler.ast import Printnl, Add, Const, UnarySub, CallFunc, Assign, AssName, Module, Stmt, Name, Expression
+
 		#define precedence
 		precedence = (
 			('right','ASSIGN'),
@@ -60,14 +59,24 @@ class Lexer:
 			('left','L_PAREN','R_PAREN')
 		)
 		
+
 		#define parse logic
+		def p_program_module(t):
+			'program : module'	
+			t[0] = Module(None,t[1])
+		def p_module_statement(t):
+			'module : simple_statement'
+			t[0] = Stmt(t[1])
 		def p_print_statement(t):
-			'statement : PRINT expression'
+			'simple_statement : PRINT expression'
 			t[0] = Printnl([t[2]], None)
 		def p_assign_statement(t):
-			'statement : NAME = expression'
+			'simple_statement : NAME ASSIGN expression'
 			t[0] = Assign(AssName(t[1],'OP_ASSIGN'),t[3])
-		
+		def p_expression_statement(t):
+			'simple_statement : expression'
+			t[0] = t[1]
+
 		def p_plus_expression(t):
 			'expression : expression PLUS expression'
 			t[0] = Add((t[1], t[3]))

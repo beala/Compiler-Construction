@@ -13,7 +13,7 @@ class Parser:
 	#                          | "(" expression ")"
 	#                          | "input" "(" ")"
 	def __init__(self):
-		from compiler.ast import Printnl, Add, Const, UnarySub, CallFunc
+		from compiler.ast import Printnl, Add, Const, UnarySub, CallFunc, Assign, AssName
 		
 		#define precedence
 		precedence = (

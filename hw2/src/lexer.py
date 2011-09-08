@@ -1,6 +1,7 @@
 class ParserLexer:
 	lexer = None
 	parser = None
+	stmtList = None
 	
 	def __init__(self):
 		reserved = {'print' : 'PRINT',
@@ -61,7 +62,7 @@ class ParserLexer:
 		)
 		
 		# Empty statement object that the parser will add to.
-		stmtList = Stmt([])
+		self.stmtList = Stmt([])
 
 		#define parse logic
 		def p_program_module(t):
@@ -71,10 +72,10 @@ class ParserLexer:
 			'''statement : statement simple_statement
 						| simple_statement'''
 			if( len(t) == 2 ):
-				stmtList.nodes.append(t[1])
+				self.stmtList.nodes.append(t[1])
 			elif( len(t) == 3):
-				stmtList.nodes.append(t[2]) #Why does ignoring t[1] make things work?
-			t[0]=stmtList
+				self.stmtList.nodes.append(t[2])
+			t[0]=self.stmtList
 		def p_module_statement(t):
 			'module : statement'
 			t[0] = t[1] 
@@ -122,6 +123,11 @@ class ParserLexer:
 			print tok
 	
 	def parseFile(self, path):
+		self.stmtList.nodes = []
 		file_to_parse = open(path, 'r')
 		text_to_parse = file_to_parse.read()
 		return self.parser.parse(text_to_parse)
+
+	def parse(self, to_parse):
+		self.stmtList.nodes = []
+		return self.parser.parse(to_parse)

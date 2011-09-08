@@ -5,7 +5,7 @@ class ParserLexer:
 	def __init__(self):
 		reserved = {'print' : 'PRINT'}
 		
-		tokens = ['NEWLINE','INT','PLUS','ASSIGN','NEGATE','FUNC', 'NAME', 'R_PAREN', 'L_PAREN'] + list(reserved.values())
+		tokens = ['INT','PLUS','ASSIGN','NEGATE','FUNC', 'NAME', 'R_PAREN', 'L_PAREN'] + list(reserved.values())
 	
 		t_PLUS  = r'\+'
 		t_ASSIGN= r'='
@@ -36,10 +36,9 @@ class ParserLexer:
 
 		t_ignore = ' \t'
 
-		def t_NEWLINE(t):
+		def t_newline(t):
 			r'\n+'
 			t.lexer.lineno += t.value.count("\n")
-			return t
 
 		def t_error(t):
 			print "Illegal character '%s'" % t.value[0]
@@ -67,17 +66,15 @@ class ParserLexer:
 		def p_program_module(t):
 			'program : module'	
 			t[0] = Module(None, t[1])
+			stmtList = Stmt([])	# End of parsing. Clear out the statement list
 		def p_statements_statement(t):
-			'''statement : statement NEWLINE simple_statement
+			'''statement : statement simple_statement
 						| simple_statement'''
 			print len(t)
 			if( len(t) == 2 ):
 				stmtList.nodes.append(t[1])
 			elif( len(t) == 3):
-				stmtList.nodes.append(t[1])
-			elif( len(t) == 4):
-				#stmtList.nodes.append(t[1].nodes[0])
-				stmtList.nodes.append(t[3])
+				stmtList.nodes.append(t[2])
 			t[0]=stmtList
 		def p_module_statement(t):
 			'module : statement'

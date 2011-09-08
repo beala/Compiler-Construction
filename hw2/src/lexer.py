@@ -1,4 +1,4 @@
-class Lexer:
+class ParserLexer:
 	lexer = None
 	parser = None
 	
@@ -57,9 +57,10 @@ class Lexer:
 			('right','ASSIGN'),
 			('left','PLUS'),
 			('right', 'NEGATE'),
-			('left','L_PAREN','R_PAREN')
+			('left','L_PAREN','R_PAREN'),
 		)
 		
+		# Empty statement object that the parser will add to.
 		stmtList = Stmt([])
 
 		#define parse logic
@@ -67,19 +68,19 @@ class Lexer:
 			'program : module'	
 			t[0] = Module(None, t[1])
 		def p_statements_statement(t):
-			'''statements : simple_statement NEWLINE
-						| simple_statement
-						| simple_statement NEWLINE simple_statement'''
+			'''statement : statement NEWLINE simple_statement
+						| simple_statement'''
+			print len(t)
 			if( len(t) == 2 ):
 				stmtList.nodes.append(t[1])
 			elif( len(t) == 3):
 				stmtList.nodes.append(t[1])
 			elif( len(t) == 4):
-				stmtList.nodes.append(t[1])
+				#stmtList.nodes.append(t[1].nodes[0])
 				stmtList.nodes.append(t[3])
 			t[0]=stmtList
 		def p_module_statement(t):
-			'module : statements'
+			'module : statement'
 			t[0] = t[1] 
 		def p_print_statement(t):
 			'simple_statement : PRINT expression'
@@ -105,7 +106,7 @@ class Lexer:
 			t[0] = Name(t[1])
 		def p_func_expression(t):
 			'expression : FUNC'
-			t[0] = CallFunc(t[1],None,None,None)
+			t[0] = CallFunc(t[1].value,None,None,None)
 		def p_l_paren_expression_r_paren(t):
 			'expression : L_PAREN expression R_PAREN'
 			t[0] = t[2]

@@ -3,9 +3,10 @@ class ParserLexer:
 	parser = None
 	
 	def __init__(self):
-		reserved = {'print' : 'PRINT'}
+		reserved = {'print' : 'PRINT',
+					'input' : 'INPUT'}
 		
-		tokens = ['INT','PLUS','ASSIGN','NEGATE','FUNC', 'NAME', 'R_PAREN', 'L_PAREN'] + list(reserved.values())
+		tokens = ['INT','PLUS','ASSIGN','NEGATE','NAME', 'R_PAREN', 'L_PAREN'] + list(reserved.values())
 	
 		t_PLUS  = r'\+'
 		t_ASSIGN= r'='
@@ -20,10 +21,10 @@ class ParserLexer:
 			t.type = reserved.get(t.value,'NAME')    # Check for reserved words
 			return t
 
-		def t_FUNC(t):
-			r'[a-zA-Z]+\(\)'
-			t.value = t.value[:len(t.value)-2]
-			return t
+		#def t_FUNC(t):
+		#	r'[a-zA-Z]+()'
+		#	t.value = t.value[:len(t.value)-2]
+		#	return t
 
 		def t_INT(t):
 			r'\d+'
@@ -66,15 +67,13 @@ class ParserLexer:
 		def p_program_module(t):
 			'program : module'	
 			t[0] = Module(None, t[1])
-			stmtList = Stmt([])	# End of parsing. Clear out the statement list
 		def p_statements_statement(t):
 			'''statement : statement simple_statement
 						| simple_statement'''
-			print len(t)
 			if( len(t) == 2 ):
 				stmtList.nodes.append(t[1])
 			elif( len(t) == 3):
-				stmtList.nodes.append(t[2])
+				stmtList.nodes.append(t[2]) #Why does ignoring t[1] make things work?
 			t[0]=stmtList
 		def p_module_statement(t):
 			'module : statement'
@@ -84,7 +83,7 @@ class ParserLexer:
 			t[0] = Printnl([t[2]], None)
 		def p_assign_statement(t):
 			'simple_statement : NAME ASSIGN expression'
-			t[0] = Assign(AssName(t[1],'OP_ASSIGN'),t[3])
+			t[0] = Assign([AssName(t[1],'OP_ASSIGN')],t[3])
 		def p_expression_statement(t):
 			'simple_statement : expression'
 			t[0] = t[1]
@@ -102,8 +101,8 @@ class ParserLexer:
 			'expression : NAME'
 			t[0] = Name(t[1])
 		def p_func_expression(t):
-			'expression : FUNC'
-			t[0] = CallFunc(t[1].value,None,None,None)
+			'expression : INPUT L_PAREN R_PAREN'
+			t[0] = CallFunc(t[1],None,None,None)
 		def p_l_paren_expression_r_paren(t):
 			'expression : L_PAREN expression R_PAREN'
 			t[0] = t[2]
@@ -121,4 +120,8 @@ class ParserLexer:
 			tok = self.lexer.token()
 			if not tok: break
 			print tok
-		
+	
+	def parseFile(self, path):
+		file_to_parse = open(path, 'r')
+		text_to_parse = file_to_parse.read()
+		return self.parser.parse(text_to_parse)

@@ -5,14 +5,14 @@ from compiler.ast import *
 import compiler
 import sys
 import string
-import lexer
+import myparser
 
 class csci4555_compiler:
 	#class variables
 	__dict_vars = {} #dictionary (associative array) of variable names to memory locations relative to ebp
 	__stack_offset = 0
 	__generated_code = ""
-	parse_lex=None
+	parser=None
 
 	#class methods		
 	def get_generated_code(self):
@@ -46,7 +46,7 @@ class csci4555_compiler:
 		elif isinstance(ast, Const):
 			# Build statement to assign the constant value to a tmp variable
 			stmt = 'tmp' + str(tmp_num) + ' = ' + str(ast.value)
-			flat_ast.node.nodes.append(self.parse_lex.parse(stmt).node.nodes[0])
+			flat_ast.node.nodes.append(self.parser.parse(stmt).node.nodes[0])
 			# Return the number coorsponding to the tmp variable
 			return tmp_num
 		elif isinstance(ast, Add):
@@ -56,7 +56,7 @@ class csci4555_compiler:
 			# Build a statement to add the two tmp variables
 			# and assign that value to a new tmp variable
 			stmt = 'tmp' + str(right + 1) + ' = tmp' + str(left) + ' + tmp' + str(right)
-			flat_ast.node.nodes.append(self.parse_lex.parse(stmt).node.nodes[0])
+			flat_ast.node.nodes.append(self.parser.parse(stmt).node.nodes[0])
 			# Return the number cooresponding to the new tmp variable.
 			return right + 1
 		elif isinstance(ast, UnarySub):
@@ -64,14 +64,14 @@ class csci4555_compiler:
 			to_negate = self.flatten_sub(ast.expr, tmp_num, flat_ast, self.__dict_vars)
 			# Negate the variable, and assign to a new variable.
 			stmt = 'tmp' + str(to_negate + 1) + ' = -tmp' + str(to_negate)
-			flat_ast.node.nodes.append(self.parse_lex.parse(stmt).node.nodes[0])
+			flat_ast.node.nodes.append(self.parser.parse(stmt).node.nodes[0])
 			# Return the number cooresponding to the tmp variable.
 			return to_negate + 1
 		elif isinstance(ast, CallFunc):
 			# CallFunc always refers to an input() (in P0, at least).
 			# So, build a statement calling input() and storing it to a tmp var.
 			stmt = 'tmp' + str(tmp_num) + ' = input()'
-			flat_ast.node.nodes.append(self.parse_lex.parse(stmt).node.nodes[0])
+			flat_ast.node.nodes.append(self.parser.parse(stmt).node.nodes[0])
 			# Return the number cooresponding to the tmp var.
 			return tmp_num
 		elif isinstance(ast, Printnl):
@@ -79,7 +79,7 @@ class csci4555_compiler:
 			to_print = self.flatten_sub(ast.nodes[0], tmp_num, flat_ast, self.__dict_vars)
 			# Build statement printing that tmp var.
 			stmt = 'print tmp' + str(to_print)
-			flat_ast.node.nodes.append(self.parse_lex.parse(stmt).node.nodes[0])
+			flat_ast.node.nodes.append(self.parser.parse(stmt).node.nodes[0])
 			# Nothing to return. print is always an upper node.
 			return to_print
 		elif isinstance(ast, Assign):
@@ -88,14 +88,14 @@ class csci4555_compiler:
 			# Get the tmp var containing the value to be assigned (r value)
 			right = self.flatten_sub(ast.expr, tmp_num, flat_ast, self.__dict_vars)
 			stmt = var_name + ' = tmp' + str(right)
-			flat_ast.node.nodes.append(self.parse_lex.parse(stmt).node.nodes[0])
+			flat_ast.node.nodes.append(self.parser.parse(stmt).node.nodes[0])
 			# Nothing to return. An upper node.		
 			return right
 		elif isinstance(ast, Name):
 			# Assign the variable to a tmp var.
 			ast.name = "__"+ast.name
 			stmt = 'tmp' + str(tmp_num) + ' = ' + ast.name
-			flat_ast.node.nodes.append(self.parse_lex.parse(stmt).node.nodes[0])
+			flat_ast.node.nodes.append(self.parser.parse(stmt).node.nodes[0])
 			return tmp_num
 		else:
 			raise Exception("Error: Unrecognized node/object type.")
@@ -179,8 +179,8 @@ class csci4555_compiler:
 		else:
 			raise Exception("Error: Unrecognized node/object type.")
 	def __init__(self,codefile):
-		self.parse_lex = lexer.ParserLexer()
-		self.generate_x86_code(self.flatten(self.parse_lex.parseFile(codefile)),self.__dict_vars)
+		self.parser = myparser.MyParser()
+		self.generate_x86_code(self.flatten(self.parser.parseFile(codefile)),self.__dict_vars)
 		self._encapsulate_generated_code()
 
 #mycode = sys.stdin.readlines()

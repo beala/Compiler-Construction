@@ -7,3 +7,4 @@ SRC_DIR="$SCRIPT_PATH/../src"
 
 rm $TESTS_DIR/*.s
 rm $BUILD_DIR/*
+rm $SRC_DIR/*.pyc

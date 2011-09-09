@@ -1,4 +1,5 @@
-class ParserLexer:
+import compiler
+class MyParser:
 	lexer = None
 	parser = None
 	stmtList = None
@@ -68,6 +69,9 @@ class ParserLexer:
 		def p_program_module(t):
 			'program : module'	
 			t[0] = Module(None, t[1])
+		def p_module_statement(t):
+			'module : statement'
+			t[0] = t[1]
 		def p_statements_statement(t):
 			'''statement : statement simple_statement
 						| simple_statement'''
@@ -76,9 +80,9 @@ class ParserLexer:
 			elif( len(t) == 3):
 				self.stmtList.nodes.append(t[2])
 			t[0]=self.stmtList
-		def p_module_statement(t):
-			'module : statement'
-			t[0] = t[1] 
+#		def p_empty_statement(t):
+#			'simple_statement : '
+#			t[0]=self.stmtList
 		def p_print_statement(t):
 			'simple_statement : PRINT expression'
 			t[0] = Printnl([t[2]], None)
@@ -88,7 +92,6 @@ class ParserLexer:
 		def p_expression_statement(t):
 			'simple_statement : expression'
 			t[0] = t[1]
-
 		def p_plus_expression(t):
 			'expression : expression PLUS expression'
 			t[0] = Add((t[1], t[3]))
@@ -103,7 +106,7 @@ class ParserLexer:
 			t[0] = Name(t[1])
 		def p_func_expression(t):
 			'expression : INPUT L_PAREN R_PAREN'
-			t[0] = CallFunc(t[1],None,None,None)
+			t[0] = CallFunc(Name(t[1]),[],None,None)
 		def p_l_paren_expression_r_paren(t):
 			'expression : L_PAREN expression R_PAREN'
 			t[0] = t[2]
@@ -115,19 +118,26 @@ class ParserLexer:
 		self.parser = yacc.yacc()
 
 		
-	def test_lex(self, to_lex):
+	def testLexer(self, to_lex):
 		self.lexer.input(to_lex)
 		while True:
 			tok = self.lexer.token()
 			if not tok: break
 			print tok
+
+	# Desc: Clears the list of statements that the parser appends to
+	#	as it builds the tree. Needs to be called in between calls
+	#	to parse() and parseFile()
+	def clearStatements(self):
+		self.stmtList.nodes=[]
 	
 	def parseFile(self, path):
-		self.stmtList.nodes = []
+		self.clearStatements()
 		file_to_parse = open(path, 'r')
 		text_to_parse = file_to_parse.read()
 		return self.parser.parse(text_to_parse)
 
 	def parse(self, to_parse):
-		self.stmtList.nodes = []
+		# Clear stmtList. See comment in parseFile()
+		self.clearStatements()
 		return self.parser.parse(to_parse)

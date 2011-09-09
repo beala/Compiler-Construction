@@ -1,11 +1,12 @@
 class Lexer:
 	lexer = None
 	parser = None
+	stmtList = None
 	
 	def __init__(self):
 		reserved = {'print' : 'PRINT'}
 		
-		tokens = ['INT','PLUS','ASSIGN','NEGATE','FUNC', 'NAME', 'R_PAREN', 'L_PAREN'] + list(reserved.values())
+		tokens = ['NEWLINE','INT','PLUS','ASSIGN','NEGATE','FUNC', 'NAME', 'R_PAREN', 'L_PAREN'] + list(reserved.values())
 	
 		t_PLUS  = r'\+'
 		t_ASSIGN= r'='
@@ -15,14 +16,14 @@ class Lexer:
 		t_ignore_COMMENT = r'\#.*' #ignore comments
 		
 		# Taken from the PLY documentation: http://www.dabeaz.com/ply/ply.html#ply_nn6
-		def t_NAME(t):
-			r'[a-zA-Z_][a-zA-Z_0-9]*'
-			t.type = reserved.get(t.value,'NAME')    # Check for reserved words
-			return t
-
 		def t_FUNC(t):
 			r'[a-zA-Z]+\(\)'
 			t.value = t.value[:len(t.value)-2]
+			return t
+
+		def t_NAME(t):
+			r'[a-zA-Z_][a-zA-Z_0-9]*'
+			t.type = reserved.get(t.value,'NAME')    # Check for reserved words
 			return t
 
 		def t_INT(t):
@@ -36,9 +37,10 @@ class Lexer:
 
 		t_ignore = ' \t'
 
-		def t_newline(t):
+		def t_NEWLINE(t):
 			r'\n+'
 			t.lexer.lineno += t.value.count("\n")
+			return t
 
 		def t_error(t):
 			print "Illegal character '%s'" % t.value[0]
@@ -49,7 +51,7 @@ class Lexer:
 		
 		#------------- PARSER
 		
-		from compiler.ast import Printnl, Add, Const, UnarySub, CallFunc, Assign, AssName, Module, Stmt, Name, Expression
+		from compiler.ast import Printnl, Add, Const, UnarySub, CallFunc, Assign, AssName, Module, Stmt, Name, Expression, Discard
 
 		#define precedence
 		precedence = (
@@ -59,14 +61,27 @@ class Lexer:
 			('left','L_PAREN','R_PAREN')
 		)
 		
+		# Empty statement object that the parser will add to.
+		self.stmtList = Stmt([])
 
 		#define parse logic
 		def p_program_module(t):
 			'program : module'	
 			t[0] = Module(None,t[1])
 		def p_module_statement(t):
-			'module : simple_statement'
-			t[0] = Stmt(t[1])
+			'module : statement'
+			t[0] = self.stmtList
+	
+		def p_statement_newline_statement(t):
+			'statement : simple_statement NEWLINE statement'
+			self.stmtList.nodes.insert(0,t[1])
+			t[0] = self.stmtList
+		def p_statement_simple_statement(t):
+			'''statement : simple_statement NEWLINE
+						 | simple_statement'''
+			self.stmtList.nodes.insert(0,t[1])
+			t[0] = self.stmtList
+			
 		def p_print_statement(t):
 			'simple_statement : PRINT expression'
 			t[0] = Printnl([t[2]], None)
@@ -75,7 +90,7 @@ class Lexer:
 			t[0] = Assign(AssName(t[1],'OP_ASSIGN'),t[3])
 		def p_expression_statement(t):
 			'simple_statement : expression'
-			t[0] = t[1]
+			t[0] = Discard(t[1])
 
 		def p_plus_expression(t):
 			'expression : expression PLUS expression'
@@ -90,7 +105,8 @@ class Lexer:
 			'expression : NAME'
 			t[0] = Name(t[1])
 		def p_func_expression(t):
-			'expression : FUNC'
+			'''expression : FUNC
+						  | FUNC L_PAREN R_PAREN'''
 			t[0] = CallFunc(t[1],None,None,None)
 		def p_l_paren_expression_r_paren(t):
 			'expression : L_PAREN expression R_PAREN'
@@ -110,3 +126,12 @@ class Lexer:
 			if not tok: break
 			print tok
 		
+	def parseFile(self, path):
+		self.stmtList.nodes = []
+		file_to_parse = open(path, 'r')
+		text_to_parse = file_to_parse.read()
+		return self.parser.parse(text_to_parse)
+	
+	def parse(self, to_parse):
+		self.stmtList.nodes = []
+		return self.parser.parse(to_parse)

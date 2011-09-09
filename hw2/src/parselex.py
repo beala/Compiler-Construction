@@ -1,4 +1,4 @@
-class Lexer:
+class ParserLexer:
 	lexer = None
 	parser = None
 	stmtList = None
@@ -87,7 +87,7 @@ class Lexer:
 			t[0] = Printnl([t[2]], None)
 		def p_assign_statement(t):
 			'simple_statement : NAME ASSIGN expression'
-			t[0] = Assign(AssName(t[1],'OP_ASSIGN'),t[3])
+			t[0] = Assign([AssName(t[1],'OP_ASSIGN')],t[3])
 		def p_expression_statement(t):
 			'simple_statement : expression'
 			t[0] = Discard(t[1])
@@ -118,7 +118,6 @@ class Lexer:
 		import ply.yacc as yacc
 		self.parser = yacc.yacc()
 
-		
 	def test_lex(self, to_lex):
 		self.lexer.input(to_lex)
 		while True:

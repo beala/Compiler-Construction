@@ -2,7 +2,21 @@
 # Created by: Josh Wepman <joshua.wepman@colorado.edu>
 # 19 Sept 2011
 
-class varNode:
+class Node:
+	def __init__(self):
+		pass
+
+class ConstNode(Node):
+	def __init__(self,myValue):
+		self.myValue = myValue
+	def __str__(self):
+		return "$"+self.myValue
+class Register(Node):
+	def __init__(self,myRegister):
+		self.myRegister = myRegister
+	def __str__(self):
+		return "%"+myRegister
+class VarNode(Node):
 	spillable = True
 	saturation = 0
 	degree = 0
@@ -53,15 +67,15 @@ class Movl(x86):
 	numOperands = 2
 	def __init__(self,operand1,operand2):
 		self.instruction = "movl"
-		if (isinstance(operand1, varNode)):
+		if (isinstance(operand1, Node)):
 			self.operandList.add(operand1)
 		else:
-			self.operandList.add(varNode(None))
+			self.operandList.add(Node)
 		
-		if (isinstance(operand2, varNode)):
+		if (isinstance(operand2, Node)):
 			self.operandList.add(operand2)
 		else:
-			self.operandList.add(varNode(None))
+			self.operandList.add(Node)
 	def __str__(self):
 		return "%s %s,%s" % (self.operation, self.operandList[0], self.operandList[1])
 	
@@ -71,10 +85,10 @@ class Pushl(x86):
 	numOperands = 1
 	def __init__(self,operand1):
 		self.instruction = "pushl"
-		if (isinstance(operand1, varNode)):
+		if (isinstance(operand1, Node)):
 			self.operandList.add(operand1)
 		else:
-			self.operandList.add(varNode(None))
+			self.operandList.add(Node)
 	def __str__(self):
 		return "%s %s" % (self.operation, self.operandList[0])
 
@@ -82,10 +96,10 @@ class Popl(x86):
 	numOperands = 1
 	def __init__(self,operand1):
 		self.instruction = "popl"
-		if (isinstance(operand1, varNode)):
+		if (isinstance(operand1, Node)):
 			self.operandList.add(operand1)
 		else:
-			self.operandList.add(varNode(None))
+			self.operandList.add(Node)
 	def __str__(self):
 		return "%s %s" % (self.operation, self.operandList[0])
 
@@ -93,15 +107,15 @@ class Addl(x86):
 	numOperands = 2
 	def __init__(self,operand1,operand2):
 		self.instruction = "addl"
-		if (isinstance(operand1, varNode)):
+		if (isinstance(operand1, Node)):
 			self.operandList.add(operand1)
 		else:
-			self.operandList.add(varNode(None))
+			self.operandList.add(Node)
 		
-		if (isinstance(operand2, varNode)):
+		if (isinstance(operand2, Node)):
 			self.operandList.add(operand2)
 		else:
-			self.operandList.add(varNode(None))
+			self.operandList.add(Node)
 	def __str__(self):
 		return "%s %s,%s" % (self.operation, self.operandList[0], self.operandList[1])
 
@@ -111,10 +125,10 @@ class Negl(x86):
 	numOperands = 1
 	def __init__(self,operand1):
 		self.instruction = "negl"
-		if (isinstance(operand1, varNode)):
+		if (isinstance(operand1, Node)):
 			self.operandList.add(operand1)
 		else:
-			self.operandList.add(varNode(None))
+			self.operandList.add(Node)
 	def __str__(self):
 		return "%s %s" % (self.operation, self.operandList[0])
 
@@ -122,15 +136,15 @@ class Subl(x86):
 	numOperands = 2
 	def __init__(self,operand1,operand2):
 		self.instruction = "subl"
-		if (isinstance(operand1, varNode)):
+		if (isinstance(operand1, Node)):
 			self.operandList.add(operand1)
 		else:
-			self.operandList.add(varNode(None))
+			self.operandList.add(Node)
 		
-		if (isinstance(operand2, varNode)):
+		if (isinstance(operand2, Node)):
 			self.operandList.add(operand2)
 		else:
-			self.operandList.add(varNode(None))
+			self.operandList.add(Node)
 	def __str__(self):
 		return "%s %s,%s" % (self.operation, self.operandList[0], self.operandList[1])
 
@@ -138,10 +152,7 @@ class Call(x86):
 	numOperands = 1
 	def __init__(self,operand1):
 		self.instruction = "call"
-		if (isinstance(operand1, varNode)):
-			self.operandList.add(operand1)
-		else:
-			self.operandList.add(varNode(None))
+		self.operandList.add(operand1)
 	def __str__(self):
 		return "%s %s" % (self.operation, self.operandList[0])
 

@@ -116,3 +116,38 @@ class InterferenceGraph(object):
 						operand.color = "-"+str(self.__listColors.get(operand.color))+"(%ebp)"
 			myString += "\t"+str(instruction)+"\n"
 		return myString
+	def __resetColors(self):
+		for node in self.__theGraph:
+			node.color=-1
+	def __resetColorList(self):
+		self.__listColors = {1:'eax',2:'ebx',3:'ecx',4:'edx'}
+	def __calculateLiveSets(self):
+ 		previousLiveSet = set()
+ 		for instruction in reversed(self.__ir):
+ 			previousLiveSet = instruction.doCalculateLiveSet(previousLiveSet)
+	def __spillAnalysis(self):
+		spillFlag = False
+		for instruction in self.__ir:
+			if instruction.numOperands == 2:
+				if instruction.operandList[0].color > 4 and instruction.operandList[1].color > 4:
+					#insert spill code
+					if isinstance(instruction, Movl):
+						secondArg = instruction.operandList[1]
+						instruction.operandList[1] = VarNode("{__spillSaver")
+						instruction.operandList[1].spillable = False
+						newInstruction = Movl(instruction.operandList[1],secondArg)
+						self.__ir.insert(self.__ir.index(instruction)+1,newInstruction)
+					spillFlag =  True
+		return spillFlag
+	def allocateRegisters(self):
+		__spilled = 0
+		while True:
+			self.__resetColors()
+			self.__resetColorList()
+			self.__calculateLiveSets()
+			self.drawEdges()
+			self.doColor()
+			__spilled = self.__spillAnalysis()
+			if not __spilled:
+				break
+	

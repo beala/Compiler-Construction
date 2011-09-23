@@ -52,7 +52,7 @@ class VarNode(Node):
 		return self.myName == other.myName
 	def __str__(self):
 		if (self.color != -1):
-			return str(self.color)+"<colored "+self.myName+">"
+			return str(self.color) #+"<colored "+self.myName+">"
 		else:
 			return self.myName+"<uncolored>"
 	def addAdjacency(self,other):

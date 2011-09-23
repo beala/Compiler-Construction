@@ -16,7 +16,7 @@ class InterferenceGraph(object):
 		for reg in self.__registers:
 			self.__theGraph[reg] = set()
 	def insertConnection(self,node1,node2):
-		if not (isinstance(node1,VarNode) and isinstance(node2,VarNode)):
+		if not ((isinstance(node1,VarNode) or isinstance(node1,Register)) and (isinstance(node2,VarNode) or isinstance(node2,Register))):
 			return
 		self.__theGraph[node1] = self.__theGraph[node1] | set([node2])
 		self.__theGraph[node2] = self.__theGraph[node2] | set([node1])
@@ -51,7 +51,7 @@ class InterferenceGraph(object):
 		for element in self.__ir:
 			if isinstance(element,Movl) and isinstance(element.operandList[0],VarNode) and isinstance(element.operandList[1],VarNode):
 				if element.operandList[0].color == element.operandList[1].color:
-					print str(element.operandList[0].color) + "," + str(element.operandList[1].color)
+					#print str(element.operandList[0].color) + "," + str(element.operandList[1].color)
 					continue
 			myCopy.append(element)
 		return myCopy
@@ -91,16 +91,28 @@ class InterferenceGraph(object):
 			
 			if len(availableColors) == 0:
 				#add stack slot (new color)
-				largest_key = len(self.__colorList) + 1 #actually, this is the new key
-				self.__colorList[largest_key] = self.stackOffset
-				self.stackOffset = self.stackOffset + 4
+				largest_key = len(self.__listColors) + 1  #actually, this is the new key
+				self.__listColors[largest_key] = self.__stackOffset
+				self.__stackOffset = self.__stackOffset + 4
 				node.color = largest_key
 			else:
 				sortedColorsList = [ color_key for color_key in availableColors ]
 				sortedColorsList.sort()
 				node.color = sortedColorsList[0]
-			print "Color: " + str(node.color)
 	
 			self.doUpdateAdjacentSaturation(node)
 			nodesToColor = self.__rebuildPriorityQueue(nodesToColor)
 		self.__ir = self.__reduceDuplicateMoves()
+	def emitColoredIR(self):
+		myString = "\tpush %ebp\n\tmovl %esp,%ebp\n\tsubl $"+str(self.__stackOffset)+",%esp\n"
+		for instruction in self.__ir:
+			if instruction.isFullyColored == False:
+				return False
+			for operand in instruction.operandList:
+				if  isinstance(operand,VarNode) and isinstance(operand.color,int):
+					if (operand.color <= 4):
+						operand.color = "%"+str(self.__listColors.get(operand.color))
+					else:
+						operand.color = "-"+str(self.__listColors.get(operand.color))+"(%ebp)"
+			myString += "\t"+str(instruction)+"\n"
+		return myString

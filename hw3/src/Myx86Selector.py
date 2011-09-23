@@ -25,9 +25,9 @@ class Myx86Selector:
 		#emit x86 code
 		myString = ""
 		for instruction in self.__ir:
-			myString = myString + '\t\tliveset('+self.emitSetVarNodeText(instruction.liveSetBefore)+')\n'
+			#myString = myString + '\t\tliveset('+self.emitSetVarNodeText(instruction.liveSetBefore)+')\n'
 			myString = myString + '\t'+str(instruction)+'\n'
-			myString = myString + '\t\tliveset('+self.emitSetVarNodeText(instruction.liveSetAfter)+')\n'
+			#myString = myString + '\t\tliveset('+self.emitSetVarNodeText(instruction.liveSetAfter)+')\n'
 		return myString
 	def calculateLiveSets(self):
 		previousLiveSet = set()

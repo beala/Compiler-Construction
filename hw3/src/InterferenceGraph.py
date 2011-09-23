@@ -128,7 +128,7 @@ class InterferenceGraph(object):
 	def __spillAnalysis(self):
 		spillFlag = False
 		for instruction in self.__ir:
-			if instruction.numOperands == 2:
+			if instruction.numOperands == 2 and isinstance(instruction.operandList[0],VarNode) and isinstance(instruction.operandList[1],VarNode):
 				if instruction.operandList[0].color > 4 and instruction.operandList[1].color > 4:
 					#insert spill code
 					if isinstance(instruction, Movl):

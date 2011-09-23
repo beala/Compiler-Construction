@@ -1,10 +1,12 @@
 from x86 import * 
+import Queue
 
 class InterferenceGraph(object):
 	__theGraph = {} #`VarNode => set([adjacent VarNodes])
 	__ir = []
 	__registers = [Register('ecx'),Register('edx'),Register('eax')]
-
+	__listColors = {1:'eax',2:'ebx',3:'ecx',4:'edx'}
+	__stackOffset = 4
 	def __init__(self,IR):
 		self.__ir = IR
 		for node2 in self.__ir:
@@ -42,4 +44,32 @@ class InterferenceGraph(object):
 		for node in self.__theGraph.keys():
 			myString = myString + str(node) + "--> [" + ','.join([ str(node_connection) for node_connection in self.__theGraph[node] ]) + "]\n"
 		return myString
-		
+	
+	def doColor(self):
+		#color caller-save register nodes (just in case)
+		for reg in self.__registers:
+			reg.color = self.__listColors.index(reg.myName)
+		#create priority queue of nodes and iterate
+		nodesToColor = Queue.PriorityQueue()
+		for node in self.__theGraph:
+			nodesToColor.put(node)
+		while not nodesToColor.empty():
+			adjacentColors = set([])
+			node = nodesToColor.get()
+			#find lowest color not in adjacent nodes (create one if needed -- this would be a stack location)
+	 		for node2 in self.__theGraph[node]:
+				if node2.color != "":
+					adjacentColors = adjacentColors | set([node2.color])
+			availableColors = self.__listColors - adjacentColors
+			if len(availableColors) == 0:
+				#add stack slot (new color)
+				largest_key = len(self.__colorList) + 1 #actually, this is the new key
+				self.__colorList[largest_key] = self.stackOffset
+				self.stackOffset = self.stackOffset + 4
+				node.color = largest_key
+			else:
+				sortedColorsList = [ x for color_key in availableColors ].sort()
+				node.color = sortedColorsList[0]
+				#pick lowest color
+			#assign color to this node
+			#remove this node from queue (already done, but w/e)	

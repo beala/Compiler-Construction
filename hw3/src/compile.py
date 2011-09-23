@@ -18,7 +18,9 @@ class csci4555_compiler:
 		x86IRObj.calculateLiveSets()
 		my_graph = InterferenceGraph.InterferenceGraph(x86IRObj.getIR())
 		my_graph.drawEdges()
+		my_graph.doColor()
 		print my_graph.printGraph()
+		x86IRObj.setIR(my_graph.getIR())
 		print x86IRObj.emitx86Text()
 if __name__ == "__main__":
 	myfile = sys.argv[1]

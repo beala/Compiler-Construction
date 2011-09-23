@@ -14,6 +14,8 @@ class ConstNode(Node):
 class Register(Node):
 	def __init__(self,myRegister):
 		self.myRegister = myRegister
+	def __eq__(self,other):
+		return self.myRegister == other.myRegister
 	def __str__(self):
 		return "%"+self.myRegister
 class VarNode(Node):
@@ -21,7 +23,7 @@ class VarNode(Node):
 	saturation = 0
 	degree = 0
 	adjacentNodes = set()
-	color = ""
+	color = -1
 	myName = ""
 	def __init__(self,myName):
 		self.myName = myName
@@ -40,9 +42,17 @@ class VarNode(Node):
 			return -1
 		else:
 			return 0
+	def equalColors(self,other):
+		if not isinstance(other,VarNode):
+			return False
+		return self.color == other.color
+	def __eq__(self,other):
+		if not isinstance(other,VarNode):
+			return False
+		return self.myName == other.myName
 	def __str__(self):
-		if (self.color != ''):
-			return self.color
+		if (self.color != -1):
+			return str(self.color)+"<colored "+self.myName+">"
 		else:
 			return self.myName+"<uncolored>"
 	def addAdjacency(self,other):
@@ -51,6 +61,7 @@ class VarNode(Node):
 class x86(object):
 	numOperands = 0
 	liveSetBefore = set()
+	liveSetAfter = set()
 	def __init__(self):
 		self.instruction = ""
 		self.operandList = []

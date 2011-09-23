@@ -12,7 +12,8 @@ class Myx86Selector:
 	__dict_vars = {} #dictionary (associative array) of variable names to memory locations relative to ebp
 	__ir = []
 	__currentTmpVar = 0;
-
+	def setIR(self,IR):
+		self.__ir = IR
 	def getIR(self):
 		return self.__ir
 	def emitSetVarNodeText(self,mySet):
@@ -26,6 +27,7 @@ class Myx86Selector:
 		for instruction in self.__ir:
 			myString = myString + '\t\tliveset('+self.emitSetVarNodeText(instruction.liveSetBefore)+')\n'
 			myString = myString + '\t'+str(instruction)+'\n'
+			myString = myString + '\t\tliveset('+self.emitSetVarNodeText(instruction.liveSetAfter)+')\n'
 		return myString
 	def calculateLiveSets(self):
 		previousLiveSet = set()

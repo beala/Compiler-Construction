@@ -8,13 +8,18 @@ class InterferenceGraph(object):
 	__listColors = {1:'eax',2:'ebx',3:'ecx',4:'edx'}
 	__stackOffset = 4
 	def __init__(self,IR):
+		self.__initGraph(IR)
+
+	def __initGraph(self, IR):	
 		self.__ir = IR
+		self.__theGraph = {}
 		for node2 in self.__ir:
 			for node in node2.operandList: 
 				if isinstance(node,VarNode) and not self.__theGraph.has_key(node):
 					self.__theGraph[node] = set()
 		for reg in self.__registers:
 			self.__theGraph[reg] = set()
+
 	def insertConnection(self,node1,node2):
 		if not ((isinstance(node1,VarNode) or isinstance(node1,Register)) and (isinstance(node2,VarNode) or isinstance(node2,Register))):
 			return
@@ -142,6 +147,7 @@ class InterferenceGraph(object):
 	def allocateRegisters(self):
 		__spilled = 0
 		while True:
+			self.__initGraph(self.__ir)
 			self.__resetColors()
 			self.__resetColorList()
 			self.__calculateLiveSets()

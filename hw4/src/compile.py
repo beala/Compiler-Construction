@@ -14,7 +14,7 @@ import InterferenceGraph
 class csci4555_compiler:
 	myGraph = None
 	def __init__(self,codefile):
-		flattened_ast = MyFlattener.P0FlattenAST().visit(compiler.parseFile(codefile))
+		flattened_ast = MyFlattener.P0ASTFlattener().visit(compiler.parseFile(codefile))
 		x86IRObj = Myx86Selector.Myx86Selector(flattened_ast)
 		#x86IRObj.calculateLiveSets()
 		self.my_graph = InterferenceGraph.InterferenceGraph(x86IRObj.getIR())

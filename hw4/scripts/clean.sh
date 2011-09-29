@@ -5,11 +5,6 @@ TESTS_DIR="$SCRIPT_PATH/../tests"
 BUILD_DIR="$SCRIPT_PATH/../build"
 SRC_DIR="$SCRIPT_PATH/../src"
 
-(
-cd $SRC_DIR
-zip -r $BUILD_DIR/hw3.zip *
-)
-(
-cd $TESTS_DIR
-zip -r $BUILD_DIR/hw3_tests.zip *
-)
+rm $TESTS_DIR/*.s
+rm $BUILD_DIR/*
+rm $SRC_DIR/*.pyc

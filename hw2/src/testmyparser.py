@@ -15,6 +15,7 @@ class TestMyParser(unittest.TestCase):
 				#'',	# P0 doesn't contain empty stmts. Test fails.
 				'x=1\ny=x+(-1)+(1+(1+(1))+-y)\nprint y',
 				#'1+2+3',	#Discards don't compile correctly
+				'input\n(1+3)'
 			)
 
 	def setUp(self):

@@ -7,9 +7,9 @@ SRC_DIR="$SCRIPT_PATH/../src"
 
 (
 cd $SRC_DIR
-zip -r $BUILD_DIR/hw3.zip *
+zip -r $BUILD_DIR/hw4.zip *
 )
 (
 cd $TESTS_DIR
-zip -r $BUILD_DIR/hw3_tests.zip *
+zip -r $BUILD_DIR/hw4_tests.zip *
 )

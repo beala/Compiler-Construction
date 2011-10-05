@@ -24,9 +24,9 @@ class Let(Node):
 	def __init__(self, var, rhs, body):
 		self.var = var
 		self.rhs = rhs
-		self.body = bod
+		self.body = body
 	def __repr__(self):
-		return 'Let(' + str(self.var) + ', ' + str(self.rsh) + ', ' + str(self.body) + ')'
+		return 'Let(' + str(self.var) + ', ' + str(self.rhs) + ', ' + str(self.body) + ')'
 
 class IntegerAdd(Add):
 	def __repr__(self):

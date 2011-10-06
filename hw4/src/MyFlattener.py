@@ -12,7 +12,7 @@ class ASTVisitor(object):
 		return method(node)
 	def default(self, node):
 		'''Visit node children'''
-		print "Uh oh: A method doesn't exist for this node type."
+		print "Uh oh: A method doesn't exist for this node type: %s" % node.__class__.__name__
 
 class P0ASTFlattener(ASTVisitor):
 	# Private Variables: #########################################################################

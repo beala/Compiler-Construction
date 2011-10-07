@@ -89,18 +89,24 @@ class Myx86Selector:
 			expr = self.getTmpVar()
 			self.generate_x86_code(ast.ops[1])
 			expr2 = self.getTmpVar()
-			self.__ir.append(x86.Cmpl(expr, expr2))
+			#self.__ir.append(x86.Cmpl(expr, expr2))
 			newVar = self.makeTmpVar()
-			myNewLabel = self._makeLabel()
-			myEndLabel = self._makeLabel()
+			#myNewLabel = self._makeLabel()
+			#myEndLabel = self._makeLabel()
+			#if ast.ops[0] == '==':
+			#	self.__ir.append(x86.Je(myNewLabel))
+			#elif ast.ops[0] == '!=':
+			#	self.__ir.append(x86.Jne(myNewLabel))
+			#self.__ir.append(x86.Movl(x86.ConstNode(0), newVar))
+			#self.__ir.append(x86.Jmp(myEndLabel))
+			#self.__ir.append(x86.Movl(x86.ConstNode(1), newVar))
+			#self.__ir.append(x86.Label(myNewLabel))
+			
 			if ast.ops[0] == '==':
-				self.__ir.append(x86.Je(myNewLabel))
+				self.__ir.append(x86.Ifx86(x86.Cmpl(expr,expr2), x86.Movl(x86.constNode(0), newVar), x86.Movl(x86.constNode(1), newVar))) 
 			elif ast.ops[0] == '!=':
-				self.__ir.append(x86.Jne(myNewLabel))
-			self.__ir.append(x86.Movl(x86.ConstNode(0), newVar))
-			self.__ir.append(x86.Jmp(myEndLabel))
-			self.__ir.append(x86.Movl(x86.ConstNode(1), newVar))
-			self.__ir.append(x86.Label(myNewLabel))
+				self.__ir.append(x86.Ifx86(x86.Cmpl(expr,expr2), x86.Movl(x86.ConstNode(1), newVar), x86.Movl(x86.ConstNode(0), newVar))) 			
+			return
 		elif isinstance(ast, Const):
 			# put constant in general register eax for later assignment (in our flattener, constants are always the RHS of an assignment
 			# self.__generated_code += "movl $" + str(ast.value) + ", %eax\n"

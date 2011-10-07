@@ -112,9 +112,9 @@ class P1Explicate(ASTVisitor):
 		rExpr = self.visit(node.nodes[1])
 		tmpVarLeft = Name(self._makeTmpVar())
 		tmpVarRight = Name(self._makeTmpVar())
-
-        return Let(tmpVarLeft, lExpr, Let( tmpVarRight, rExpr, IfExp( ProjectTo(GetTag(tmpVarLeft),tmpVarLeft), tmpVarLeft, tmpVarRight)))
-		#return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, \
+		return Let(tmpVarLeft, lExpr, Let( tmpVarRight, rExpr, IfExp( ProjectTo(GetTag(tmpVarLeft),tmpVarLeft), tmpVarLeft, tmpVarRight)))
+		
+		#return Let(tmpVarLeft, lExpr, Let(tmp:VarRight, rExpr, \
 		#			IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'])]), IfExp( ProjectTo(self._typeMap['int'],tmpVarLeft), tmpVarLeft, tmpVarRight),	\
 		#			IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']),self._compareEqType(tmpVarRight,self._typeMap['bool'])] ), IfExp( ProjectTo(self._typeMap['int'],tmpVarLeft), tmpVarLeft, tmpVarRight), \
 		#			IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['bool']),self._compareEqType(tmpVarRight,self._typeMap['int'])] ), IfExp( ProjectTo(self._typeMap['bool'],tmpVarLeft), tmpVarLeft, tmpVarRight),	\
@@ -164,7 +164,7 @@ class P1Explicate(ASTVisitor):
 		return newDict
 
 	def visit_Subscript(self, node):
-		return Subscript( self.visit(node.expr), node.flags, self.visit(node.subs) )
+		return Subscript( self.visit(node.expr), node.flags, [self.visit(i) for i in node.subs] )
 
 	def visit_IfExp(self, node):
 		myTest = self.visit(node.test)
@@ -181,4 +181,5 @@ class P1Explicate(ASTVisitor):
 if __name__ == '__main__':
 	import sys
 	import compiler
+	print compiler.parse(sys.argv[1])
 	print P1Explicate().visit(compiler.parse(sys.argv[1]))

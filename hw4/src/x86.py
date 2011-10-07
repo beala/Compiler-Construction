@@ -86,6 +86,18 @@ class x86(object):
 	def __str__(self):
 		return "%s" % self.instruction
 
+class Ifx86(x86):
+	numOperands = 3
+	def __init__(self, test, then, else_):
+		self.instruction = "_IF"
+		self.operandList = [test, then, else_]
+	def doCalculateLiveSet(self, currentLiveSet):
+		liveSetElse = else_.doCalculateLiveSet(currentLiveSet)
+		liveSetThen = then.doCalculateLiveSet(currentLiveSet)
+		liveSetTest = test.doCalculateLiveSet(currentLiveSet)
+		self.liveSetBefore = set(liveSetTest) | set(liveSetElse) | set(liveSetThen)
+		return self.liveSetBefore
+
 class Movl(x86):
 	numOperands = 2
 	def __init__(self,operand1,operand2):

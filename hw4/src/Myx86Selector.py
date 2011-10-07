@@ -107,6 +107,60 @@ class Myx86Selector:
 			elif ast.ops[0] == '!=':
 				self.__ir.append(x86.Ifx86(x86.Cmpl(expr,expr2), x86.Movl(x86.ConstNode(1), newVar), x86.Movl(x86.ConstNode(0), newVar))) 			
 			return
+
+		elif isinstance(ast, Or):
+			self.generate_x86_code(ast.nodes[0])
+			lExpr = self.getTmpVar()
+			self.generate_x86_code(ast.nodes[1])
+			rExpr = self.getTmpVar()
+			resultVar = self.makeTmpVar()
+			self.__ir.append(x86.Ifx86(x86.Call('is_true'), x86.Movl(lExpr, resultVar), x86.Movl(rExpr, resultVar)))
+			return
+		elif isinstance(ast, And):
+			self.generate_x86_code(ast.nodes[0])
+			lExpr = self.getTmpVar()
+			self.generate_x86_code(ast.nodes[1])
+			rExpr = self.getTmpVar()
+			resultVar = self.makeTmpVar()
+			self.__ir.append(x86.Ifx86(x86.Call('is_true'), x86.Movl(rExpr, resultVar), x86.Movl(lExpr, resultVar)))
+			return
+		elif isinstance(ast, ProjectTo):
+			self.generate_x86_code(ast.arg)
+			argExpr = self.getTmpVar()
+			resultVar = self.makeTmpVar()
+			self.__ir.append(x86.Pushl(argExpr))
+			if ast.typ.value == 0:
+				self.__ir.append(x86.Call('project_int'))
+			if ast.typ.value == 1:
+				self.__ir.append(x86.Call('project_bool'))
+			if ast.typ.value == 3:
+				self.__ir.append(x86.Call('project_big'))
+			self.__ir.append(x86.Movl(x86.Register('eax'),resultVar))
+			self.__ir.append(x86.Addl(x86.ConstNode(4), x86.Regster('esp')))
+			return
+		elif isinstance(ast, InjectTo):
+			self.generate_x86_code(ast.arg)
+			argExpr = self.getTmpVar()
+			resultVar = self.makeTmpVar()
+			self.__ir.append(x86.Pushl(argExpr))
+			if ast.typ.value == 0:
+				self.__ir.append(x86.Call('inject_int'))
+			if ast.typ.value == 1:
+				self.__ir.append(x86.Call('inject_bool'))
+			if ast.typ.value == 3:
+				self.__ir.append(x86.Call('inject_big'))
+			self.__ir.append(x86.Movl(x86.Register('eax'),resultVar))
+			self.__ir.append(x86.Addl(x86.ConstNode(4), x86.Regster('esp')))
+			return
+		elif isinstance(ast, Subscript):
+			pass
+		elif isinstance(ast, GetTag):
+			self.generate_x86_code(ast.arg)
+			argExpr = self.getTmpVar()
+			self.__ir.append(x86.Pushl(argExpr))
+			self.__ir.append(x86.Call('tag'))
+			resultVar = self.makeTmpVar()
+			self.__ir.append(x86.Movl(x86.Register('eax'),resultVar))
 		elif isinstance(ast, Const):
 			# put constant in general register eax for later assignment (in our flattener, constants are always the RHS of an assignment
 			# self.__generated_code += "movl $" + str(ast.value) + ", %eax\n"

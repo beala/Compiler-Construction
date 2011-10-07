@@ -31,3 +31,7 @@ class Let(Node):
 class IntegerAdd(Add):
 	def __repr__(self):
 		return 'IntegerAdd((' + str(self.left) + ', ' + str(self.right) + '))'
+
+class BigAdd(Add):
+	def __repr__(self):
+		return 'BigAdd((' + str(self.left) + ', ' + str(self.right) + '))'

@@ -6,9 +6,9 @@ from p1ast import *
 class P1Explicate(ASTVisitor):
 	# Private Variables: #########################################################################
 	_currentTmpVar = 0
-	_typeMap = {'int': 0,
-				'bool': 1,
-				'big' : 3 }
+	_typeMap = {'int': Const(0),
+				'bool': Const(1),
+				'big' : Const(3) }
 	
 	# Private Methods: ###########################################################################
 	def _makeTmpVar(self):
@@ -52,7 +52,7 @@ class P1Explicate(ASTVisitor):
 		return Stmt(list_statements)
 	
 	def visit_Discard(self, node):
-		return self.visit(node.expr)[1]
+		return Discard(self.visit(node.expr))
 
 	def visit_Printnl(self, node):
 		expr = self.visit(node.nodes[0])

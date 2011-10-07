@@ -11,7 +11,8 @@ class Myx86Selector:
 	#class variables
 	__dict_vars = {} #dictionary (associative array) of variable names to memory locations relative to ebp
 	__ir = []
-	__currentTmpVar = 0;
+	__currentTmpVar = 0
+	_currentLabelNum = 0
 	def setIR(self,IR):
 		self.__ir = IR
 	def getIR(self):
@@ -57,7 +58,10 @@ class Myx86Selector:
 
 	def getTmpVar(self):
 		return self.__currentTmpNode
-	
+
+	def _makeLabel():
+		return 'label' + str(self._currentLabelNum)	
+
     #TODO: Do something about this.
 	#def _encapsulate_generated_code(self):
 	#	self.__generated_code = ".globl main\nmain:\npushl %ebp\nmovl %esp, %ebp\nsubl $"+str(self.__stack_offset)+",%esp\n" + self.__generated_code + "movl $0, %eax\nleave\nret\n"
@@ -74,6 +78,29 @@ class Myx86Selector:
 			# Nothing to do. Just go to the next node.
 			self.generate_x86_code(ast.expr)
 			return
+		elif isinstance(ast, If):
+			x86Test = MyX86Selector(ast.test)
+			x86Then = MyX86Selector(ast.then)
+			x86Else = MyX86Selector(ast.else_)
+			self.__ir.append(x86.Ifx86(x86Test.getIR(),x86Then.getIR(),x86Else.getIR()))
+			return
+		elif isinstance(ast, Compare):
+			self.generate_x86_code(ast.expr)
+			expr = self.getTmpVar()
+			self.generate_x86_code(ast.ops[1])
+			expr2 = self.getTmpVar()
+			self.__ir.append(x86.Cmpl(expr, expr2))
+			newVar = self.makeTmpVar()
+			myNewLabel = self._makeLabel()
+			myEndLabel = self._makeLabel()
+			if ast.ops[0] == '==':
+				self.__ir.append(x86.Je(myNewLabel))
+			elif ast.ops[0] == '!=':
+				self.__ir.append(x86.Jne(myNewLabel))
+			self.__ir.append(x86.Movl(x86.ConstNode(0), newVar))
+			self.__ir.append(x86.Jmp(myEndLabel))
+			self.__ir.append(x86.Movl(x86.ConstNode(1), newVar))
+			self.__ir.append(x86.Label(myNewLabel))
 		elif isinstance(ast, Const):
 			# put constant in general register eax for later assignment (in our flattener, constants are always the RHS of an assignment
 			# self.__generated_code += "movl $" + str(ast.value) + ", %eax\n"

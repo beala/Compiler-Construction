@@ -120,10 +120,25 @@ class P1ASTFlattener(P0ASTFlattener):
 		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], BigAdd((expr_left, expr_right)))
 		return (Name(tmpVar), stmt_left + stmt_right + [newAssign])
 
+	# Debugging methods: #############################################################################
+	def print_ast(self, stmt_ast, tabcount):
+		for node in stmt_ast.nodes:
+			if isinstance(node, If):
+				print '\t' * tabcount + 'If: ' + str(node.tests[0][0]) + ' then:'
+				#print '\t' * (tabcount + 1) +  str(self.print_ast(node.tests[0][1], tabcount+1))
+				self.print_ast(node.tests[0][1], tabcount+1)
+				print '\t' * (tabcount) + 'Else: '
+				#print '\t' * (tabcount + 1) + str(self.print_ast(node.else_, tabcount + 1))
+				self.print_ast(node.else_, tabcount+1)
+				print '\t' * (tabcount) + 'End If'
+			else:
+				print '\t' * (tabcount) + str(node)
+ 
 if __name__ == "__main__":
 	import sys
 	import compiler
-	print compiler.parse(sys.argv[1])
+	print '-' * 10 + 'Parsed AST' + '-' * 10
+	print str(compiler.parse(sys.argv[1])) + '\n'
 	flat_ast = P1ASTFlattener().visit(P1Explicate().visit(compiler.parse(sys.argv[1])))
-	print flat_ast
-			
+	print '-' * 10 + 'Flat AST' + '-' * 10
+	P1ASTFlattener().print_ast(flat_ast.node, 0)	

@@ -7,6 +7,7 @@ class P1ASTFlattener(P0ASTFlattener):
 		(flatrhs, stmt_list) = self.visit(node.rhs)
 		newName = self._renameVar(node.var.name)
 		newAssign = Assign([AssName(newName, 'OP_ASSIGN')], flatrhs)
+		print len(self.visit(node.body))
 		(body_result, stmt_list_body) = self.visit(node.body)
 		return (body_result, stmt_list + [newAssign] + stmt_list_body)
 
@@ -62,7 +63,11 @@ class P1ASTFlattener(P0ASTFlattener):
 			tupleList.append(self.visit(element))
 		tmpVar = self._makeTmpVar()
 		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], List([element for (element,stmt) in tupleList]))
-		return (Name(tmpVar), [stmt for (element,stmt) in tupleList] + [newAssign])
+		myStmtList = []
+		for (element,stmt) in tupleList:
+			for element2 in stmt:
+				myStmtList.append(element2)
+		return (Name(tmpVar), myStmtList + [newAssign])
 
 	def visit_Dict(self,node):
 		tupleTupleList = []
@@ -70,7 +75,11 @@ class P1ASTFlattener(P0ASTFlattener):
 			tupleTupleList.append( (self.visit(element[0]), self.visit(element[1])) )
 		tmpVar = self._makeTmpVar()
 		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], Dict([ (flat_key[0], flat_value[0]) for (flat_key, flat_value) in tupleTupleList ]))
-		return (Name(tmpVar), [ flat_value[1] for (flat_key, flat_value) in tupleTupleList ] + [ flat_key[1] for (flat_key, flat_value) in tupleTupleList ] + [newAssign])
+		myFlatValueandKeyList = []
+		for (flat_key, flat_value) in tupleTupleList:
+			myFlatValueandKeyList += flat_key[1]
+			myFlatValueandKeyList += flat_value[1]
+		return (Name(tmpVar), myFlatValueandKeyList + [newAssign])
 
 	def visit_GetTag(self, node):
 		(expr, stmt) = self.visit(node.arg)
@@ -105,7 +114,7 @@ class P1ASTFlattener(P0ASTFlattener):
 		tmpVar = self._makeTmpVar()
 		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], IntegerAdd((expr_left, expr_right)))
 		return (Name(tmpVar), stmt_left + stmt_right + [newAssign])
-	
+
 if __name__ == "__main__":
 	import sys
 	import compiler

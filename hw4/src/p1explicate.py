@@ -24,23 +24,6 @@ class P1Explicate(ASTVisitor):
 	def _compareEqType(self, lhs, rhs):
 		return Compare(GetTag(lhs), [('==', rhs)])
 
-	def _makeBigAssIf(self, varToTest, intFunc, boolFunc, bigFunc):
-		errFunc='type_error'
-		return IfExp( self._compareEqType(varToTest, self._typeMap['int']), 						\
-									CallFunc(Name(intFunc), []), 									\
-									IfExp( self._compareEqType(varToTest, self._typeMap['bool']),	\
-										CallFunc(Name(boolFunc), []),								\
-										IfExp( self._compareEqType(varToTest, self._typeMap['big']),\
-											CallFunc(Name(bigFunc), []),							\
-											CallFunc(Name(errFunc), []) )))
-	def _makeBinaryIf(self, leftVar, rightVar, intOrBoolFunc, twoBigsFunc):
-		return IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'])]), IntegerAdd((ProjectTo(self._typeMap['int'],tmpVarLeft), ProjectTo(self._typeMap['int'],tmpVarRight))),	\
-					IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']),self._compareEqType(tmpVarRight,self._typeMap['bool'])] ), IntegerAdd((ProjectTo(self._typeMap['int'],tmpVarLeft), ProjectTo(self._typeMap['bool'],tmpVarRight))), \
-					IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['bool']),self._compareEqType(tmpVarRight,self._typeMap['int'])] ), IntegerAdd((ProjectTo(self._typeMap['bool'],tmpVarLeft), ProjectTo(self._typeMap['int'],tmpVarRight))), \
-					IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['bool']),self._compareEqType(tmpVarRight,self._typeMap['bool'])] ), IntegerAdd((ProjectTo(self._typeMap['bool'],tmpVarLeft), ProjectTo(self._typeMap['bool'],tmpVarRight))), \
-					IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['big']),self._compareEqType(tmpVarRight,self._typeMap['big'])] ), BigAdd((ProjectTo(self._typeMap['big'],tmpVarLeft), ProjectTo(self._typeMap['big'],tmpVarRight))), \
-					CallFunc(Name('type_error'), [])))))) 
-	
 	# Visitor Methods: ###########################################################################
 	def visit_Module(self, node):
 		return Module(None, self.visit(node.node))
@@ -67,7 +50,8 @@ class P1Explicate(ASTVisitor):
 	def visit_Assign(self, node):
 		lExpr = self.visit(node.nodes[0])
 		rExpr = self.visit(node.expr)
-		return Assign([lExpr],rExpr)
+		rExprTmp = Name(self._makeTmpVar())
+		return Assign([lExpr], Let(rExprTmp, rExpr, InjectFrom(GetTag(rExprTmp), rExprTmp)))
 
 	def visit_UnarySub(self, node):
 		expr = self.visit(node.expr)

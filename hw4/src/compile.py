@@ -6,15 +6,15 @@ import compiler
 import sys
 import string
 import x86
-import MyFlattener
+import p1flattener
 import Myx86Selector
 import compiler
 import InterferenceGraph
-
+import p1removex86ifs
 class csci4555_compiler:
 	myGraph = None
 	def __init__(self,codefile):
-		flattened_ast = MyFlattener.P0ASTFlattener().visit(compiler.parseFile(codefile))
+		flattened_ast = p1flattener.P1ASTFlattener().visit(compiler.parseFile(codefile))
 		x86IRObj = Myx86Selector.Myx86Selector(flattened_ast)
 		#x86IRObj.calculateLiveSets()
 		self.my_graph = InterferenceGraph.InterferenceGraph(x86IRObj.getIR())
@@ -23,9 +23,13 @@ class csci4555_compiler:
 		#print my_graph.printGraph()
 		#x86IRObj.setIR(self.my_graph.getIR())
 		self.my_graph.allocateRegisters()
+		final_ir = p1removex86ifs.P1Removex86Ifs(self.my_graph.getIR()).removeIfs()
+		self.my_graph.setIR(final_ir)
+
 	def getColoredIR(self):
 		return ".globl main\nmain:\n"+self.my_graph.emitColoredIR()+"\tleave\n\tret\n"
 		#print x86IRObj.emitx86Text()
+
 if __name__ == "__main__":
 	myfile = sys.argv[1]
 	basename = myfile[:len(myfile)-3]

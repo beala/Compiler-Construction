@@ -27,6 +27,8 @@ class InterferenceGraph(object):
 		self.__theGraph[node2] = self.__theGraph[node2] | set([node1])
 	def getIR(self):
 		return self.__ir
+	def setIR(self,newIR):
+		self.__ir = newIR
 	def insertNode(self, node):
 		self.__theGraph[node] = set()
 	def __copylBeforeTolAfter(self):
@@ -51,6 +53,26 @@ class InterferenceGraph(object):
 				for iterlAfter in node.liveSetAfter:
 					for iterReg in self.__registers:
 						self.insertConnection(iterlAfter, iterReg)
+			elif isinstance(node, Ifx86):
+				writtenToSet = self.__getWrittenTo(node)
+				for iterlAfter in node.liveSetAfter:
+					for writtenToElement in writtenToSet:
+						self.insertConnection(iterlAfter, writtenToElement)
+	def __getWrittenTo(self,ifNode):
+		mySet = set()
+		for instruction in ifNode.then+ifNode.else_:
+			if isinstance(instruction, Movl):
+				mySet.add(instruction.operandList[1])
+			elif isinstance(instruction, Addl):
+				mySet.add(instruction.operandList[1])
+			elif isinstance(instruction, Negl):
+				mySet.add(instruction.operandList[0])
+			elif isinstance(instruction, Call):
+				for iterReg in self.__registers:
+					mySet.add(iterReg)
+			elif isinstance(instruction, Ifx86):
+				mySet = mySet | self.__getWrittenTo(instruction)
+		return mySet	
 	def __reduceDuplicateMoves(self):
 		myCopy = []
 		for element in self.__ir:

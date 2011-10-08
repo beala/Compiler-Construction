@@ -85,10 +85,12 @@ class x86(object):
 		return self.liveSetBefore
 	def __str__(self):
 		return "%s" % self.instruction
-
+	def __repr__(self):
+		return self.__str__()
 class Ifx86(x86):
 	numOperands = 3
 	def __init__(self, test, then, else_):
+		super(Ifx86, self).__init__()
 		self.instruction = "_IF"
 		self.operandList = [test, then, else_]
 	def doCalculateLiveSet(self, currentLiveSet):
@@ -98,6 +100,41 @@ class Ifx86(x86):
 		self.liveSetBefore = set(liveSetTest) | set(liveSetElse) | set(liveSetThen)
 		return self.liveSetBefore
 
+class Cmpl(x86):
+	numOperands = 2
+	def __init__(self,op1,op2):
+		super(Cmpl, self).__init__()
+		self.instruction = "cmpl"
+		if isinstance(op1, Node):
+			self.operandList.append(op1)
+		else:
+			raise TypeError("Can't assign that to Cmpl!")
+		if isinstance(op2, Node):
+			self.operandList.append(op2)
+		else:
+			raise TypeError("Can't assign that to Cmpl!")
+	def __str__(self):
+		return "%s %s,%s" % (self.instruction, self.operandList[0], self.operandList[1])
+
+class Jne(x86):
+	numOperands = 1
+	def __init__(self,label):
+		super(Jne, self).__init__()
+		self.instruction = "jne"
+		self.operandList.append(label)
+	def __str__(self):
+		return "%s %s" % (self.instruction, self.operandList[0])
+	def doCalculateLiveSet(self):
+		pass
+class Label(x86):
+	numOperands = 0
+	def __init__(self, label):
+		super(Label, self).__init__()
+		self.instruction = label
+	def __str__(self):
+		return "%s:" % (self.instruction)
+	def doCalculateLiveSet(self):
+		pass
 class Movl(x86):
 	numOperands = 2
 	def __init__(self,operand1,operand2):

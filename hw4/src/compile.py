@@ -11,10 +11,12 @@ import Myx86Selector
 import compiler
 import InterferenceGraph
 import p1removex86ifs
+import p1explicate
 class csci4555_compiler:
 	myGraph = None
 	def __init__(self,codefile):
-		flattened_ast = p1flattener.P1ASTFlattener().visit(compiler.parseFile(codefile))
+		explicated_ast = p1explicate.P1Explicate().visit(compiler.parseFile(codefile))
+		flattened_ast = p1flattener.P1ASTFlattener().visit(explicated_ast)
 		x86IRObj = Myx86Selector.Myx86Selector(flattened_ast)
 		#x86IRObj.calculateLiveSets()
 		self.my_graph = InterferenceGraph.InterferenceGraph(x86IRObj.getIR())
@@ -23,7 +25,8 @@ class csci4555_compiler:
 		#print my_graph.printGraph()
 		#x86IRObj.setIR(self.my_graph.getIR())
 		self.my_graph.allocateRegisters()
-		final_ir = p1removex86ifs.P1Removex86Ifs(self.my_graph.getIR()).removeIfs()
+		removethings = p1removex86ifs.P1Removex86Ifs(self.my_graph.getIR())
+		final_ir = removethings.removeIfs()
 		self.my_graph.setIR(final_ir)
 
 	def getColoredIR(self):

@@ -16,19 +16,20 @@ class P1Removex86Ifs:
 				myNewInstructionList += self.removeIfStructure(testInstruction)
 			else:
 				myNewInstructionList += [testInstruction]
-		myNewInstructionList += [x86.Jne(elseLabel)]
+		myNewInstructionList += [Jne(elseLabel)]
 		for thenInstruction in ifx86Node.operandList[1]:
 			if isinstance(thenInstruction, Ifx86):
 				myNewInstructionList += self.removeIfStructure(thenInstruction)
 			else:
 				myNewInstructionList += [thenInstruction]
-		myNewInstructionList += [x86.Label(elseLabel)]
+		myNewInstructionList += [Jmp(endLabel)]
+		myNewInstructionList += [Label(elseLabel)]
 		for elseInstruction in ifx86Node.operandList[2]:
 			if isinstance(elseInstruction, Ifx86):
 				myNewInstructionList += self.removeIfStructure(elseInstruction)
 			else:
 				myNewInstructionList += [elseInstruction]
-		myNewInstructionList += [x86.Label(endLabel)]
+		myNewInstructionList += [Label(endLabel)]
 		
 		return myNewInstructionList #list of flat instructions
 
@@ -49,7 +50,14 @@ if __name__ == "__main__":
 	from p1flattener import *
 	from Myx86Selector import *
 	import sys
+	import InterferenceGraph
 	explicated_ast = P1Explicate().visit(compiler.parse(sys.argv[1]))
 	flattened_ast = P1ASTFlattener().visit(explicated_ast)
 	ir =  Myx86Selector(flattened_ast).getIR()
-	print P1Removex86Ifs(ir).removeIfs() 
+	graph = InterferenceGraph.InterferenceGraph(ir)
+	graph.allocateRegisters()
+	color_ir = graph.getIR()
+	removedthingsir = P1Removex86Ifs(color_ir).removeIfs() 
+	graph.setIR(removedthingsir)
+	print graph.emitColoredIR()
+

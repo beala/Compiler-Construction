@@ -50,8 +50,7 @@ class P1Explicate(ASTVisitor):
 	def visit_Assign(self, node):
 		lExpr = self.visit(node.nodes[0])
 		rExpr = self.visit(node.expr)
-		rExprTmp = Name(self._makeTmpVar())
-		return Assign([lExpr], Let(rExprTmp, rExpr, InjectFrom(GetTag(rExprTmp), rExprTmp)))
+		return Assign([lExpr],  rExpr)
 
 	def visit_UnarySub(self, node):
 		expr = self.visit(node.expr)
@@ -160,7 +159,8 @@ class P1Explicate(ASTVisitor):
 		return Let( tmpMyTest, myTest, Let(tmpMyThen, myThen, Let( tmpMyElse_, myElse_, IfExp(ProjectTo(GetTag(tmpMyTest),tmpMyTest), tmpMyThen, tmpMyElse_))))
 
 	def visit_CallFunc(self, node):
-		return node
+		
+		return InjectFrom(self._typeMap['int'], node)
 
 if __name__ == '__main__':
 	import sys

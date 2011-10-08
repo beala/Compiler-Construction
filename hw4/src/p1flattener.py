@@ -7,7 +7,6 @@ class P1ASTFlattener(P0ASTFlattener):
 		(flatrhs, stmt_list) = self.visit(node.rhs)
 		newName = self._renameVar(node.var.name)
 		newAssign = Assign([AssName(newName, 'OP_ASSIGN')], flatrhs)
-		print len(self.visit(node.body))
 		(body_result, stmt_list_body) = self.visit(node.body)
 		return (body_result, stmt_list + [newAssign] + stmt_list_body)
 
@@ -18,7 +17,7 @@ class P1ASTFlattener(P0ASTFlattener):
 		tmpVar = self._makeTmpVar()
 		ifAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], fe2)
 		elseAssign = Assign([AssName(tmpVar,'OP_ASSIGN')], fe3)
-		newIf = If([ (fe1, Stmt(se2 +[ifAssign], None)) ], Stmt(se3+[elseAssign], None))
+		newIf = If([ (fe1, Stmt(se2 +[ifAssign])) ], Stmt(se3+[elseAssign]))
 		return (Name(tmpVar), se1 + [newIf])
 	
 	def visit_Compare(self, node):
@@ -26,7 +25,7 @@ class P1ASTFlattener(P0ASTFlattener):
 		(flat_ops, stmt_list_ops) = self.visit(node.ops[0][1])
 		tmpVar = self._makeTmpVar()
 		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], Compare(expr, [(node.ops[0][0], flat_ops)]))
-		return (Name(tmpVar), stmt_list + stmt_list_ops + [newAssign])
+		return (Name(tmpVar), Stmt(stmt_list + stmt_list_ops + [newAssign]))
 
 	def visit_Or(self, node):
 		flattenedTuples = []

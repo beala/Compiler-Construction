@@ -70,6 +70,7 @@ class Myx86Selector:
 	#def _encapsulate_generated_code(self):
 	#	self.__generated_code = ".globl main\nmain:\npushl %ebp\nmovl %esp, %ebp\nsubl $"+str(self.__stack_offset)+",%esp\n" + self.__generated_code + "movl $0, %eax\nleave\nret\n"
 	def generate_x86_code(self, ast):
+		print ast
 		if isinstance(ast, Module):
 			# Nothing to do. Just go to the next node.
 			self.generate_x86_code(ast.node)
@@ -83,15 +84,15 @@ class Myx86Selector:
 			self.generate_x86_code(ast.expr)
 			return
 		elif isinstance(ast, If):
-			x86Test = MyX86Selector(ast.test)
-			x86Then = MyX86Selector(ast.then)
-			x86Else = MyX86Selector(ast.else_)
+			x86Test = Myx86Selector(ast.tests[0])
+			x86Then = Myx86Selector(ast.tests[1])
+			x86Else = Myx86Selector(ast.else_)
 			self.__ir.append(x86.Ifx86(x86Test.getIR(),x86Then.getIR(),x86Else.getIR()))
 			return
 		elif isinstance(ast, Compare):
 			self.generate_x86_code(ast.expr)
 			expr = self.getTmpVar()
-			self.generate_x86_code(ast.ops[1])
+			self.generate_x86_code(ast.ops[0][1])
 			expr2 = self.getTmpVar()
 			#self.__ir.append(x86.Cmpl(expr, expr2))
 			newVar = self.makeTmpVar()
@@ -120,8 +121,8 @@ class Myx86Selector:
 			resultVar = self.makeTmpVar()
 			self.__ir.append(x86.Pushl(lExpr))
 			self.__ir.append(x86.Call('is_true'))
-			self.__ir.append(x86.Ifx86([x86.Cmpl(x86.Register('eax'),x86.ConstNode(1))], [x86.Movl(lExpr, resultVar)], [x86.Movl(rExpr, resultVar)]))
-			self.__ir.append(x86.Addl(x86.ConstNode(4), x86.Regster('esp')))
+			self.__ir.append(x86.Ifx86([x86.Cmpl(x86.ConstNode(1),x86.Register('eax'))], [x86.Movl(lExpr, resultVar)], [x86.Movl(rExpr, resultVar)]))
+			self.__ir.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			return
 		elif isinstance(ast, And):
 			self.generate_x86_code(ast.nodes[0])
@@ -131,18 +132,25 @@ class Myx86Selector:
 			resultVar = self.makeTmpVar()
 			self.__ir.append(x86.Pushl(lExpr))
 			self.__ir.append(x86.Call('is_true'))
-			self.__ir.append(x86.Ifx86([x86.Cmpl(x86.Register('eax'),x86.ConstNode(0))], [x86.Movl(lExpr, resultVar)], [x86.Movl(rExpr, resultVar)]))
-			self.__ir.append(x86.Addl(x86.ConstNode(4), x86.Regster('esp')))
+			self.__ir.append(x86.Ifx86([x86.Cmpl(x86.ConstNode(0),x86.Register('eax'))], [x86.Movl(lExpr, resultVar)], [x86.Movl(rExpr, resultVar)]))
+			self.__ir.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			return
 		elif isinstance(ast, ProjectTo):
 			self.generate_x86_code(ast.arg)
 			argExpr = self.getTmpVar()
 			resultVar = self.makeTmpVar()
 			self.__ir.append(x86.Pushl(argExpr))
-			self.__ir.append(x86.Ifx86([x86.Cmpl(typExpr, x86.ConstNode(0))], [x86.Call('project_int')], \
-								[x86.Ifx86([x86.Cmpl(typExpr, x86.ConstNode(1))], [x86.Call('project_bool')], \
-								[x86.Ifx86([x86.Cmpl(typExpr, x86.ConstNode(3))], [x86.Call('project_big')], \
-								[x86.Call('type_error')])])]))
+			if (isinstance(typExpr,Const) and typExpr.value == 0):
+				self.__ir.append(x86.Call('project_int'))
+			elif (isinstance(typExpr,Const) and typExpr.value == 1):
+				self.__ir.append(x86.Call('project_bool'))
+			elif (isinstance(typExpr,Const) and typExpr.value == 3):
+				self.__ir.append(x86.Call('project_big'))
+			else:
+				self.__ir.append(x86.Ifx86([x86.Cmpl(x86.ConstNode(0),typExpr)], [x86.Call('project_int')], \
+								[x86.Ifx86([x86.Cmpl(x86.ConstNode(1),typExpr)], [x86.Call('project_bool')], \
+								[x86.Ifx86([x86.Cmpl(x86.ConstNode(3),typExpr)], [x86.Call('project_big')], \
+								[])])]))
 			self.__ir.append(x86.Movl(x86.Register('eax'),resultVar))
 			self.__ir.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			return
@@ -153,10 +161,17 @@ class Myx86Selector:
 			typExpr = self.getTmpVar()
 			resultVar = self.makeTmpVar()
 			self.__ir.append(x86.Pushl(argExpr))
-			self.__ir.append(x86.Ifx86([x86.Cmpl(typExpr, x86.ConstNode(0))], [x86.Call('inject_int')], \
-						[x86.Ifx86([x86.Cmpl(typExpr, x86.ConstNode(1))], [x86.Call('inject_bool')], \
-						[x86.Ifx86([x86.Cmpl(typExpr, x86.ConstNode(3))], [x86.Call('inject_big')], \
-						[x86.Call('type_error')])])]))
+			if (isinstance(typExpr,Const) and typExpr.value == 0):
+				self.__ir.append(x86.Call('inject_int'))
+			elif (isinstance(typExpr,Const) and typExpr.value == 1):
+				self.__ir.append(x86.Call('inject_bool'))
+			elif (isinstance(typExpr,Const) and typExpr.value == 3):
+				self.__ir.append(x86.Call('inject_big'))
+			else:
+				self.__ir.append(x86.Ifx86([x86.Cmpl(x86.ConstNode(0),typExpr)], [x86.Call('inject_int')], \
+						[x86.Ifx86([x86.Cmpl(x86.ConstNode(1),typExpr)], [x86.Call('inject_bool')], \
+						[x86.Ifx86([x86.Cmpl(x86.ConstNode(3),typExpr)], [x86.Call('inject_big')], \
+						[])])]))
 			self.__ir.append(x86.Movl(x86.Register('eax'),resultVar))
 			self.__ir.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			return

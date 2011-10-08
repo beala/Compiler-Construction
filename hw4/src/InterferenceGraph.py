@@ -60,7 +60,7 @@ class InterferenceGraph(object):
 						self.insertConnection(iterlAfter, writtenToElement)
 	def __getWrittenTo(self,ifNode):
 		mySet = set()
-		for instruction in ifNode.then+ifNode.else_:
+		for instruction in ifNode.operandList[1]+ifNode.operandList[2]:
 			if isinstance(instruction, Movl):
 				mySet.add(instruction.operandList[1])
 			elif isinstance(instruction, Addl):

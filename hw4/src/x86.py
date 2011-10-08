@@ -94,10 +94,12 @@ class Ifx86(x86):
 		self.instruction = "_IF"
 		self.operandList = [test, then, else_]
 	def doCalculateLiveSet(self, currentLiveSet):
-		liveSetElse = else_.doCalculateLiveSet(currentLiveSet)
-		liveSetThen = then.doCalculateLiveSet(currentLiveSet)
-		liveSetTest = test.doCalculateLiveSet(currentLiveSet)
-		self.liveSetBefore = set(liveSetTest) | set(liveSetElse) | set(liveSetThen)
+		liveSetAll = set()
+		for number in range(2):
+			for instruction in self.operandList[number]:
+				liveSetAll = liveSetAll | instruction.doCalculateLiveSet(currentLiveSet)
+		
+		self.liveSetBefore = set(liveSetAll)
 		return self.liveSetBefore
 
 class Cmpl(x86):
@@ -115,7 +117,16 @@ class Cmpl(x86):
 			raise TypeError("Can't assign that to Cmpl!")
 	def __str__(self):
 		return "%s %s,%s" % (self.instruction, self.operandList[0], self.operandList[1])
-
+class Jmp(x86):
+	numOperands = 1
+	def __init__(self,label):
+		super(Jmp, self).__init__()
+		self.instruction = "jmp"
+		self.operandList.append(label)
+	def __str__(self): 
+		return "%s %s" % (self.instruction, self.operandList[0])
+	def doCalculateLiveSet(self):
+		pass
 class Jne(x86):
 	numOperands = 1
 	def __init__(self,label):

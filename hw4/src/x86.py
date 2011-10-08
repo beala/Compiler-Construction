@@ -15,6 +15,8 @@ class Register(Node):
 	def __init__(self,myRegister):
 		self.myRegister = myRegister
 	def __eq__(self,other):
+		if not isinstance(other, Register):
+			return False
 		return self.myRegister == other.myRegister
 	def __str__(self):
 		return "%"+self.myRegister
@@ -95,12 +97,18 @@ class Ifx86(x86):
 		self.operandList = [test, then, else_]
 	def doCalculateLiveSet(self, currentLiveSet):
 		liveSetAll = set()
-		for number in range(2):
+		for number in range(3):
 			for instruction in self.operandList[number]:
 				liveSetAll = liveSetAll | instruction.doCalculateLiveSet(currentLiveSet)
 		
 		self.liveSetBefore = set(liveSetAll)
 		return self.liveSetBefore
+	def __str__(self):
+		myString = ""
+		for number in range(3):
+			for instruction in self.operandList[number]:
+				myString +=  "-"*(number+1) + ">" + str(instruction)+"\n"
+		return myString
 
 class Cmpl(x86):
 	numOperands = 2

@@ -17,9 +17,9 @@ class csci4555_compiler:
 	def __init__(self,codefile):
 		explicated_ast = p1explicate.P1Explicate().visit(compiler.parseFile(codefile))
 		flattened_ast = p1flattener.P1ASTFlattener().visit(explicated_ast)
-		x86IRObj = Myx86Selector.Myx86Selector(flattened_ast)
+		ir = Myx86Selector.Myx86Selector().generate_x86_code(flattened_ast)
 		#x86IRObj.calculateLiveSets()
-		self.my_graph = InterferenceGraph.InterferenceGraph(x86IRObj.getIR())
+		self.my_graph = InterferenceGraph.InterferenceGraph(ir)
 		#self.my_graph.drawEdges()
 		#self.my_graph.doColor()
 		#print my_graph.printGraph()

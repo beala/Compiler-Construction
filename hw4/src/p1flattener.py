@@ -25,7 +25,7 @@ class P1ASTFlattener(P0ASTFlattener):
 		(flat_ops, stmt_list_ops) = self.visit(node.ops[0][1])
 		tmpVar = self._makeTmpVar()
 		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], Compare(expr, [(node.ops[0][0], flat_ops)]))
-		return (Name(tmpVar), Stmt(stmt_list + stmt_list_ops + [newAssign]))
+		return (Name(tmpVar), stmt_list + stmt_list_ops + [newAssign])
 
 	def visit_Or(self, node):
 		flattenedTuples = []
@@ -33,7 +33,10 @@ class P1ASTFlattener(P0ASTFlattener):
 			flattenedTuples.append(self.visit(element))
 		tmpVar = self._makeTmpVar()
 		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], Or([element for (element,stmt) in flattenedTuples]))
-		return (Name(tmpVar), [stmt for (element,stmt) in flattenedTuples] + [newAssign])
+		myStmtList = []
+		for (element,stmt) in flattenedTuples:
+			myStmtList += stmt
+		return (Name(tmpVar), myStmtList  + [newAssign])
 	
 	def visit_And(self, node):
 		flattenedTuples = []
@@ -41,7 +44,10 @@ class P1ASTFlattener(P0ASTFlattener):
 			flattenedTuples.append(self.visit(element))
 		tmpVar = self._makeTmpVar()
 		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], And([element for (element,stmt) in flattenedTuples]))
-		return (Name(tmpVar), [stmt for (element,stmt) in flattenedTuples] + [newAssign])
+		myStmtList = []
+		for (element,stmt) in flattenedTuples:
+			myStmtList += stmt
+		return (Name(tmpVar), myStmtList + [newAssign])
 
 	def visit_Not(self, node):
 		(expr, stmt_list) = self.visit(node.expr)
@@ -111,7 +117,7 @@ class P1ASTFlattener(P0ASTFlattener):
 		(expr_left, stmt_left) = self.visit(node.left)
 		(expr_right, stmt_right) = self.visit(node.right)
 		tmpVar = self._makeTmpVar()
-		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], IntegerAdd((expr_left, expr_right)))
+		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], BigAdd((expr_left, expr_right)))
 		return (Name(tmpVar), stmt_left + stmt_right + [newAssign])
 
 if __name__ == "__main__":

@@ -53,7 +53,7 @@ if __name__ == "__main__":
 	import InterferenceGraph
 	explicated_ast = P1Explicate().visit(compiler.parse(sys.argv[1]))
 	flattened_ast = P1ASTFlattener().visit(explicated_ast)
-	ir =  Myx86Selector(flattened_ast).getIR()
+	ir =  Myx86Selector().generate_x86_code(flattened_ast)
 	graph = InterferenceGraph.InterferenceGraph(ir)
 	graph.allocateRegisters()
 	color_ir = graph.getIR()

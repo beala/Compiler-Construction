@@ -8,21 +8,27 @@ class InterferenceGraph(object):
 	__listColors = {1:'eax',2:'ebx',3:'ecx',4:'edx'}
 	__stackOffset = 4
 	def __init__(self,IR):
-		self.__initGraph(IR)
-
-	def __initGraph(self, IR):	
-		self.__ir = IR
 		self.__theGraph = {}
-		for node2 in self.__ir:
-			for node in node2.operandList: 
-				if isinstance(node,VarNode) and not self.__theGraph.has_key(node):
-					self.__theGraph[node] = set()
+		self.__initGraph(IR)
+		self.__ir = IR
+	def __initGraph(self, IR):	
+		for instruction in IR:
+			if isinstance(instruction, Ifx86):
+				for number in range(3):
+					self.__initGraph(instruction.operandList[number])
+			for operand in instruction.operandList: 
+				if isinstance(operand,VarNode) and not self.__theGraph.has_key(operand):
+					self.__theGraph[operand] = set()
 		for reg in self.__registers:
 			self.__theGraph[reg] = set()
 
 	def insertConnection(self,node1,node2):
 		if not ((isinstance(node1,VarNode) or isinstance(node1,Register)) and (isinstance(node2,VarNode) or isinstance(node2,Register))):
 			return
+		#if not node1 in self.__theGraph:
+		#	self.__theGraph[node1] = set()
+		#if not node2 in self.__theGraph:
+		#	self.__theGraph[node2] = set()
 		self.__theGraph[node1] = self.__theGraph[node1] | set([node2])
 		self.__theGraph[node2] = self.__theGraph[node2] | set([node1])
 	def getIR(self):
@@ -36,9 +42,9 @@ class InterferenceGraph(object):
 		for node in reversed(self.__ir):
 			node.liveSetAfter = lAfter
 			lAfter=node.liveSetBefore
-	def drawEdges(self):
+	def drawEdges(self, myIR):
 		self.__copylBeforeTolAfter()
-		for node in self.__ir:
+		for node in myIR:
 			if isinstance(node, Movl) and node.operandList[1] in node.liveSetAfter:
 				for iterlAfter in node.liveSetAfter:
 					if not (iterlAfter == node.operandList[1] or iterlAfter == node.operandList[0]):
@@ -55,6 +61,8 @@ class InterferenceGraph(object):
 						self.insertConnection(iterlAfter, iterReg)
 			elif isinstance(node, Ifx86):
 				writtenToSet = self.__getWrittenTo(node)
+				for number in range(3):
+					self.drawEdges(node.operandList[number])
 				for iterlAfter in node.liveSetAfter:
 					for writtenToElement in writtenToSet:
 						self.insertConnection(iterlAfter, writtenToElement)
@@ -137,6 +145,8 @@ class InterferenceGraph(object):
 				return False
 			for operand in instruction.operandList:
 				if  isinstance(operand,VarNode) and isinstance(operand.color,int):
+					if self.__listColors.get(operand.color) == None:
+						import pdb; pdb.set_trace()
 					if (operand.color <= 4):
 						operand.color = "%"+str(self.__listColors.get(operand.color))
 					else:
@@ -173,7 +183,7 @@ class InterferenceGraph(object):
 			self.__resetColors()
 			self.__resetColorList()
 			self.__calculateLiveSets()
-			self.drawEdges()
+			self.drawEdges(self.__ir)
 			self.doColor()
 			__spilled = self.__spillAnalysis()
 			if not __spilled:

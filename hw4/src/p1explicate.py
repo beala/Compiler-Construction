@@ -45,7 +45,7 @@ class P1Explicate(ASTVisitor):
 		return node
 	
 	def visit_Const(self, node):
-		return node
+		return InjectFrom(self._typeMap['int'], node)
 
 	def visit_Assign(self, node):
 		lExpr = self.visit(node.nodes[0])

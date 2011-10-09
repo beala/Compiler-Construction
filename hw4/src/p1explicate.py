@@ -92,10 +92,10 @@ class P1Explicate(ASTVisitor):
 	
 	def visit_Or(self, node):
 		lExpr = self.visit(node.nodes[0])
-		rExpr = self.visit(node.nodes[1])
+		#		rExpr = self.visit(node.nodes[1])
 		tmpVarLeft = Name(self._makeTmpVar())
-		tmpVarRight = Name(self._makeTmpVar())
-		return Let(tmpVarLeft, lExpr, Let( tmpVarRight, rExpr, IfExp( ProjectTo(GetTag(tmpVarLeft),tmpVarLeft), tmpVarLeft, tmpVarRight)))
+		#		tmpVarRight = Name(self._makeTmpVar())
+		return Let(tmpVarLeft, lExpr, IfExp(tmpVarLeft, tmpVarLeft, self.visit(node.nodes[1])))
 		
 		#return Let(tmpVarLeft, lExpr, Let(tmp:VarRight, rExpr, \
 		#			IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'])]), IfExp( ProjectTo(self._typeMap['int'],tmpVarLeft), tmpVarLeft, tmpVarRight),	\
@@ -111,10 +111,10 @@ class P1Explicate(ASTVisitor):
 
 	def visit_And(self, node):
 		lExpr = self.visit(node.nodes[0])
-		rExpr = self.visit(node.nodes[1])
+		#rExpr = self.visit(node.nodes[1])
 		tmpVarLeft = Name(self._makeTmpVar())
-		tmpVarRight = Name(self._makeTmpVar())
-		return Let(tmpVarLeft, lExpr, Let( tmpVarRight, rExpr, IfExp( ProjectTo(GetTag(tmpVarLeft),tmpVarLeft), tmpVarRight, tmpVarLeft)))
+		#tmpVarRight = Name(self._makeTmpVar())
+		return Let(tmpVarLeft, lExpr, IfExp( ProjectTo(GetTag(tmpVarLeft),tmpVarLeft), node.nodes[1], tmpVarLeft))
 		#return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, \
         #            IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'])]), IfExp( ProjectTo(self._typeMap['int'],tmpVarLeft), tmpVarRight, tmpVarLeft),  \
         #            IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']),self._compareEqType(tmpVarRight,self._typeMap['bool'])] ), IfExp( ProjectTo(self._typeMap['int'],tmpVarLeft), tmpVarRight, tmpVarLeft), \

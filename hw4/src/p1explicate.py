@@ -114,7 +114,7 @@ class P1Explicate(ASTVisitor):
 		#rExpr = self.visit(node.nodes[1])
 		tmpVarLeft = Name(self._makeTmpVar())
 		#tmpVarRight = Name(self._makeTmpVar())
-		return Let(tmpVarLeft, lExpr, IfExp( ProjectTo(GetTag(tmpVarLeft),tmpVarLeft), node.nodes[1], tmpVarLeft))
+		return Let(tmpVarLeft, lExpr, IfExp( tmpVarLeft, self.visit(node.nodes[1]), tmpVarLeft))
 		#return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, \
         #            IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'])]), IfExp( ProjectTo(self._typeMap['int'],tmpVarLeft), tmpVarRight, tmpVarLeft),  \
         #            IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']),self._compareEqType(tmpVarRight,self._typeMap['bool'])] ), IfExp( ProjectTo(self._typeMap['int'],tmpVarLeft), tmpVarRight, tmpVarLeft), \

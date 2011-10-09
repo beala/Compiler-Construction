@@ -56,11 +56,17 @@ class P1ASTFlattener(P0ASTFlattener):
 		return(Name(tmpVar), stmt_list + [newAssign])
 
 	def visit_Subscript(self, node):
+		myCurrentTemp = self._getCurrentTmpVar()
 		(flat_expr, stmt_list_expr) = self.visit(node.expr)
 		(flat_subs, stmt_list_subs) = self.visit(node.subs[0])
 		tmpVar = self._makeTmpVar()
-		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], Subscript(flat_expr, node.flags, [flat_subs]))
-		return(Name(tmpVar), stmt_list_expr + stmt_list_subs + [newAssign])
+		if node.flags == 'OP_APPLY':
+			newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], Subscript(flat_expr, 'OP_APPLY', [flat_subs]))
+			return (Name(tmpVar), stmt_list_expr + stmt_list_subs + [newAssign1])
+		else:
+			newAssign1 = Assign([Subscript(flat_expr, 'OP_ASSIGN', [flat_subs])], Name(myCurrentTemp))
+			newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], Subscript(flat_expr, 'OP_APPLY', [flat_subs]))
+			return (Name(tmpVar), stmt_list_expr + stmt_list_subs + [newAssign1] + [newAssign])
 
 	def visit_List(self,node):
 		tupleList = []
@@ -125,10 +131,8 @@ class P1ASTFlattener(P0ASTFlattener):
 		for node in stmt_ast.nodes:
 			if isinstance(node, If):
 				print '\t' * tabcount + 'If: ' + str(node.tests[0][0]) + ' then:'
-				#print '\t' * (tabcount + 1) +  str(self.print_ast(node.tests[0][1], tabcount+1))
 				self.print_ast(node.tests[0][1], tabcount+1)
 				print '\t' * (tabcount) + 'Else: '
-				#print '\t' * (tabcount + 1) + str(self.print_ast(node.else_, tabcount + 1))
 				self.print_ast(node.else_, tabcount+1)
 				print '\t' * (tabcount) + 'End If'
 			else:
@@ -138,7 +142,12 @@ if __name__ == "__main__":
 	import sys
 	import compiler
 	print '-' * 10 + 'Parsed AST' + '-' * 10
-	print str(compiler.parse(sys.argv[1])) + '\n'
-	flat_ast = P1ASTFlattener().visit(P1Explicate().visit(compiler.parse(sys.argv[1])))
+	import os
+	if os.path.isfile(sys.argv[1]):
+		print str(compiler.parseFile(sys.argv[1])) + '\n'
+		flat_ast = P1ASTFlattener().visit(P1Explicate().visit(compiler.parseFile(sys.argv[1])))
+	else:
+		print str(compiler.parse(sys.argv[1])) + '\n'
+		flat_ast = P1ASTFlattener().visit(P1Explicate().visit(compiler.parse(sys.argv[1])))
 	print '-' * 10 + 'Flat AST' + '-' * 10
 	P1ASTFlattener().print_ast(flat_ast.node, 0)	

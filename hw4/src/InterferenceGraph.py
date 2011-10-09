@@ -16,6 +16,7 @@ class InterferenceGraph(object):
 			if isinstance(instruction, Ifx86):
 				for number in range(3):
 					self.__initGraph(instruction.operandList[number])
+				continue
 			for operand in instruction.operandList: 
 				if isinstance(operand,VarNode) and not self.__theGraph.has_key(operand):
 					self.__theGraph[operand] = set()
@@ -25,10 +26,10 @@ class InterferenceGraph(object):
 	def insertConnection(self,node1,node2):
 		if not ((isinstance(node1,VarNode) or isinstance(node1,Register)) and (isinstance(node2,VarNode) or isinstance(node2,Register))):
 			return
-		#if not node1 in self.__theGraph:
-		#	self.__theGraph[node1] = set()
-		#if not node2 in self.__theGraph:
-		#	self.__theGraph[node2] = set()
+		if isinstance(node1, Register) and node1 not in self.__registers:
+			return
+		elif isinstance(node2, Register) and node2 not in self.__registers:
+			return
 		self.__theGraph[node1] = self.__theGraph[node1] | set([node2])
 		self.__theGraph[node2] = self.__theGraph[node2] | set([node1])
 	def getIR(self):
@@ -162,20 +163,40 @@ class InterferenceGraph(object):
  		previousLiveSet = set()
  		for instruction in reversed(self.__ir):
  			previousLiveSet = instruction.doCalculateLiveSet(previousLiveSet)
-	def __spillAnalysis(self):
-		spillFlag = False
-		for instruction in self.__ir:
+	def __spillAnalysis(self, ir, alreadySpilled = False):
+		spillFlag = alreadySpilled
+		for instruction in ir:
+			if isinstance(instruction, Ifx86):
+				#Recurse into the test, then, and else branches
+			#	if (spillFlag):
+			#		import pdb; pdb.set_trace()
+				(spillFlag, test_ir) = self.__spillAnalysis(instruction.operandList[0], spillFlag)
+				instruction.operandList[0] = test_ir
+				
+				(spillFlag,then_ir) = self.__spillAnalysis(instruction.operandList[1], spillFlag)
+				instruction.operandList[1] = then_ir
+				
+				(spillFlag, else_ir) = self.__spillAnalysis(instruction.operandList[2], spillFlag)
+				instruction.operandList[2] = else_ir
+				#Continue to next instruction
+				continue
 			if instruction.numOperands == 2 and isinstance(instruction.operandList[0],VarNode) and isinstance(instruction.operandList[1],VarNode):
 				if instruction.operandList[0].color > 4 and instruction.operandList[1].color > 4:
+					#deal with redundant instruction (colors are same)
+					if instruction.operandList[0].color == instruction.operandList[1].color:
+						ir.remove(instruction)
+						continue
 					#insert spill code
 					if isinstance(instruction, Movl):
 						secondArg = instruction.operandList[1]
 						instruction.operandList[1] = VarNode("{__spillSaver")
 						instruction.operandList[1].spillable = False
 						newInstruction = Movl(instruction.operandList[1],secondArg)
-						self.__ir.insert(self.__ir.index(instruction)+1,newInstruction)
-					spillFlag =  True
-		return spillFlag
+						ir.insert(ir.index(instruction)+1,newInstruction)
+						spillFlag =  True
+		#End For
+		return (spillFlag, ir)
+	
 	def allocateRegisters(self):
 		__spilled = 0
 		while True:
@@ -185,7 +206,8 @@ class InterferenceGraph(object):
 			self.__calculateLiveSets()
 			self.drawEdges(self.__ir)
 			self.doColor()
-			__spilled = self.__spillAnalysis()
-			if not __spilled:
+			(_spilled, self.__ir) = self.__spillAnalysis(self.__ir)
+			if not _spilled:
 				break
-	
+			else:
+				self.__theGraph = {}	

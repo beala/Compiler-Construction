@@ -156,7 +156,7 @@ class P1Explicate(ASTVisitor):
 		tmpMyTest = Name(self._makeTmpVar())
 		#tmpMyThen = Name(self._makeTmpVar())
 		#tmpMyElse_ = Name(self._makeTmpVar())
-		return Let( tmpMyTest, myTest, IfExp(ProjectTo(GetTag(tmpMyTest),tmpMyTest), myThen, myElse_))
+		return Let( tmpMyTest, myTest, IfExp(tmpMyTest, myThen, myElse_))
 		#return Let( tmpMyTest, myTest, Let(tmpMyThen, myThen, Let( tmpMyElse_, myElse_, IfExp(ProjectTo(GetTag(tmpMyTest),tmpMyTest), tmpMyThen, tmpMyElse_))))
 
 	def visit_CallFunc(self, node):

@@ -81,9 +81,11 @@ class Myx86Selector:
 			return myIRList
 		elif isinstance(ast, If):
 			x86Test = self.generate_x86_code(ast.tests[0][0])
+			resultTmpVar = self.getTmpVar()
 			x86Then = self.generate_x86_code(ast.tests[0][1])
 			x86Else = self.generate_x86_code(ast.else_)
-			myIRList.append(x86.Ifx86(x86Test,x86Then,x86Else))
+			compareInstruct = [x86.Pushl(resultTmpVar), x86.Call('is_true'), x86.Addl(x86.ConstNode(4), x86.Register('esp')), x86.Cmpl(x86.ConstNode(1),x86.Register('eax'))]
+			myIRList.append(x86.Ifx86(x86Test + compareInstruct,x86Then,x86Else))
 			return myIRList
 		elif isinstance(ast, Compare):
 			myIRList += self.generate_x86_code(ast.expr)
@@ -134,10 +136,10 @@ class Myx86Selector:
 		elif isinstance(ast, ProjectTo):
 			myIRList += self.generate_x86_code(ast.arg)
 			argExpr = self.getTmpVar()
+			myIRList.append(x86.Pushl(argExpr))
 			myIRList += self.generate_x86_code(ast.typ)
 			typExpr = self.getTmpVar()	
 			resultVar = self.makeTmpVar()
-			myIRList.append(x86.Pushl(argExpr))
 			if (isinstance(typExpr,Const) and typExpr.value == 0):
 				myIRList.append(x86.Call('project_int'))
 			elif (isinstance(typExpr,Const) and typExpr.value == 1):
@@ -155,10 +157,10 @@ class Myx86Selector:
 		elif isinstance(ast, InjectFrom):
 			myIRList += self.generate_x86_code(ast.arg)
 			argExpr = self.getTmpVar()
+			myIRList.append(x86.Pushl(argExpr))
 			myIRList += self.generate_x86_code(ast.typ)
 			typExpr = self.getTmpVar()
 			resultVar = self.makeTmpVar()
-			myIRList.append(x86.Pushl(argExpr))
 			if (isinstance(typExpr,Const) and typExpr.value == 0):
 				myIRList.append(x86.Call('inject_int'))
 			elif (isinstance(typExpr,Const) and typExpr.value == 1):
@@ -176,7 +178,7 @@ class Myx86Selector:
 		elif isinstance(ast, Subscript):
 			if ast.flags == 'OP_ASSIGN':
 				toStore = self.getTmpVar()
-
+				myIRList.append(x86.Pushl(toStore))
 			myIRList += self.generate_x86_code(ast.expr)
 			argExpr = self.getTmpVar()
 			myIRList += self.generate_x86_code(ast.subs[0])
@@ -188,14 +190,14 @@ class Myx86Selector:
 				myIRList.append(x86.Pushl(subExpr))
 				myIRList.append(x86.Pushl(argExpr))
 				myIRList.append(x86.Call('get_subscript'))
-				myIRList.append(x87.Addl(x86.ConstNode(8), x86.Register('esp')))
+				myIRList.append(x86.Addl(x86.ConstNode(8), x86.Register('esp')))
 			elif ast.flags == 'OP_ASSIGN':
 				#Call set sub
-				myIRList.append(x86.Pushl(toStore))
+				#myIRList.append(x86.Pushl(toStore))
 				myIRList.append(x86.Pushl(subExpr))
 				myIRList.append(x86.Pushl(argExpr))
 				myIRList.append(x86.Call('set_subscript'))
-				myIRList.append(x87.Addl(x86.ConstNode(12), x86.Register('esp')))
+				myIRList.append(x86.Addl(x86.ConstNode(12), x86.Register('esp')))
 			myIRList.append(x86.Movl(x86.Register('eax'), resultVar))
 			return myIRList
 		elif isinstance(ast, List):
@@ -203,6 +205,10 @@ class Myx86Selector:
 			myIRList.append(x86.Pushl(x86.ConstNode(len(ast.nodes) << 2)))
 			myIRList.append(x86.Call('create_list'))
 			newList = self.makeTmpVar()
+			myIRList.append(x86.Movl(x86.Register('eax'),newList))
+			myIRList.append(x86.Addl(x86.ConstNode(4),x86.Register('esp')))
+			myIRList.append(x86.Pushl(newList))
+			myIRList.append(x86.Call('inject_big'))
 			myIRList.append(x86.Movl(x86.Register('eax'),newList))
 			myIRList.append(x86.Addl(x86.ConstNode(4),x86.Register('esp')))
 			for element in ast.nodes:
@@ -280,15 +286,35 @@ class Myx86Selector:
 			return myIRList
 		elif isinstance(ast, Assign):
 			# Get the name of the variable being assigned to (l value)
-			var_name = ast.nodes[0].name
+			if isinstance(ast.nodes[0], AssName):
+				var_name = ast.nodes[0].name
 			
-			#emit our expression (RHS)
-			myIRList += self.generate_x86_code(ast.expr)
+				#emit our expression (RHS)
+				myIRList += self.generate_x86_code(ast.expr)
 					
-			#now, the result of that should be stored in %eax, so do the assignment
-			var_LHSnode = self._update_dict_vars(var_name)
-			#self.__generated_code += "movl %eax, -"+str(var_offset)+"(%ebp)\n"
-			myIRList.append(x86.Movl(self.getTmpVar(), var_LHSnode))
+				#now, the result of that should be stored in %eax, so do the assignment
+				var_LHSnode = self._update_dict_vars(var_name)
+				#self.__generated_code += "movl %eax, -"+str(var_offset)+"(%ebp)\n"
+				myIRList.append(x86.Movl(self.getTmpVar(), var_LHSnode))
+			elif isinstance(ast.nodes[0], Subscript):
+				#generate code for our RHS and get temp var
+				myIRList += self.generate_x86_code(ast.expr)
+				myTmpVar = self.getTmpVar()
+	
+				#generate code for our subscript and get temp var
+				myIRList += self.generate_x86_code(ast.nodes[0].subs[0])
+				mySubs = self.getTmpVar()
+				
+				#generate code for our element and get temp var
+				myIRList += self.generate_x86_code(ast.nodes[0].expr)
+				myExpr = self.getTmpVar()
+				#push RHS, subscript, element
+				myIRList.append(x86.Pushl(myTmpVar))
+				myIRList.append(x86.Pushl(mySubs))
+				myIRList.append(x86.Pushl(myExpr))
+				#call set_subscript
+				myIRList.append(x86.Call('set_subscript'))
+				myIRList.append(x86.Addl(x86.ConstNode(12),x86.Register('esp')))
 			return myIRList
 		elif isinstance(ast, Name):
 			# retrieve var from stack and place into %eax
@@ -302,7 +328,11 @@ class Myx86Selector:
 		self.__currentTmpVarPostfix = base64.b64encode(os.urandom(5))
 
 if __name__ == "__main__":
-	explicated_ast = P1Explicate().visit(compiler.parse(sys.argv[1]))
+	import os
+	if os.path.isfile(sys.argv[1]):
+		explicated_ast = P1Explicate().visit(compiler.parseFile(sys.argv[1]))
+	else:
+		explicated_ast = P1Explicate().visit(compiler.parse(sys.argv[1]))
 	flattened_ast = P1ASTFlattener().visit(explicated_ast)
 	ir_list = Myx86Selector().generate_x86_code(flattened_ast)
 	for element in ir_list:

@@ -53,9 +53,17 @@ class P0ASTFlattener(ASTVisitor):
 		return (statement_list + [Printnl([expr], None)])
 	
 	def visit_Assign(self,node):
-		(expr, statement_list) = self.visit(node.expr)
-		newName = self._renameVar(node.nodes[0].name)
-		return (statement_list + [Assign([AssName(newName, 'OP_ASSIGN')], expr)])
+		if isinstance(node.nodes[0], Subscript):
+			(expr, statement_list) = self.visit(node.expr)
+			(expr_nodes, statement_list_nodes) = self.visit(node.nodes[0])
+			return (statement_list + statement_list_nodes + [Assign([AssName(expr_nodes.name,'OP_ASSIGN')], expr)])
+		else:
+			(expr, statement_list) = self.visit(node.expr)
+			newName = self._renameVar(node.nodes[0].name)
+			return (statement_list + [Assign([AssName(newName, 'OP_ASSIGN')], expr)])
+
+		#newName = self._renameVar(node.nodes[0].name)
+		#return (statement_list + [Assign([AssName(newName, 'OP_ASSIGN')], expr)])
 	
 	def visit_Add(self, node):
 		(lExpr, lstatement_list) = self.visit(node.left)

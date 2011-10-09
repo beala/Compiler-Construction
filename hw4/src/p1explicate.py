@@ -77,10 +77,10 @@ class P1Explicate(ASTVisitor):
 
 	def visit_Compare(self, node):
 		lExpr = self.visit(node.expr)
-		rExpr = self.visit(node.ops[1])
+		rExpr = self.visit(node.ops[0][1])
 		tmpVarLeft = Name(self._makeTmpVar())
 		tmpVarRight = Name(self._makeTmpVar())
-		return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, Compare(ProjectTo(GetTag(tmpVarLeft),tmpVarLeft), [node.ops[0],ProjectTo(GetTag(tmpVarRight),tmpVarRight)])))
+		return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, Compare(ProjectTo(GetTag(tmpVarLeft),tmpVarLeft), [(node.ops[0][0],ProjectTo(GetTag(tmpVarRight),tmpVarRight))])))
 
 		#return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, \
 		#			IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'])]), InjectFrom(self._typeMap['bool'], Compare(ProjectTo(self._typeMap['int'],tmpVarLeft),[node.ops[0], ProjectTo(self._typeMap['int'],tmpVarRight)])),	\

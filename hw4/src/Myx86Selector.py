@@ -105,10 +105,10 @@ class Myx86Selector:
 			#myIRList.append(x86.Movl(x86.ConstNode(1), newVar))
 			#myIRList.append(x86.Label(myNewLabel))
 			
-			if ast.ops[0] == '==':
-				myIRList.append(x86.Ifx86([x86.Cmpl(expr,expr2)], [x86.Movl(x86.constNode(0), newVar)], [x86.Movl(x86.constNode(1), newVar)])) 
-			elif ast.ops[0] == '!=':
-				myIRList.append(x86.Ifx86([x86.Cmpl(expr,expr2)], [x86.Movl(x86.ConstNode(1), newVar)], [x86.Movl(x86.ConstNode(0), newVar)])) 			
+			if ast.ops[0][0] == '==':
+				myIRList.append(x86.Ifx86([x86.Cmpl(expr,expr2)], [x86.Movl(x86.ConstNode(5), newVar)], [x86.Movl(x86.ConstNode(1), newVar)])) 
+			elif ast.ops[0][0] == '!=':
+				myIRList.append(x86.Ifx86([x86.Cmpl(expr,expr2)], [x86.Movl(x86.ConstNode(1), newVar)], [x86.Movl(x86.ConstNode(5), newVar)])) 			
 			return myIRList
 
 		elif isinstance(ast, Or):

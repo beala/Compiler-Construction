@@ -62,7 +62,7 @@ class P1ASTFlattener(P0ASTFlattener):
 		tmpVar = self._makeTmpVar()
 		if node.flags == 'OP_APPLY':
 			newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], Subscript(flat_expr, 'OP_APPLY', [flat_subs]))
-			return (Name(tmpVar), stmt_list_expr + stmt_list_subs + [newAssign1])
+			return (Name(tmpVar), stmt_list_expr + stmt_list_subs + [newAssign])
 		else:
 			newAssign1 = Assign([Subscript(flat_expr, 'OP_ASSIGN', [flat_subs])], Name(myCurrentTemp))
 			newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], Subscript(flat_expr, 'OP_APPLY', [flat_subs]))

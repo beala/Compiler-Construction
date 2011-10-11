@@ -675,7 +675,7 @@ static pyobj subscript_assign(big_pyobj* c, pyobj key, pyobj val)
     return *dict_subscript(c->u.d, key) = val;
   default:
     printf("error in set subscript, not a list or dictionary\n");
-    assert(0);
+	assert(0);
   }
 }
 

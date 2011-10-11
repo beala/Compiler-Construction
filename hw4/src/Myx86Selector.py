@@ -230,8 +230,12 @@ class Myx86Selector:
 			return myIRList
 		elif isinstance(ast, Dict):
 			myIRList.append(x86.Call('create_dict'))
-			newDict = self.makeTmpVar()
-			myIRList.append(x86.Movl(x86.Register('eax'), newDict))
+			newPtrDict = self.makeTmpVar()
+			myIRList.append(x86.Movl(x86.Register('eax'), newPtrDict))
+			myIRList.append(x86.Pushl(newPtrDict))
+			myIRList.append(x86.Call('inject_big'))
+			newDictPyobj = self.makeTmpVar()
+			myIRList.append(x86.Movl(x86.Register('eax'), newDictPyobj))
 			for element in ast.items:
 				myIRList += self.generate_x86_code(element[0])
 				keyTmp = self.getTmpVar()
@@ -239,11 +243,11 @@ class Myx86Selector:
 				valTmp = self.getTmpVar()
 				myIRList.append(x86.Pushl(valTmp))
 				myIRList.append(x86.Pushl(keyTmp))
-				myIRList.append(x86.Pushl(newDict))
+				myIRList.append(x86.Pushl(newDictPyobj))
 				myIRList.append(x86.Call('set_subscript'))
 				myIRList.append(x86.Addl(x86.ConstNode(12), x86.Register('esp')))
 			newNewList = self.makeTmpVar()
-			myIRList.append(x86.Movl(newDict, newNewList))
+			myIRList.append(x86.Movl(newDictPyobj, newNewList))
 			return myIRList
 		elif isinstance(ast, GetTag):
 			myIRList += self.generate_x86_code(ast.arg)
@@ -331,7 +335,22 @@ class Myx86Selector:
 			print ast
 			raise Exception("Error: Unrecognized node/object type %s:" % ast.__class__.__name__)
 	def __init__(self):
-		self.__currentTmpVarPostfix = base64.b64encode(os.urandom(5))
+		#self.__currentTmpVarPostfix = base64.b64encode(os.urandom(5))
+		self.__currentTmpVarPostfix = ""
+	# Debug Functions: #############################################################################
+	def prettyPrint(self, ir_to_print, indents=0):
+		for instruction in ir_to_print:
+			if isinstance(instruction, x86.Ifx86):
+				print "\t" * indents + "If: " + str(instruction.operandList[0])
+				self.prettyPrint(instruction.operandList[1], indents+1)
+				print "\t" * indents + "Else:"
+				self.prettyPrint(instruction.operandList[2], indents+1)
+				print "\t" * indents + "EndIf"
+			else:
+				print "\t" * indents + str(instruction)
+
+
+
 
 if __name__ == "__main__":
 	import os
@@ -341,5 +360,5 @@ if __name__ == "__main__":
 		explicated_ast = P1Explicate().visit(compiler.parse(sys.argv[1]))
 	flattened_ast = P1ASTFlattener().visit(explicated_ast)
 	ir_list = Myx86Selector().generate_x86_code(flattened_ast)
-	for element in ir_list:
-		print element
+	print "-" * 20 + "Pretty Print" + "-" * 20
+	Myx86Selector().prettyPrint(ir_list)

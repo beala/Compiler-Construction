@@ -31,17 +31,17 @@ class VarNode(Node):
 		self.myName = myName
 	def __cmp__(self,other):
 		if (self.spillable == False and other.spillable == True):
-			return 1
+			return -1
 		elif (other.spillable == False and self.spillable == True):
-			return -1
+			return 1
 		elif (self.saturation > other.saturation):
-			return 1
+			return -1
 		elif (other.saturation > self.saturation):
-			return -1
-		elif (self.degree > other.degree):
 			return 1
-		elif (other.degree > self.degree):
+		elif (self.degree > other.degree):
 			return -1
+		elif (other.degree > self.degree):
+			return 1
 		else:
 			return 0
 	def equalColors(self,other):
@@ -101,7 +101,7 @@ class Ifx86(x86):
 			for instruction in self.operandList[number]:
 				liveSetAll = liveSetAll | instruction.doCalculateLiveSet(currentLiveSet)
 		
-		self.liveSetBefore = set(liveSetAll)
+		self.liveSetBefore = set(liveSetAll) | set(currentLiveSet)
 		return self.liveSetBefore
 	def __str__(self):
 		myString = ""

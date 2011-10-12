@@ -9,6 +9,7 @@ import x86
 import os
 from p1explicate import *
 from p1flattener import *
+import p1ast
 import base64
 
 class Myx86Selector:
@@ -104,7 +105,9 @@ class Myx86Selector:
 			#myIRList.append(x86.Jmp(myEndLabel))
 			#myIRList.append(x86.Movl(x86.ConstNode(1), newVar))
 			#myIRList.append(x86.Label(myNewLabel))
-			
+		
+			# ConstNode(5) == True with Bool tag applied ( 1 << 2 + 1 = 5)
+			# ConstNode(1) == False with Bool tag applied ( 0 << 2 + 1 = 1)
 			if ast.ops[0][0] == '==':
 				myIRList.append(x86.Ifx86([x86.Cmpl(expr,expr2)], [x86.Movl(x86.ConstNode(5), newVar)], [x86.Movl(x86.ConstNode(1), newVar)])) 
 			elif ast.ops[0][0] == '!=':
@@ -236,6 +239,7 @@ class Myx86Selector:
 			myIRList.append(x86.Call('inject_big'))
 			newDictPyobj = self.makeTmpVar()
 			myIRList.append(x86.Movl(x86.Register('eax'), newDictPyobj))
+			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			for element in ast.items:
 				myIRList += self.generate_x86_code(element[0])
 				keyTmp = self.getTmpVar()
@@ -263,18 +267,18 @@ class Myx86Selector:
 			# self.__generated_code += "movl $" + str(ast.value) + ", %eax\n"
 			myIRList.append(x86.Movl(x86.ConstNode(ast.value),self.makeTmpVar())) 
 			return myIRList
-		elif isinstance(ast, Add):
-			#process LHS, move to %edx
-			myIRList += self.generate_x86_code(ast.left)
-			expr1 = self.getTmpVar()
-			expr2 = self.makeTmpVar()
-			myIRList.append(x86.Movl(expr1,expr2))
-			#process RHS
-			myIRList += self.generate_x86_code(ast.right)
-			#add
-			myIRList.append(x86.Addl(self.getTmpVar(),expr2))
-			myIRList.append(x86.Movl(expr2,self.makeTmpVar()))
-			return myIRList
+		#elif isinstance(ast, Add):
+		#	#process LHS, move to %edx
+		#	myIRList += self.generate_x86_code(ast.left)
+		#	expr1 = self.getTmpVar()
+		#	expr2 = self.makeTmpVar()
+		#	myIRList.append(x86.Movl(expr1,expr2))
+		#	#process RHS
+		#	myIRList += self.generate_x86_code(ast.right)
+		#	#add
+		#	myIRList.append(x86.Addl(self.getTmpVar(),expr2))
+		#	myIRList.append(x86.Movl(expr2,self.makeTmpVar()))
+		#	return myIRList
 		elif isinstance(ast, UnarySub):
 			# negate value and leave in %eax
 			myIRList += self.generate_x86_code(ast.expr)
@@ -330,6 +334,36 @@ class Myx86Selector:
 			# retrieve var from stack and place into %eax
 			# NOTE: this will need to handle function names soon, so this will break in that case! ~ symbol table :S
 			myIRList.append(x86.Movl(self._update_dict_vars(ast.name),self.makeTmpVar()))
+			return myIRList
+		
+		elif isinstance(ast, p1ast.IntegerAdd):
+			lExpr_list = self.generate_x86_code(ast.left)
+			lExpr_var = self.getTmpVar()
+			rExpr_list = self.generate_x86_code(ast.right)
+			rExpr_var = self.getTmpVar()
+			
+			myIRList += lExpr_list + rExpr_list
+			myIRList.append(x86.Addl(lExpr_var, rExpr_var))
+			resultVar = self.makeTmpVar()
+			myIRList.append(x86.Movl(rExpr_var, resultVar))
+			return myIRList
+		
+		elif isinstance(ast, p1ast.BigAdd):
+			lExpr_list = self.generate_x86_code(ast.left)
+			lExpr_var = self.getTmpVar()
+			rExpr_list = self.generate_x86_code(ast.right)
+			rExpr_var = self.getTmpVar()
+			
+			myIRList += lExpr_list + rExpr_list
+			myIRList.append(x86.Pushl(rExpr_var))
+			myIRList.append(x86.Pushl(lExpr_var))
+			myIRList.append(x86.Call('add'))
+			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
+			myIRList.append(x86.Pushl(x86.Register('eax')))
+			myIRList.append(x86.Call('inject_big'))
+			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
+			big_result_pyobj = self.makeTmpVar()
+			myIRList.append(x86.Movl(x86.Register('eax'), big_result_pyobj))
 			return myIRList
 		else:
 			print ast

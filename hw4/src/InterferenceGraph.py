@@ -100,6 +100,7 @@ class InterferenceGraph(object):
 		myNewQueue = Queue.PriorityQueue()
 		while not oldQueue.empty():
 			myNewQueue.put(oldQueue.get())
+		#print "Q Length: " + str(myNewQueue.qsize())
 		return myNewQueue
 	def doCalculateAvailColors(self,node):
 		adjacentColors = set()
@@ -183,7 +184,7 @@ class InterferenceGraph(object):
 			if instruction.numOperands == 2 and isinstance(instruction.operandList[0],VarNode) and isinstance(instruction.operandList[1],VarNode):
 				if instruction.operandList[0].color > 4 and instruction.operandList[1].color > 4:
 					#deal with redundant instruction (colors are same)
-					if instruction.operandList[0].color == instruction.operandList[1].color:
+					if isinstance(instruction, Movl) and instruction.operandList[0].color == instruction.operandList[1].color:
 						ir.remove(instruction)
 						continue
 					#insert spill code
@@ -194,11 +195,15 @@ class InterferenceGraph(object):
 						newInstruction = Movl(instruction.operandList[1],secondArg)
 						ir.insert(ir.index(instruction)+1,newInstruction)
 						spillFlag =  True
+					if isinstance(instruction, Addl):
+						instruction.operandList[1].spillable = False
+						spillFlag = True
+					#TODO Add cmp spill code
 		#End For
 		return (spillFlag, ir)
 	
 	def allocateRegisters(self):
-		__spilled = 0
+		_spilled = False
 		while True:
 			self.__initGraph(self.__ir)
 			self.__resetColors()
@@ -210,4 +215,5 @@ class InterferenceGraph(object):
 			if not _spilled:
 				break
 			else:
+				#print "Spilled!"
 				self.__theGraph = {}	

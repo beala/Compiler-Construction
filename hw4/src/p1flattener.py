@@ -3,6 +3,11 @@ from compiler.ast import *
 from p1explicate import *
 
 class P1ASTFlattener(P0ASTFlattener):
+	def _renameVar(self, var_name):
+		if var_name == 'False' or var_name == 'True':
+			return var_name
+		return "_" + var_name
+	
 	def visit_Let(self, node):
 		(flatrhs, stmt_list) = self.visit(node.rhs)
 		newName = self._renameVar(node.var.name)

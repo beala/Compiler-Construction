@@ -238,9 +238,9 @@ class InterferenceGraph(object):
 			#print "-"*100
 			#Myx86Selector.Myx86Selector().prettyPrint(self.__ir)
 			(_spilled, self.__ir) = self.__spillAnalysis(self.__ir,False)
-			print "Spilled: " + str(_spilled)
+		#	print "Spilled: " + str(_spilled)
 			if not _spilled:
-				Myx86Selector.Myx86Selector().prettyPrint(self.__ir)
+			#	Myx86Selector.Myx86Selector().prettyPrint(self.__ir)
 				break
 			else:
 				#print "Spilled!"

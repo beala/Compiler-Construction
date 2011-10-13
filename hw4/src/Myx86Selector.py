@@ -331,9 +331,14 @@ class Myx86Selector:
 				myIRList.append(x86.Addl(x86.ConstNode(12),x86.Register('esp')))
 			return myIRList
 		elif isinstance(ast, Name):
-			# retrieve var from stack and place into %eax
-			# NOTE: this will need to handle function names soon, so this will break in that case! ~ symbol table :S
-			myIRList.append(x86.Movl(self._update_dict_vars(ast.name),self.makeTmpVar()))
+			if(ast.name == 'True'):
+				myIRList.append(x86.Movl(x86.ConstNode(5), self.makeTmpVar()))	
+			elif(ast.name == 'False'):
+				myIRList.append(x86.Movl(x86.ConstNode(1), self.makeTmpVar()))
+			else:
+				# retrieve var from stack and place into %eax
+				# NOTE: this will need to handle function names soon, so this will break in that case! ~ symbol table :S
+				myIRList.append(x86.Movl(self._update_dict_vars(ast.name),self.makeTmpVar()))
 			return myIRList
 		
 		elif isinstance(ast, p1ast.IntegerAdd):
@@ -359,9 +364,9 @@ class Myx86Selector:
 			myIRList.append(x86.Pushl(lExpr_var))
 			myIRList.append(x86.Call('add'))
 			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
-			myIRList.append(x86.Pushl(x86.Register('eax')))
-			myIRList.append(x86.Call('inject_big'))
-			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
+			#myIRList.append(x86.Pushl(x86.Register('eax')))
+			#myIRList.append(x86.Call('inject_big'))
+			#myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			big_result_pyobj = self.makeTmpVar()
 			myIRList.append(x86.Movl(x86.Register('eax'), big_result_pyobj))
 			return myIRList

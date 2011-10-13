@@ -6,6 +6,12 @@
 
 #include "runtime.h"
 
+void type_error(void) {
+	printf("Type error\n");
+	assert(0);
+}
+
+
 int min(int x, int y) { return y < x ? y : x; }
 
 /* Some forward declarations */

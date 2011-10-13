@@ -108,10 +108,17 @@ class Myx86Selector:
 		
 			# ConstNode(5) == True with Bool tag applied ( 1 << 2 + 1 = 5)
 			# ConstNode(1) == False with Bool tag applied ( 0 << 2 + 1 = 1)
-			if ast.ops[0][0] == '==':
+			if ast.ops[0][0] == 'is':
 				myIRList.append(x86.Ifx86([x86.Cmpl(expr,expr2)], [x86.Movl(x86.ConstNode(5), newVar)], [x86.Movl(x86.ConstNode(1), newVar)])) 
+				return myIRList
+		
+			myIRList.append(x86.Pushl(expr))
+			myIRList.append(x86.Pushl(expr2))
+			if ast.ops[0][0] == '==':
+				myIRList.append(x86.Call('equal'))
 			elif ast.ops[0][0] == '!=':
-				myIRList.append(x86.Ifx86([x86.Cmpl(expr,expr2)], [x86.Movl(x86.ConstNode(1), newVar)], [x86.Movl(x86.ConstNode(5), newVar)])) 			
+				myIRList.append(x86.Call('not_equal'))
+			myIRList.append(x86.Movl(x86.Register('eax'),newVar))
 			return myIRList
 
 		elif isinstance(ast, Or):

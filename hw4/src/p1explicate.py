@@ -22,7 +22,7 @@ class P1Explicate(ASTVisitor):
 		return "_" + var_name
 
 	def _compareEqType(self, lhs, rhs):
-		return Compare(GetTag(lhs), [('==', rhs)])
+		return IntegerCompare(GetTag(lhs), [('==', rhs)])
 
 	# Visitor Methods: ###########################################################################
 	def visit_Module(self, node):
@@ -84,8 +84,17 @@ class P1Explicate(ASTVisitor):
 		rExpr = self.visit(node.ops[0][1])
 		tmpVarLeft = Name(self._makeTmpVar())
 		tmpVarRight = Name(self._makeTmpVar())
-		return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, InjectFrom( self._typeMap['bool'], Compare(ProjectTo(GetTag(tmpVarLeft),tmpVarLeft), [(node.ops[0][0],ProjectTo(GetTag(tmpVarRight),tmpVarRight))]))))
+		if node.ops[0][0] == 'is':
+			return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, IntegerCompare(tmpVarLeft, [(node.ops[0][0],tmpVarRight)])))
+		elif node.ops[0][0] == '==' or node.ops[0][0] == '!=':
+			return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'] )]),IntegerCompare(tmpVarLeft, [(node.ops[0][0], tmpVarRight)]), \
+					IfExp (And( [self._compareEqType(tmpVarLeft, self._typeMap['bool']), self._compareEqType(tmpVarRight, self._typeMap['int'] )]),IntegerCompare(tmpVarLeft, [(node.ops[0][0], tmpVarRight)]), \
+					IfExp (And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['bool'] )]),IntegerCompare(tmpVarLeft,[(node.ops[0][0], tmpVarRight)]), \
+					IfExp (And( [self._compareEqType(tmpVarLeft, self._typeMap['big']), self._compareEqType(tmpVarRight, self._typeMap['big'] )]), BigCompare(tmpVarLeft,[(node.ops[0][0], tmpVarRight)]), CallFunc(Name('type_error'), [])))))))	
 
+		#return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, Compare(ProjectTo(GetTag(tmpVarLeft), tmpVarLeft), [(node.ops[0][0],ProjectTo(GetTag(tmpVarRight),tmpVarRight))])))
+		#return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, InjectFrom( self._typeMap['bool'], Compare(ProjectTo(GetTag(tmpVarLeft),tmpVarLeft), [(node.ops[0][0],ProjectTo(GetTag(tmpVarRight),tmpVarRight))]))))
+		
 		#return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, \
 		#			IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'])]), InjectFrom(self._typeMap['bool'], Compare(ProjectTo(self._typeMap['int'],tmpVarLeft),[node.ops[0], ProjectTo(self._typeMap['int'],tmpVarRight)])),	\
 		#			IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']),self._compareEqType(tmpVarRight,self._typeMap['bool'])] ), InjectFrom(self._typeMap['bool'], Compare(ProjectTo(self._typeMap['int'],tmpVarLeft), [node.ops[0],ProjectTo(self._typeMap['bool'],tmpVarRight)])), \

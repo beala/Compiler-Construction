@@ -267,18 +267,6 @@ class Myx86Selector:
 			# self.__generated_code += "movl $" + str(ast.value) + ", %eax\n"
 			myIRList.append(x86.Movl(x86.ConstNode(ast.value),self.makeTmpVar())) 
 			return myIRList
-		#elif isinstance(ast, Add):
-		#	#process LHS, move to %edx
-		#	myIRList += self.generate_x86_code(ast.left)
-		#	expr1 = self.getTmpVar()
-		#	expr2 = self.makeTmpVar()
-		#	myIRList.append(x86.Movl(expr1,expr2))
-		#	#process RHS
-		#	myIRList += self.generate_x86_code(ast.right)
-		#	#add
-		#	myIRList.append(x86.Addl(self.getTmpVar(),expr2))
-		#	myIRList.append(x86.Movl(expr2,self.makeTmpVar()))
-		#	return myIRList
 		elif isinstance(ast, UnarySub):
 			# negate value and leave in %eax
 			myIRList += self.generate_x86_code(ast.expr)
@@ -286,7 +274,7 @@ class Myx86Selector:
 			return myIRList
 		elif isinstance(ast, CallFunc):
 			# CallFunc always refers to an input() (in P0, at least).
-			myIRList.append(x86.Call('input'))
+			myIRList.append(x86.Call(ast.node.name))
 			myIRList.append(x86.Movl(x86.Register('eax'),self.makeTmpVar()))
 			return myIRList
 		elif isinstance(ast, Printnl):
@@ -364,9 +352,6 @@ class Myx86Selector:
 			myIRList.append(x86.Pushl(lExpr_var))
 			myIRList.append(x86.Call('add'))
 			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
-			#myIRList.append(x86.Pushl(x86.Register('eax')))
-			#myIRList.append(x86.Call('inject_big'))
-			#myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			big_result_pyobj = self.makeTmpVar()
 			myIRList.append(x86.Movl(x86.Register('eax'), big_result_pyobj))
 			return myIRList

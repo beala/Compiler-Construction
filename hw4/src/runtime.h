@@ -139,4 +139,6 @@ pyobj set_attr(pyobj obj, char* attr, pyobj val);
 
 pyobj error_pyobj(char* string);
 
+void type_error(void);
+
 #endif /* RUNTIME_H */

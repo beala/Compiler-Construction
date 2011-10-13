@@ -3,6 +3,8 @@ from compiler.ast import *
 from p1explicate import *
 
 class P1ASTFlattener(P0ASTFlattener):
+	
+	# Private Methods: ##################################################################
 	def _renameVar(self, var_name):
 		if var_name == 'False' or var_name == 'True':
 			return var_name

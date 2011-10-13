@@ -84,7 +84,7 @@ class P1Explicate(ASTVisitor):
 		rExpr = self.visit(node.ops[0][1])
 		tmpVarLeft = Name(self._makeTmpVar())
 		tmpVarRight = Name(self._makeTmpVar())
-		return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, Compare(ProjectTo(GetTag(tmpVarLeft),tmpVarLeft), [(node.ops[0][0],ProjectTo(GetTag(tmpVarRight),tmpVarRight))])))
+		return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, InjectFrom( self._typeMap['bool'], Compare(ProjectTo(GetTag(tmpVarLeft),tmpVarLeft), [(node.ops[0][0],ProjectTo(GetTag(tmpVarRight),tmpVarRight))]))))
 
 		#return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, \
 		#			IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'])]), InjectFrom(self._typeMap['bool'], Compare(ProjectTo(self._typeMap['int'],tmpVarLeft),[node.ops[0], ProjectTo(self._typeMap['int'],tmpVarRight)])),	\
@@ -134,9 +134,7 @@ class P1Explicate(ASTVisitor):
 	def visit_Not(self, node):
 		expr = self.visit(node.expr)
 		tmpVarLeft = Name(self._makeTmpVar())
-		falseNode = ProjectTo(self._typeMap['bool'],Const(0))
-		trueNode = ProjectTo(self._typeMap['bool'],Const(1))
-		return Let(tmpVarLeft, expr, IfExp( ProjectTo(GetTag(tmpVarLeft),tmpVarLeft), falseNode, trueNode))
+		return Let(tmpVarLeft, expr, IfExp( tmpVarLeft, Const(1), Const(5)))
 
 	def visit_List(self, node):
 		newList = List([])

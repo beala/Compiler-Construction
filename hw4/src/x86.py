@@ -27,6 +27,8 @@ class VarNode(Node):
 	adjacentNodes = set()
 	color = -1
 	myName = ""
+	def __repr__(self):
+		return str(self)
 	def __init__(self,myName):
 		self.myName = myName
 	def __cmp__(self,other):
@@ -95,13 +97,19 @@ class Ifx86(x86):
 		super(Ifx86, self).__init__()
 		self.instruction = "_IF"
 		self.operandList = [test, then, else_]
-	def doCalculateLiveSet(self, currentLiveSet):
+	def doCalculateLiveSet(self, previousLiveSet):
 		liveSetAll = set()
+		# Iterate through if, then, else.
 		for number in range(3):
-			for instruction in self.operandList[number]:
-				liveSetAll = liveSetAll | instruction.doCalculateLiveSet(currentLiveSet)
+			# Calculate the l_before of each.
+			# previousLiveSet = set()
+			for instruction in reversed(self.operandList[number]):
+				previousLiveSet = instruction.doCalculateLiveSet(previousLiveSet)
+			# Union it into the l_before of the if instruction
+			liveSetAll = liveSetAll | previousLiveSet
 		
-		self.liveSetBefore = set(liveSetAll) | set(currentLiveSet)
+		self.liveSetBefore = set(liveSetAll)
+		#import pdb; pdb.set_trace()
 		return self.liveSetBefore
 	def __str__(self):
 		myString = ""

@@ -87,6 +87,8 @@ class InterferenceGraph(object):
 				mySet.add(instruction.operandList[1])
 			elif isinstance(instruction, Negl):
 				mySet.add(instruction.operandList[0])
+			#elif isinstance(instruction, Popl):
+			#	mySet.add(instruction.operandList[0])
 			elif isinstance(instruction, Call):
 				for iterReg in self.__registers:
 					mySet.add(iterReg)
@@ -97,7 +99,7 @@ class InterferenceGraph(object):
 		myCopy = []
 		for element in irToReduce:
 			if isinstance(element,Movl) and isinstance(element.operandList[0],VarNode) and isinstance(element.operandList[1],VarNode):
-				if element.operandList[0] == element.operandList[1] or ( not ( element.operandList[0].color == -1 or element.operandList[1].color == -1) and (element.operandList[0].color == element.operandList[1].color)):
+				if element.operandList[0] == element.operandList[1]: #or ( not ( element.operandList[0].color == -1 or element.operandList[1].color == -1) and (element.operandList[0].color == element.operandList[1].color)):
 					#print str(element.operandList[0].color) + "," + str(element.operandList[1].color)
 					continue
 			if isinstance(element, Ifx86):
@@ -134,6 +136,7 @@ class InterferenceGraph(object):
 			if isinstance(node,VarNode):
 				nodesToColor.put(node)
 		print "Q Length: " + str(nodesToColor.qsize())
+	#	import pdb; pdb.set_trace()
 		while not nodesToColor.empty():
 			adjacentColors = set([])
 			node = nodesToColor.get()
@@ -197,21 +200,24 @@ class InterferenceGraph(object):
 			if instruction.numOperands == 2 and isinstance(instruction.operandList[0],VarNode) and isinstance(instruction.operandList[1],VarNode):
 				if instruction.operandList[0].color > 4 and instruction.operandList[1].color > 4:
 					#insert spill code
-					if isinstance(instruction, Movl):
-						secondArg = instruction.operandList[1]
-						instruction.operandList[1] = VarNode(self.makeTmpVar())
-						instruction.operandList[1].spillable = False
-						newInstruction = Movl(instruction.operandList[1],secondArg)
-						ir.insert(ir.index(instruction)+1,newInstruction)
-						spillFlag =  True
-					if isinstance(instruction, Addl) or isinstance(instruction, Cmpl):
+					#if isinstance(instruction, Movl):
+					#	secondArg = instruction.operandList[1]
+					#	instruction.operandList[1] = VarNode(self.makeTmpVar())
+					#	instruction.operandList[1].spillable = False
+					#	newInstruction = Movl(instruction.operandList[1],secondArg)
+					#	ir.insert(ir.index(instruction)+1,newInstruction)
+					#	spillFlag =  True
+					if isinstance(instruction, Movl) or isinstance(instruction, Addl) or isinstance(instruction, Cmpl):
+						if instruction.operandList[0].spillable == False or instruction.operandList[1].spillable == False:
+							#If one of the operands is already unspillable, don't make spill code for the spill code!
+							spillFlag = True
+							continue
 						firstArg = instruction.operandList[0]
 						instruction.operandList[0] = VarNode(self.makeTmpVar())
 						instruction.operandList[0].spillable = False
 						newInstruction = Movl(firstArg, instruction.operandList[0])
 						ir.insert(ir.index(instruction), newInstruction)
 						spillFlag = True
-					#TODO Add cmp spill code
 		#End For
 		return (spillFlag, ir)
 	
@@ -219,7 +225,8 @@ class InterferenceGraph(object):
 		_spilled = False
 		import Myx86Selector
 		while True:
-			self.__ir = self.__reduceDuplicateMoves(self.__ir)
+			#self.__ir = self.__reduceDuplicateMoves(self.__ir)
+			#print "-"*100
 			#Myx86Selector.Myx86Selector().prettyPrint(self.__ir)
 			self.__initGraph(self.__ir)
 			self.__resetColors()
@@ -228,10 +235,12 @@ class InterferenceGraph(object):
 			self.drawEdges(self.__ir)
 			self.doColor()
 			self.__ir = self.__reduceDuplicateMoves(self.__ir)
-			(_spilled, self.__ir) = self.__spillAnalysis(self.__ir)
-			Myx86Selector.Myx86Selector().prettyPrint(self.__ir)
-			#print "Spilled: " + str(_spilled)
+			#print "-"*100
+			#Myx86Selector.Myx86Selector().prettyPrint(self.__ir)
+			(_spilled, self.__ir) = self.__spillAnalysis(self.__ir,False)
+			print "Spilled: " + str(_spilled)
 			if not _spilled:
+				Myx86Selector.Myx86Selector().prettyPrint(self.__ir)
 				break
 			else:
 				#print "Spilled!"

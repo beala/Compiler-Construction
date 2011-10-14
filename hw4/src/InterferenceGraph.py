@@ -169,7 +169,6 @@ class InterferenceGraph(object):
 		for node in self.__theGraph:
 			if isinstance(node,VarNode):
 				nodesToColor.add_task(node.calculatePriority(),node)
-		print "Q Length: " + str(len(nodesToColor))
 		while not nodesToColor.empty():
 			adjacentColors = set([])
 			node = nodesToColor.pop_task()

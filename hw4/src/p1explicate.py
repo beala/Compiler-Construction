@@ -42,10 +42,15 @@ class P1Explicate(ASTVisitor):
 		return  Printnl([expr], None) 
 
 	def visit_Name(self, node):
+		# If name is on the LHS of an expr, the thing on the RHS should alreay have been
+		# injected.
+		# If name is on the RHS, then earlier in the program, it should have had an already 
+		# injected thing assigned to it (by step 1)
+		# Therefore, it's already been injected and doesn't need to be again.
 		return node
 	
 	def visit_Const(self, node):
-		return InjectFrom(self._typeMap['int'], node)
+		return InjectFrom(self._typeMap['int'], node) # Inject const because it is always a leave node. It can't already have been injected.
 
 	def visit_Assign(self, node):
 		lExpr = self.visit(node.nodes[0])
@@ -110,7 +115,7 @@ class P1Explicate(ASTVisitor):
 		#		rExpr = self.visit(node.nodes[1])
 		tmpVarLeft = Name(self._makeTmpVar())
 		#		tmpVarRight = Name(self._makeTmpVar())
-		return Let(tmpVarLeft, lExpr, IfExp(tmpVarLeft, tmpVarLeft, self.visit(node.nodes[1])))
+		return Let(tmpVarLeft, lExpr, IfExp( tmpVarLeft, tmpVarLeft, self.visit(node.nodes[1])))
 		
 		#return Let(tmpVarLeft, lExpr, Let(tmp:VarRight, rExpr, \
 		#			IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'])]), IfExp( ProjectTo(self._typeMap['int'],tmpVarLeft), tmpVarLeft, tmpVarRight),	\
@@ -129,7 +134,7 @@ class P1Explicate(ASTVisitor):
 		#rExpr = self.visit(node.nodes[1])
 		tmpVarLeft = Name(self._makeTmpVar())
 		#tmpVarRight = Name(self._makeTmpVar())
-		return Let(tmpVarLeft, lExpr, IfExp( InjectFrom( GetTag(tmpVarLeft), tmpVarLeft), self.visit(node.nodes[1]), tmpVarLeft))
+		return Let(tmpVarLeft, lExpr, IfExp( tmpVarLeft, self.visit(node.nodes[1]), tmpVarLeft))
 		#return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, \
         #            IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'])]), IfExp( ProjectTo(self._typeMap['int'],tmpVarLeft), tmpVarRight, tmpVarLeft),  \
         #            IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']),self._compareEqType(tmpVarRight,self._typeMap['bool'])] ), IfExp( ProjectTo(self._typeMap['int'],tmpVarLeft), tmpVarRight, tmpVarLeft), \
@@ -145,20 +150,21 @@ class P1Explicate(ASTVisitor):
 	def visit_Not(self, node):
 		expr = self.visit(node.expr)
 		tmpVarLeft = Name(self._makeTmpVar())
-		return Let(tmpVarLeft, expr, IfExp( InjectFrom( GetTag(tmpVarLeft), tmpVarLeft), Const(1), Const(5)))
+		return Let(tmpVarLeft, expr, InjectFrom( self._typeMap['bool'], IfExp( InjectFrom( GetTag(tmpVarLeft), tmpVarLeft), Const(0), Const(1))))
 
 	def visit_List(self, node):
 		newList = List([])
 		for element in node.nodes:
 			newList.nodes.append(self.visit(element))
-		return newList
+		return InjectFrom(self._typeMap['big'],newList)
 
 	def visit_Dict(self, node):
 		newDict = Dict([])
 		for element in node.items:
 			newDict.items.append( (self.visit(element[0]), self.visit(element[1]) ) )
-		return newDict
+		return InjectFrom(self._typeMap['big'],newDict)
 
+	# TODO: what sort of injection or projection needs to happen here?
 	def visit_Subscript(self, node):
 		return Subscript( self.visit(node.expr), node.flags, [self.visit(i) for i in node.subs] )
 
@@ -169,7 +175,7 @@ class P1Explicate(ASTVisitor):
 		tmpMyTest = Name(self._makeTmpVar())
 		#tmpMyThen = Name(self._makeTmpVar())
 		#tmpMyElse_ = Name(self._makeTmpVar())
-		return Let( tmpMyTest, myTest, IfExp(tmpMyTest, myThen, myElse_))
+		return Let( tmpMyTest, myTest, IfExp(InjectFrom( GetTag(tmpVarLeft), tmpVarLeft), myThen, myElse_))
 		#return Let( tmpMyTest, myTest, Let(tmpMyThen, myThen, Let( tmpMyElse_, myElse_, IfExp(ProjectTo(GetTag(tmpMyTest),tmpMyTest), tmpMyThen, tmpMyElse_))))
 
 	def visit_CallFunc(self, node):

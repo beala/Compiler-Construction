@@ -127,6 +127,35 @@ class InterferenceGraph(object):
 			myNeighbor.saturation = len(self.doCalculateAvailColors(myNeighbor))
 		node.saturation = len(self.doCalculateAvailColors(node))
 	def doColor(self):
+		#color caller-save register nodes - using a list/sort for optimization?
+		for reg in self.__registers:
+			reg.color = [ key for key,value in self.__listColors.items() if value == reg.myRegister ][0]
+		#create list of nodes, sort and iterate
+		nodesToColor = []
+		for node in self.__theGraph:
+			if isinstance(node,VarNode):
+				nodesToColor.append(node)
+		print "Q Length: " + str(len(nodesToColor))
+		nodesToColor.sort()
+		while len(nodesToColor) > 0:
+			adjacentColors = set([])
+			node = nodesToColor.pop()
+			#find lowest color not in adjacent nodes (create one if needed -- this would be a stack location)
+			availableColors = self.doCalculateAvailColors(node)
+			if len(availableColors) == 0:
+				#add stack slot (new color)
+				largest_key = len(self.__listColors) + 1  #actually, this is the new key
+				self.__listColors[largest_key] = self.__stackOffset
+				self.__stackOffset = self.__stackOffset + 4
+				node.color = largest_key
+			else:
+				sortedColorsList = [ color_key for color_key in availableColors ]
+				sortedColorsList.sort()
+				node.color = sortedColorsList[0]
+		
+			self.doUpdateAdjacentSaturation(node)
+			nodesToColor.sort()
+	def OLDdoColor(self):
 		#color caller-save register nodes (just in case)
 		for reg in self.__registers:
 			reg.color = [ key for key,value in self.__listColors.items() if value == reg.myRegister ][0]

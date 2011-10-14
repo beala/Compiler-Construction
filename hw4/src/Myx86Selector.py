@@ -240,7 +240,10 @@ class Myx86Selector:
 				myIRList.append(x86.Addl(x86.ConstNode(12),x86.Register('esp')))
 				currentElement += 1
 			newNewList = self.makeTmpVar()
-			myIRList.append(x86.Movl(newList,newNewList))
+			myIRList.append(x86.Pushl(newList))
+			myIRList.append(x86.Call('project_big'))
+			myIRList.append(x86.Movl(x86.Register('eax'),newNewList))
+			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			return myIRList
 		elif isinstance(ast, Dict):
 			myIRList.append(x86.Call('create_dict'))
@@ -262,7 +265,10 @@ class Myx86Selector:
 				myIRList.append(x86.Call('set_subscript'))
 				myIRList.append(x86.Addl(x86.ConstNode(12), x86.Register('esp')))
 			newNewList = self.makeTmpVar()
-			myIRList.append(x86.Movl(newDictPyobj, newNewList))
+			myIRList.append(x86.Pushl(newDictPyobj))
+			myIRList.append(x86.Call('project_big'))
+			myIRList.append(x86.Movl(x86.Register('eax'),newNewList))
+			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			return myIRList
 		elif isinstance(ast, GetTag):
 			myIRList += self.generate_x86_code(ast.arg)

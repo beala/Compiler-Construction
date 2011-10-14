@@ -109,8 +109,8 @@ class P1ASTFlattener(P0ASTFlattener):
 		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], Dict([ (flat_key[0], flat_value[0]) for (flat_key, flat_value) in tupleTupleList ]))
 		myFlatValueandKeyList = []
 		for (flat_key, flat_value) in tupleTupleList:
-			myFlatValueandKeyList += flat_key[1]
 			myFlatValueandKeyList += flat_value[1]
+			myFlatValueandKeyList += flat_key[1]
 		return (Name(tmpVar), myFlatValueandKeyList + [newAssign])
 
 	def visit_GetTag(self, node):

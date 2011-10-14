@@ -255,10 +255,10 @@ class Myx86Selector:
 			myIRList.append(x86.Movl(x86.Register('eax'), newDictPyobj))
 			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			for element in ast.items:
-				myIRList += self.generate_x86_code(element[0])
-				keyTmp = self.getTmpVar()
 				myIRList += self.generate_x86_code(element[1])
 				valTmp = self.getTmpVar()
+				myIRList += self.generate_x86_code(element[0])
+				keyTmp = self.getTmpVar()
 				myIRList.append(x86.Pushl(valTmp))
 				myIRList.append(x86.Pushl(keyTmp))
 				myIRList.append(x86.Pushl(newDictPyobj))

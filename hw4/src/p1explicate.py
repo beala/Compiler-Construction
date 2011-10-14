@@ -47,7 +47,10 @@ class P1Explicate(ASTVisitor):
 		# If name is on the RHS, then earlier in the program, it should have had an already 
 		# injected thing assigned to it (by step 1)
 		# Therefore, it's already been injected and doesn't need to be again.
-		return node
+		if (node.name=='True' or node.name=='False'):
+			return InjectFrom(self._typeMap['bool'], node)
+		else:
+			return node
 	
 	def visit_Const(self, node):
 		return InjectFrom(self._typeMap['int'], node) # Inject const because it is always a leave node. It can't already have been injected.
@@ -177,7 +180,7 @@ class P1Explicate(ASTVisitor):
 		tmpMyTest = Name(self._makeTmpVar())
 		#tmpMyThen = Name(self._makeTmpVar())
 		#tmpMyElse_ = Name(self._makeTmpVar())
-		return Let( tmpMyTest, myTest, IfExp(InjectFrom( GetTag(tmpVarLeft), tmpVarLeft), myThen, myElse_))
+		return Let( tmpMyTest, myTest, IfExp(tmpMyTest, myThen, myElse_))
 		#return Let( tmpMyTest, myTest, Let(tmpMyThen, myThen, Let( tmpMyElse_, myElse_, IfExp(ProjectTo(GetTag(tmpMyTest),tmpMyTest), tmpMyThen, tmpMyElse_))))
 
 	def visit_CallFunc(self, node):

@@ -1,6 +1,6 @@
 from x86 import * 
-import Queue
-
+#import Queue
+import heappriorityqueue
 class InterferenceGraph(object):
 	__theGraph = {} #`VarNode => set([adjacent VarNodes])
 	__ir = []
@@ -122,9 +122,12 @@ class InterferenceGraph(object):
 		for myNeighbor in self.__theGraph[node]:
 			adjacentColors = adjacentColors | set([myNeighbor.color])
 		return set(self.__listColors.keys()) - adjacentColors
-	def doUpdateAdjacentSaturation(self,node):
+	def doUpdateAdjacentSaturation(self,myHeap,node):
 		for myNeighbor in self.__theGraph[node]:
 			myNeighbor.saturation = len(self.doCalculateAvailColors(myNeighbor))
+			if isinstance(myNeighbor,VarNode) and myNeighbor.color == -1:
+				#update priorities of all nodes in our heapq that are uncolored
+				myHeap.add_task(myNeighbor.calculatePriority(),myNeighbor)
 		node.saturation = len(self.doCalculateAvailColors(node))
 	def NEWdoColor(self):
 		#color caller-save register nodes - using a list/sort for optimization?
@@ -160,14 +163,14 @@ class InterferenceGraph(object):
 		for reg in self.__registers:
 			reg.color = [ key for key,value in self.__listColors.items() if value == reg.myRegister ][0]
 		#create priority queue of nodes and iterate
-		nodesToColor = Queue.PriorityQueue()
+		nodesToColor = heappriorityqueue.HeapPriorityQueue()
 		for node in self.__theGraph:
 			if isinstance(node,VarNode):
-				nodesToColor.put(node)
+				nodesToColor.add_task(node.calculatePriority(),node)
 		#print "Q Length: " + str(nodesToColor.qsize())
 		while not nodesToColor.empty():
 			adjacentColors = set([])
-			node = nodesToColor.get()
+			node = nodesToColor.pop_task()
 			#find lowest color not in adjacent nodes (create one if needed -- this would be a stack location)
 			availableColors = self.doCalculateAvailColors(node)
 			
@@ -182,8 +185,8 @@ class InterferenceGraph(object):
 				sortedColorsList.sort()
 				node.color = sortedColorsList[0]
 	
-			self.doUpdateAdjacentSaturation(node)
-			nodesToColor = self.__rebuildPriorityQueue(nodesToColor)
+			self.doUpdateAdjacentSaturation(nodesToColor,node)
+			#nodesToColor = self.__rebuildPriorityQueue(nodesToColor)
 	def emitColoredIR(self):
 		myString = "\tpush %ebp\n\tmovl %esp,%ebp\n\tsubl $"+str(self.__stackOffset)+",%esp\n"
 		for instruction in self.__ir:

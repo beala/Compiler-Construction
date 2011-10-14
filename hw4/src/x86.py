@@ -61,6 +61,8 @@ class VarNode(Node):
 			return self.myName+"<uncolored>"
 	def addAdjacency(self,other):
 		self.adjacentNodes.append(other)
+	def calculatePriority(self):
+		return -1 * (self.saturation + 0 if self.spillable else 100)
 
 class x86(object):
 	numOperands = 0

@@ -42,12 +42,11 @@ class InterferenceGraph(object):
 		self.__ir = newIR
 	def insertNode(self, node):
 		self.__theGraph[node] = set()
-	def __copylBeforeTolAfter(self, myIR):
-		lAfter = set()
+	def __copylBeforeTolAfter(self, myIR, lAfter = set()):
 		for node in reversed(myIR):
 			if isinstance(node, Ifx86):
 				for number in range(3):
-					self.__copylBeforeTolAfter(node.operandList[number])
+					self.__copylBeforeTolAfter(node.operandList[number], lAfter)
 			node.liveSetAfter = lAfter
 			lAfter=node.liveSetBefore
 	def drawEdges(self, myIR):

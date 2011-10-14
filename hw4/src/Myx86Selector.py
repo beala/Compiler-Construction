@@ -337,9 +337,9 @@ class Myx86Selector:
 			return myIRList
 		elif isinstance(ast, Name):
 			if(ast.name == 'True'):
-				myIRList.append(x86.Movl(x86.ConstNode(5), self.makeTmpVar()))	
+				myIRList.append(x86.Movl(x86.ConstNode(1), self.makeTmpVar()))	
 			elif(ast.name == 'False'):
-				myIRList.append(x86.Movl(x86.ConstNode(1), self.makeTmpVar()))
+				myIRList.append(x86.Movl(x86.ConstNode(0), self.makeTmpVar()))
 			else:
 				# retrieve var from stack and place into %eax
 				# NOTE: this will need to handle function names soon, so this will break in that case! ~ symbol table :S

@@ -51,7 +51,7 @@ class InterferenceGraph(object):
 			node.liveSetAfter = lAfter
 			lAfter=node.liveSetBefore
 	def drawEdges(self, myIR):
-		self.__copylBeforeTolAfter(myIR)
+		#self.__copylBeforeTolAfter(myIR)
 		for node in myIR:
 			if isinstance(node, Movl) and node.operandList[1] in node.liveSetAfter:
 				for iterlAfter in node.liveSetAfter:
@@ -112,6 +112,8 @@ class InterferenceGraph(object):
 		for node in self.__theGraph.keys():
 			myString = myString + str(node) + "--> [" + ','.join([ str(node_connection) for node_connection in self.__theGraph[node] ]) + "]\n"
 		return myString
+	def getColorList(self):
+		return self.__listColors
 	def __rebuildPriorityQueue(self,oldQueue):
 		myNewQueue = Queue.PriorityQueue()
 		while not oldQueue.empty():
@@ -167,7 +169,7 @@ class InterferenceGraph(object):
 		for node in self.__theGraph:
 			if isinstance(node,VarNode):
 				nodesToColor.add_task(node.calculatePriority(),node)
-		#print "Q Length: " + str(nodesToColor.qsize())
+		print "Q Length: " + str(len(nodesToColor))
 		while not nodesToColor.empty():
 			adjacentColors = set([])
 			node = nodesToColor.pop_task()
@@ -207,10 +209,12 @@ class InterferenceGraph(object):
 			node.color=-1
 	def __resetColorList(self):
 		self.__listColors = {1:'eax',2:'ebx',3:'ecx',4:'edx'}
+		self.__stackOffset = 4
 	def __calculateLiveSets(self):
  		previousLiveSet = set()
  		for instruction in reversed(self.__ir):
  			previousLiveSet = instruction.doCalculateLiveSet(previousLiveSet)
+		self.__copylBeforeTolAfter(self.__ir)
 	def __spillAnalysis(self, ir, alreadySpilled = False):
 		spillFlag = alreadySpilled
 		for instruction in ir:
@@ -260,10 +264,10 @@ class InterferenceGraph(object):
 			#print "-"*100
 			#Myx86Selector.Myx86Selector().prettyPrint(self.__ir)
 			self.__initGraph(self.__ir)
-			self.__resetColors()
-			self.__resetColorList()
 			self.__calculateLiveSets()
 			self.drawEdges(self.__ir)
+			self.__resetColors()
+			self.__resetColorList()
 			self.doColor()
 			self.__ir = self.__reduceDuplicateMoves(self.__ir)
 			#print "-"*100
@@ -274,5 +278,4 @@ class InterferenceGraph(object):
 			#	Myx86Selector.Myx86Selector().prettyPrint(self.__ir)
 				break
 			else:
-				#print "Spilled!"
-				self.__theGraph = {}	
+				self.__theGraph = {}

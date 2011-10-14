@@ -32,24 +32,20 @@ class VarNode(Node):
 	def __init__(self,myName):
 		self.myName = myName
 	def __cmp__(self,other):
-		if other == '<removed-task>':
-			return 1
 		if (self.spillable == False and other.spillable == True):
-			return 1
+			return -1
 		elif (other.spillable == False and self.spillable == True):
-			return -1
+			return 1
 		elif (self.saturation > other.saturation):
-			return 1
+			return -1
 		elif (other.saturation > self.saturation):
-			return -1
-		elif (self.degree > other.degree):
 			return 1
-		elif (other.degree > self.degree):
+		elif (self.degree > other.degree):
 			return -1
+		elif (other.degree > self.degree):
+			return 1
 		else:
 			return 0
-	def calculatePriority(self):
-		return -1 * (self.saturation + 0 if self.spillable else 100)
 	def equalColors(self,other):
 		if not isinstance(other,VarNode):
 			return False
@@ -102,7 +98,7 @@ class Ifx86(x86):
 		self.instruction = "_IF"
 		self.operandList = [test, then, else_]
 	def doCalculateLiveSet(self, previousLiveSet):
-		liveSetAll = set() | previousLiveSet
+		liveSetAll = set()
 		# Iterate through if, then, else.
 		for number in range(3):
 			# Calculate the l_before of each.
@@ -113,6 +109,7 @@ class Ifx86(x86):
 			liveSetAll = liveSetAll | previousLiveSet
 		
 		self.liveSetBefore = set(liveSetAll)
+		#import pdb; pdb.set_trace()
 		return self.liveSetBefore
 	def __str__(self):
 		myString = ""

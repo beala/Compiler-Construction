@@ -126,7 +126,7 @@ class InterferenceGraph(object):
 		for myNeighbor in self.__theGraph[node]:
 			myNeighbor.saturation = len(self.doCalculateAvailColors(myNeighbor))
 		node.saturation = len(self.doCalculateAvailColors(node))
-	def doColor(self):
+	def NEWdoColor(self):
 		#color caller-save register nodes - using a list/sort for optimization?
 		for reg in self.__registers:
 			reg.color = [ key for key,value in self.__listColors.items() if value == reg.myRegister ][0]
@@ -135,7 +135,7 @@ class InterferenceGraph(object):
 		for node in self.__theGraph:
 			if isinstance(node,VarNode):
 				nodesToColor.append(node)
-		print "Q Length: " + str(len(nodesToColor))
+		#print "Q Length: " + str(len(nodesToColor))
 		nodesToColor.sort()
 		while len(nodesToColor) > 0:
 			adjacentColors = set([])
@@ -155,7 +155,7 @@ class InterferenceGraph(object):
 		
 			self.doUpdateAdjacentSaturation(node)
 			nodesToColor.sort()
-	def OLDdoColor(self):
+	def doColor(self):
 		#color caller-save register nodes (just in case)
 		for reg in self.__registers:
 			reg.color = [ key for key,value in self.__listColors.items() if value == reg.myRegister ][0]
@@ -164,7 +164,7 @@ class InterferenceGraph(object):
 		for node in self.__theGraph:
 			if isinstance(node,VarNode):
 				nodesToColor.put(node)
-		print "Q Length: " + str(nodesToColor.qsize())
+		#print "Q Length: " + str(nodesToColor.qsize())
 		while not nodesToColor.empty():
 			adjacentColors = set([])
 			node = nodesToColor.get()

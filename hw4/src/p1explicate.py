@@ -22,7 +22,7 @@ class P1Explicate(ASTVisitor):
 		return "_" + var_name
 
 	def _compareEqType(self, lhs, rhs):
-		return InjectFrom(self._typeMap['bool'], IntegerCompare(InjectFrom(self._typeMap['int'], GetTag(lhs)), [('==', rhs)]))
+		return InjectFrom(self._typeMap['bool'], IntegerCompare(InjectFrom(self._typeMap['int'], GetTag(lhs)), [('==', InjectFrom(self._typeMap['int'],rhs))]))
 
 	# Visitor Methods: ###########################################################################
 	def visit_Module(self, node):
@@ -150,12 +150,14 @@ class P1Explicate(ASTVisitor):
 	def visit_Not(self, node):
 		expr = self.visit(node.expr)
 		tmpVarLeft = Name(self._makeTmpVar())
-		return Let(tmpVarLeft, expr, InjectFrom( self._typeMap['bool'], IfExp( InjectFrom( GetTag(tmpVarLeft), tmpVarLeft), Const(0), Const(1))))
+		return Let(tmpVarLeft, expr, InjectFrom( self._typeMap['bool'], IfExp( tmpVarLeft, Const(0), Const(1))))
 
 	def visit_List(self, node):
 		newList = List([])
 		for element in node.nodes:
 			newList.nodes.append(self.visit(element))
+		#return newList
+		# TODO: Why does removing injectFrom make this work??
 		return InjectFrom(self._typeMap['big'],newList)
 
 	def visit_Dict(self, node):
@@ -179,7 +181,6 @@ class P1Explicate(ASTVisitor):
 		#return Let( tmpMyTest, myTest, Let(tmpMyThen, myThen, Let( tmpMyElse_, myElse_, IfExp(ProjectTo(GetTag(tmpMyTest),tmpMyTest), tmpMyThen, tmpMyElse_))))
 
 	def visit_CallFunc(self, node):
-		
 		return InjectFrom(self._typeMap['int'], node)
 
 if __name__ == '__main__':

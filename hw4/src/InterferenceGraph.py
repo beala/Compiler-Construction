@@ -1,6 +1,6 @@
 from x86 import * 
 import Queue
-
+from heappriorityqueue import *
 class InterferenceGraph(object):
 	__theGraph = {} #`VarNode => set([adjacent VarNodes])
 	__ir = []
@@ -118,28 +118,32 @@ class InterferenceGraph(object):
 			myNewQueue.put(oldQueue.get())
 		return myNewQueue
 	def doCalculateAvailColors(self,node):
-		adjacentColors = set()
+		adjacentColors = set([])
+		myListColorLength = len(self.__listColors)
 		for myNeighbor in self.__theGraph[node]:
 			adjacentColors = adjacentColors | set([myNeighbor.color])
+			if len(adjacentColors) >= myListColorLength:
+				return set([])
 		return set(self.__listColors.keys()) - adjacentColors
-	def doUpdateAdjacentSaturation(self,node):
+	def doUpdateAdjacentSaturation(self,myHeap,node):
 		for myNeighbor in self.__theGraph[node]:
 			myNeighbor.saturation = len(self.doCalculateAvailColors(myNeighbor))
+			if isinstance(myNeighbor, VarNode) and myNeighbor.color == -1:
+				myHeap.add_task(myNeighbor.calculatePriority(),myNeighbor)
 		node.saturation = len(self.doCalculateAvailColors(node))
 	def doColor(self):
 		#color caller-save register nodes - using a list/sort for optimization?
 		for reg in self.__registers:
 			reg.color = [ key for key,value in self.__listColors.items() if value == reg.myRegister ][0]
 		#create list of nodes, sort and iterate
-		nodesToColor = []
+		nodesToColor = HeapPriorityQueue()
 		for node in self.__theGraph:
 			if isinstance(node,VarNode):
-				nodesToColor.append(node)
+				nodesToColor.add_task(node.calculatePriority(),node)
 		print "Q Length: " + str(len(nodesToColor))
-		nodesToColor.sort()
-		while len(nodesToColor) > 0:
+		while not nodesToColor.empty():
 			adjacentColors = set([])
-			node = nodesToColor.pop()
+			node = nodesToColor.pop_task()
 			#find lowest color not in adjacent nodes (create one if needed -- this would be a stack location)
 			availableColors = self.doCalculateAvailColors(node)
 			if len(availableColors) == 0:
@@ -153,8 +157,7 @@ class InterferenceGraph(object):
 				sortedColorsList.sort()
 				node.color = sortedColorsList[0]
 		
-			self.doUpdateAdjacentSaturation(node)
-			nodesToColor.sort()
+			self.doUpdateAdjacentSaturation(nodesToColor,node)
 	def OLDdoColor(self):
 		#color caller-save register nodes (just in case)
 		for reg in self.__registers:
@@ -191,8 +194,8 @@ class InterferenceGraph(object):
 				return False
 			for operand in instruction.operandList:
 				if  isinstance(operand,VarNode) and isinstance(operand.color,int):
-					if self.__listColors.get(operand.color) == None:
-						import pdb; pdb.set_trace()
+					#if self.__listColors.get(operand.color) == None:
+						#import pdb; pdb.set_trace()
 					if (operand.color <= 4):
 						operand.color = "%"+str(self.__listColors.get(operand.color))
 					else:
@@ -261,6 +264,8 @@ class InterferenceGraph(object):
 			self.__resetColorList()
 			self.__calculateLiveSets()
 			self.drawEdges(self.__ir)
+			#print self.printGraph()
+			#return
 			self.doColor()
 			self.__ir = self.__reduceDuplicateMoves(self.__ir)
 			#print "-"*100

@@ -22,7 +22,7 @@ class P1Explicate(ASTVisitor):
 		return "_" + var_name
 
 	def _compareEqType(self, lhs, rhs):
-		return InjectFrom(self._typeMap['bool'], IntegerCompare(InjectFrom(self._typeMap['int'], GetTag(lhs)), [('==', rhs)]))
+		return IntegerCompare(GetTag(lhs), [('==', rhs)])
 
 	# Visitor Methods: ###########################################################################
 	def visit_Module(self, node):
@@ -90,14 +90,12 @@ class P1Explicate(ASTVisitor):
 		tmpVarLeft = Name(self._makeTmpVar())
 		tmpVarRight = Name(self._makeTmpVar())
 		if node.ops[0][0] == 'is':
-			return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, InjectFrom(self._typeMap['bool'], IsCompare(tmpVarLeft, [(node.ops[0][0], tmpVarRight)]))))
+			return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, IntegerCompare(tmpVarLeft, [(node.ops[0][0],tmpVarRight)])))
 		elif node.ops[0][0] == '==' or node.ops[0][0] == '!=':
-			return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, InjectFrom(self._typeMap['bool'],  
-					IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'] )]),IntegerCompare(ProjectTo(self._typeMap['int'],tmpVarLeft), [(node.ops[0][0], ProjectTo(self._typeMap['int'],tmpVarRight))]), \
-					IfExp (And( [self._compareEqType(tmpVarLeft, self._typeMap['bool']), self._compareEqType(tmpVarRight, self._typeMap['int'] )]),IntegerCompare(ProjectTo(self._typeMap['bool'],tmpVarLeft), [(node.ops[0][0], ProjectTo(self._typeMap['int'],tmpVarRight))]), \
-					IfExp (And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['bool'] )]),IntegerCompare(ProjectTo(self._typeMap['int'],tmpVarLeft),[(node.ops[0][0], ProjectTo(self._typeMap['bool'],tmpVarRight))]), \
-					IfExp (And( [self._compareEqType(tmpVarLeft, self._typeMap['big']), self._compareEqType(tmpVarRight, self._typeMap['big'] )]), BigCompare(ProjectTo(self._typeMap['big'],tmpVarLeft), [(node.ops[0][0], ProjectTo(self._typeMap['big'],tmpVarRight))]), \
-					Const(0) ))))))) #Comp between anything else is False	
+			return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'] )]),IntegerCompare(tmpVarLeft, [(node.ops[0][0], tmpVarRight)]), \
+					IfExp (And( [self._compareEqType(tmpVarLeft, self._typeMap['bool']), self._compareEqType(tmpVarRight, self._typeMap['int'] )]),IntegerCompare(tmpVarLeft, [(node.ops[0][0], tmpVarRight)]), \
+					IfExp (And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['bool'] )]),IntegerCompare(tmpVarLeft,[(node.ops[0][0], tmpVarRight)]), \
+					IfExp (And( [self._compareEqType(tmpVarLeft, self._typeMap['big']), self._compareEqType(tmpVarRight, self._typeMap['big'] )]), BigCompare(tmpVarLeft,[(node.ops[0][0], tmpVarRight)]), CallFunc(Name('type_error'), [])))))))	
 
 		#return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, Compare(ProjectTo(GetTag(tmpVarLeft), tmpVarLeft), [(node.ops[0][0],ProjectTo(GetTag(tmpVarRight),tmpVarRight))])))
 		#return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, InjectFrom( self._typeMap['bool'], Compare(ProjectTo(GetTag(tmpVarLeft),tmpVarLeft), [(node.ops[0][0],ProjectTo(GetTag(tmpVarRight),tmpVarRight))]))))
@@ -150,7 +148,11 @@ class P1Explicate(ASTVisitor):
 	def visit_Not(self, node):
 		expr = self.visit(node.expr)
 		tmpVarLeft = Name(self._makeTmpVar())
+<<<<<<< HEAD
 		return Let(tmpVarLeft, expr, InjectFrom( self._typeMap['bool'], IfExp( InjectFrom( GetTag(tmpVarLeft), tmpVarLeft), Const(0), Const(1))))
+=======
+		return Let(tmpVarLeft, expr, IfExp( tmpVarLeft, Const(1), Const(5)))
+>>>>>>> b44de55... About to modify all of the IfExp in explicate.
 
 	def visit_List(self, node):
 		newList = List([])

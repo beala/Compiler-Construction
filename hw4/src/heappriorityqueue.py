@@ -5,34 +5,35 @@ class HeapPriorityQueue(object):
 	entry_finder = {}
 	REMOVED = '<removed-task>'
 	counter = 0
-	def __init__(self, heapifyMe):
+	def __init__(self):
 		self.entry_finder = {}
-		self.pq = heapifyMe
-		heapify(self.pq)
-
-	def add_task(self,task):
+		self.pq = []
+		self.counter = len(self.pq)
+	def add_task(self,priority,task):
 		if task in self.entry_finder:
-			remove_task(task)
-		entry = task
+			self.remove_task(task)
+		entry = [priority, task]
 		self.entry_finder[task] = entry
 		heappush(self.pq,entry)
-		counter += 1
+		self.counter += 1
 
 	def remove_task(self,task):
 		entry = self.entry_finder.pop(task)
-		entry = REMOVED
-		counter -= 1
+		entry[1] = self.REMOVED
+		self.counter -= 1
 
 	def pop_task(self):
 		while self.pq:
-			task = heappop(self.pq)
-			if task is not REMOVED:
+			entry = heappop(self.pq)
+			task = entry[1]
+			if task != self.REMOVED:
 				del self.entry_finder[task]
+				self.counter -= 1
 				return task
 		raise KeyError('pop from an empty priority queue')
 
 	def __len__(self):
-		return counter
+		return self.counter
 	
 	def empty(self):
-		return not counter
+		return not self.counter

@@ -16,7 +16,6 @@ class Myx86Selector:
 	#class variables
 	__dict_vars = {} #dictionary (associative array) of variable names to memory locations relative to ebp
 	__currentTmpVar = 0
-	__currentTmpVarPostfix = ""
 	_currentLabelNum = 0
 	def emitSetVarNodeText(self,mySet):
 		myList = []
@@ -51,7 +50,7 @@ class Myx86Selector:
 		return self.__dict_vars.get(var_name)
 
 	def makeTmpVar(self):
-		new_tmp_name = "__tmpIR" + str(self.__currentTmpVar) + str(self.__currentTmpVarPostfix)
+		new_tmp_name = "__tmpIR" + str(self.__currentTmpVar)
 		self.__currentTmpNode = x86.VarNode( new_tmp_name )
 		self.__currentTmpVar = self.__currentTmpVar + 1
 		self._update_dict_vars_node(new_tmp_name, self.__currentTmpNode)
@@ -88,30 +87,42 @@ class Myx86Selector:
 			compareInstruct = [x86.Pushl(resultTmpVar), x86.Call('is_true'), x86.Cmpl(x86.ConstNode(1),x86.Register('eax'))]
 			myIRList.append(x86.Ifx86(x86Test + compareInstruct,[x86.Addl(x86.ConstNode(4), x86.Register('esp'))]+x86Then,x86Else))
 			return myIRList
-		elif isinstance(ast, Compare):
+		elif isinstance(ast, IsCompare):
 			myIRList += self.generate_x86_code(ast.expr)
 			expr = self.getTmpVar()
 			myIRList += self.generate_x86_code(ast.ops[0][1])
 			expr2 = self.getTmpVar()
-			#myIRList.append(x86.Cmpl(expr, expr2))
 			newVar = self.makeTmpVar()
-			#myNewLabel = self._makeLabel()
-			#myEndLabel = self._makeLabel()
-			#if ast.ops[0] == '==':
-			#	myIRList.append(x86.Je(myNewLabel))
-			#elif ast.ops[0] == '!=':
-			#	myIRList.append(x86.Jne(myNewLabel))
-			#myIRList.append(x86.Movl(x86.ConstNode(0), newVar))
-			#myIRList.append(x86.Jmp(myEndLabel))
-			#myIRList.append(x86.Movl(x86.ConstNode(1), newVar))
-			#myIRList.append(x86.Label(myNewLabel))
-		
 			# ConstNode(5) == True with Bool tag applied ( 1 << 2 + 1 = 5)
 			# ConstNode(1) == False with Bool tag applied ( 0 << 2 + 1 = 1)
+			myIRList.append(x86.Ifx86([x86.Cmpl(expr,expr2)], [x86.Movl(x86.ConstNode(1), newVar)], [x86.Movl(x86.ConstNode(0), newVar)])) 
+			return myIRList
+		
+		elif isinstance(ast, BigCompare):
+			myIRList += self.generate_x86_code(ast.expr) # The LHS of the compare
+			lhs_expr = self.getTmpVar()
+			myIRList += self.generate_x86_code(ast.ops[0][1]) # The RHS of the compare
+			rhs_expr = self.getTmpVar()
+			myIRList.append(x86.Pushl(lhs_expr))
+			myIRList.append(x86.Pushl(rhs_expr))
 			if ast.ops[0][0] == '==':
-				myIRList.append(x86.Ifx86([x86.Cmpl(expr,expr2)], [x86.Movl(x86.ConstNode(5), newVar)], [x86.Movl(x86.ConstNode(1), newVar)])) 
+				myIRList.append(x86.Call('equal'))
 			elif ast.ops[0][0] == '!=':
-				myIRList.append(x86.Ifx86([x86.Cmpl(expr,expr2)], [x86.Movl(x86.ConstNode(1), newVar)], [x86.Movl(x86.ConstNode(5), newVar)])) 			
+				myIRList.append(x86.Call('not_equal'))
+			newVar = self.makeTmpVar()
+			myIRList.append(x86.Movl(x86.Register('eax'),newVar))
+			return myIRList
+		
+		elif isinstance(ast, IntegerCompare):
+			myIRList += self.generate_x86_code(ast.expr) # The LHS of the compare
+			lhs_expr = self.getTmpVar()
+			myIRList += self.generate_x86_code(ast.ops[0][1]) # The RHS of the compare
+			rhs_expr = self.getTmpVar()
+			newVar = self.makeTmpVar()
+			if ast.ops[0][0] == '==':
+				myIRList.append(x86.Ifx86([x86.Cmpl(lhs_expr,rhs_expr)], [x86.Movl(x86.ConstNode(1), newVar)], [x86.Movl(x86.ConstNode(0), newVar)])) 
+			elif ast.ops[0][0] == '!=':
+				myIRList.append(x86.Ifx86([x86.Cmpl(lhs_expr,rhs_expr)], [x86.Movl(x86.ConstNode(0), newVar)], [x86.Movl(x86.ConstNode(1), newVar)])) 
 			return myIRList
 
 		elif isinstance(ast, Or):
@@ -229,7 +240,10 @@ class Myx86Selector:
 				myIRList.append(x86.Addl(x86.ConstNode(12),x86.Register('esp')))
 				currentElement += 1
 			newNewList = self.makeTmpVar()
-			myIRList.append(x86.Movl(newList,newNewList))
+			myIRList.append(x86.Pushl(newList))
+			myIRList.append(x86.Call('project_big'))
+			myIRList.append(x86.Movl(x86.Register('eax'),newNewList))
+			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			return myIRList
 		elif isinstance(ast, Dict):
 			myIRList.append(x86.Call('create_dict'))
@@ -251,7 +265,10 @@ class Myx86Selector:
 				myIRList.append(x86.Call('set_subscript'))
 				myIRList.append(x86.Addl(x86.ConstNode(12), x86.Register('esp')))
 			newNewList = self.makeTmpVar()
-			myIRList.append(x86.Movl(newDictPyobj, newNewList))
+			myIRList.append(x86.Pushl(newDictPyobj))
+			myIRList.append(x86.Call('project_big'))
+			myIRList.append(x86.Movl(x86.Register('eax'),newNewList))
+			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			return myIRList
 		elif isinstance(ast, GetTag):
 			myIRList += self.generate_x86_code(ast.arg)
@@ -359,8 +376,8 @@ class Myx86Selector:
 			print ast
 			raise Exception("Error: Unrecognized node/object type %s:" % ast.__class__.__name__)
 	def __init__(self):
-		#self.__currentTmpVarPostfix = base64.b64encode(os.urandom(5))
-		self.__currentTmpVarPostfix = ""
+		pass	
+
 	# Debug Functions: #############################################################################
 	def prettyPrint(self, ir_to_print, indents=0):
 		for instruction in ir_to_print:

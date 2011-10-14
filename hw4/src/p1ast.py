@@ -1,5 +1,17 @@
 from compiler.ast import *
 
+class BigCompare(Compare):
+	def __repr__(self):
+		return 'BigCompare(' + str(self.expr) + ", " + str(self.ops) + ")"
+
+class IntegerCompare(Compare):
+	def __repr__(self):
+		return 'IntegerCompare(' + str(self.expr) + ", " + str(self.ops) + ")"
+
+class IsCompare(Compare):
+	def __repr__(self):
+		return 'IsCompare(' + str(self.expr) + ', ' + str(self.ops) + ')'
+
 class GetTag(Node):
 	def __init__(self, arg):
 		self.arg = arg

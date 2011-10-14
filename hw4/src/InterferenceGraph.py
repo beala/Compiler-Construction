@@ -135,7 +135,7 @@ class InterferenceGraph(object):
 		for node in self.__theGraph:
 			if isinstance(node,VarNode):
 				nodesToColor.append(node)
-		print "Q Length: " + str(len(nodesToColor))
+		#print "Q Length: " + str(len(nodesToColor))
 		nodesToColor.sort()
 		while len(nodesToColor) > 0:
 			adjacentColors = set([])

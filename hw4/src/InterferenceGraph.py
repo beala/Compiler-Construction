@@ -1,6 +1,8 @@
 from x86 import * 
 #import Queue
 import heappriorityqueue
+from chaitincolorizer import *
+
 class InterferenceGraph(object):
 	__theGraph = {} #`VarNode => set([adjacent VarNodes])
 	__ir = []
@@ -266,7 +268,9 @@ class InterferenceGraph(object):
 			self.drawEdges(self.__ir)
 			self.__resetColors()
 			self.__resetColorList()
-			self.doColor()
+			#self.doColor()
+			self.__listColors = ChaitinColorizer(self.__theGraph).doColor()
+			#import pdb; pdb.set_trace()
 			self.__ir = self.__reduceDuplicateMoves(self.__ir)
 			#print "-"*100
 			#Myx86Selector.Myx86Selector().prettyPrint(self.__ir)

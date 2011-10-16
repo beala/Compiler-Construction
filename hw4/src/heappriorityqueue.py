@@ -10,6 +10,7 @@ class HeapPriorityQueue(object):
 	def __init__(self):
 		self.entry_finder = {}
 		self.pq = []
+		heapify(self.pq)
 		self.counter = len(self.pq)
 
 	def add_task(self,priority,task):
@@ -42,3 +43,11 @@ class HeapPriorityQueue(object):
 	
 	def empty(self):
 		return not self.counter
+	def __repr__(self):
+		#pretty print heap
+		retVal = ""
+		for element in self.pq:
+			priority, tb, removed, node = element
+			if removed != self.REMOVED:
+				retVal += "-->"+str(node)+" with priority of: "+str(priority)
+		return retVal

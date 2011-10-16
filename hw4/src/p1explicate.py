@@ -171,6 +171,10 @@ class P1Explicate(ASTVisitor):
 
 	# TODO: what sort of injection or projection needs to happen here?
 	def visit_Subscript(self, node):
+		#if node.flags=='OP_APPLY':
+	#		tmpSub = Name(self._makeTmpVar())
+	#		return Let(tmpSub, Subscript( self.visit(node.expr), node.flags, [self.visit(i) for i in node.subs] ), InjectFrom( GetTag(tmpSub), tmpSub))
+	#	else:
 		return Subscript( self.visit(node.expr), node.flags, [self.visit(i) for i in node.subs] )
 
 	def visit_IfExp(self, node):

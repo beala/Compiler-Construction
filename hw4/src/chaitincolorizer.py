@@ -9,6 +9,7 @@ class ChaitinColorizer(object):
 	stackOffset = 4
 	def __init__(self, graph, colors={1:'eax',2:'ebx',3:'ecx',4:'edx'}):
 		self.theGraph = graph
+		self.copyGraph = copy.copy(graph)
 		self.colorMap = colors
 		self.heapQueue = HeapPriorityQueue()
 		for node in self.theGraph:
@@ -36,13 +37,13 @@ class ChaitinColorizer(object):
 		#at this point, all nodes have been colored!
 		return self.colorMap
 	def doCalculateLowestAvailColor(self,node):
-		adjacentColors = []
+		adjacentColors = set([])
 		try:
-			for myNeighbor in self.theGraph[node]:
-				adjacentColors.append(myNeighbor.color)
-			return set(self.colorMap.keys()) - set(adjacentColors)
+			for myNeighbor in self.copyGraph[node]:
+				adjacentColors.add(myNeighbor.color)
+			#return set(self.colorMap.keys()) - adjacentColors
 			adjacentColors = set(adjacentColors)
-			for element in sorted(self.colorMap.keys):
+			for element in sorted(self.colorMap.keys()):
 				if element not in adjacentColors:
 					return element
 		except KeyError:

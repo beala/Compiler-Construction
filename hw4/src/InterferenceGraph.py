@@ -268,8 +268,8 @@ class InterferenceGraph(object):
 			self.drawEdges(self.__ir)
 			self.__resetColors()
 			self.__resetColorList()
-			#self.doColor()
-			self.__listColors = ChaitinColorizer(self.__theGraph).doColor()
+			self.doColor()
+			#self.__listColors = ChaitinColorizer(self.__theGraph).doColor()
 			#import pdb; pdb.set_trace()
 			self.__ir = self.__reduceDuplicateMoves(self.__ir)
 			#print "-"*100

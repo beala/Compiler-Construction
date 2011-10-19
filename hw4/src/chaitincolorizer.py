@@ -16,10 +16,7 @@ class ChaitinColorizer(object):
 		for node in self.theGraph.keys():
 			if not isinstance(node, VarNode) or node.color != -1:
 				continue
-			spillFactor = 0
-			if node.spillable == False:
-				spillFactor = -100
-			self.heapQueue.add_task(len(self.theGraph[node])+spillFactor,node)
+			self.heapQueue.add_task(len(self.theGraph[node]),node)
 	def doColor(self):
 		curNode = None
 		myColorStack = []

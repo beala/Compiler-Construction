@@ -23,7 +23,7 @@ class HeapPriorityQueue(object):
 		randomNonce = 0
 		if self.useRandomNonce:
 			randomNonce = random.randint(0,10)
-		entry = [priority, randomNonce, tb, "", task]
+		entry = [task.spillable, priority, randomNonce, tb, "", task]
 		self.entry_finder[task] = entry
 		heappush(self.pq,entry)
 		self.counter += 1

@@ -172,7 +172,7 @@ class InterferenceGraph(object):
 		for reg in self.__registers:
 			reg.color = [ key for key,value in self.__listColors.items() if value == reg.myRegister ][0]
 		#create priority queue of nodes and iterate
-		nodesToColor = heappriorityqueue.HeapPriorityQueue()
+		nodesToColor = heappriorityqueue.HeapPriorityQueue(True)
 		for node in self.__theGraph:
 			if isinstance(node,VarNode):
 				nodesToColor.add_task(node.calculatePriority(),node)
@@ -259,11 +259,18 @@ class InterferenceGraph(object):
 						newInstruction = Movl(firstArg, newTmpVar)
 						instruction.operandList[0] = newTmpVar
 						#update graph and livesets to incorporate newly added variable
-						self.insertConnection(firstArg,newTmpVar)
-						self.insertConnection(newTmpVar, instruction.operandList[1])
+						#for myNeighbor in firstArg.liveSetAfter:
+						#	self.insertConnection(myNeighbor,newTmpVar)
+						#self.insertConnection(firstArg,newTmpVar)
+						#self.insertConnection(newTmpVar, instruction.operandList[1])
+						#for myNeighbor in instruction.operandList[1].liveSetAfter:
+						#	self.insertConnection(myNeighbor,newTmpVar)
 						newInstruction.liveSetBefore = copy.copy(instruction.liveSetBefore)
 						instruction.liveSetBefore.add(newTmpVar)
-						newInstruction.liveSetAfter = copy.copy(instruction.liveSetBefore)
+						newInstruction.liveSetAfter = copy.copy(instruction.liveSetAfter)
+						newInstruction.liveSetAfter = newInstruction.liveSetAfter - set([instruction.operandList[1]]) | set([newTmpVar])
+						for otherLive in newInstruction.liveSetAfter:
+							self.insertConnection(otherLive, newTmpVar)
 						ir.insert(ir.index(instruction), newInstruction)
 						spillFlag = True
 		#End For

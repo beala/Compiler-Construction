@@ -14,7 +14,7 @@ class ChaitinColorizer(object):
 		self.colorMap = colors
 		self.heapQueue = HeapPriorityQueue(True)
 		for node in self.theGraph.keys():
-			if not isinstance(node, VarNode) or node.color != -1:
+			if (not isinstance(node, VarNode)) or node.color != -1:
 				continue
 			self.heapQueue.add_task(len(self.theGraph[node]),node)
 	def doColor(self):
@@ -78,6 +78,8 @@ class ChaitinColorizer(object):
 			for connectedElement in connectedList:
 				try:
 					self.theGraph[connectedElement].remove(node)
+					if not isinstance(connectedElement, VarNode):
+						continue
 					self.heapQueue.add_task(len(self.theGraph[connectedElement]), connectedElement) #update the heapqueue with new degree
 				except ValueError:
 					raise ValueError("Not in graph...hmmmm")

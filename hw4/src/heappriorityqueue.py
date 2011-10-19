@@ -1,5 +1,6 @@
 from heapq import *
 import itertools
+import random
 class HeapPriorityQueue(object):
 	pq = []
 	entry_finder = {}
@@ -7,17 +8,22 @@ class HeapPriorityQueue(object):
 	counter = 0
 	tie_breaker = itertools.count()
 	
-	def __init__(self):
+	def __init__(self,useRandomNonce=False):
 		self.entry_finder = {}
 		self.pq = []
 		heapify(self.pq)
 		self.counter = len(self.pq)
+		#useRandomNonce is a random tie-breaker, to prevent deadlock in register allocation
+		self.useRandomNonce = useRandomNonce
 
 	def add_task(self,priority,task):
 		if task in self.entry_finder:
 			self.remove_task(task)
 		tb = next(self.tie_breaker)
-		entry = [priority, tb, "", task]
+		randomNonce = 0
+		if self.useRandomNonce:
+			randomNonce = random.randint(0,10)
+		entry = [priority, randomNonce, tb, "", task]
 		self.entry_finder[task] = entry
 		heappush(self.pq,entry)
 		self.counter += 1

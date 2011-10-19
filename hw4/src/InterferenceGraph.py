@@ -2,7 +2,7 @@ from x86 import *
 #import Queue
 import heappriorityqueue
 from chaitincolorizer import *
-
+import copy
 class InterferenceGraph(object):
 	__theGraph = {} #`VarNode => set([adjacent VarNodes])
 	__ir = []
@@ -30,6 +30,12 @@ class InterferenceGraph(object):
 			self.__theGraph[reg] = set()
 
 	def insertConnection(self,node1,node2):
+		if node1 not in self.__theGraph:
+			self.__theGraph[node1] = set()
+			return
+		if node2 not in self.__theGraph:
+			self.__theGraph[node2] = set()
+			return
 		if not ((isinstance(node1,VarNode) or isinstance(node1,Register)) and (isinstance(node2,VarNode) or isinstance(node2,Register))):
 			return
 		if isinstance(node1, Register) and node1 not in self.__registers:
@@ -248,9 +254,16 @@ class InterferenceGraph(object):
 							spillFlag = True
 							continue
 						firstArg = instruction.operandList[0]
-						instruction.operandList[0] = VarNode(self.makeTmpVar())
-						instruction.operandList[0].spillable = False
-						newInstruction = Movl(firstArg, instruction.operandList[0])
+						newTmpVar = VarNode(self.makeTmpVar())
+						newTmpVar.spillable = False
+						newInstruction = Movl(firstArg, newTmpVar)
+						instruction.operandList[0] = newTmpVar
+						#update graph and livesets to incorporate newly added variable
+						self.insertConnection(firstArg,newTmpVar)
+						self.insertConnection(newTmpVar, instruction.operandList[1])
+						newInstruction.liveSetBefore = copy.copy(instruction.liveSetBefore)
+						instruction.liveSetBefore.add(newTmpVar)
+						newInstruction.liveSetAfter = copy.copy(instruction.liveSetBefore)
 						ir.insert(ir.index(instruction), newInstruction)
 						spillFlag = True
 		#End For
@@ -259,13 +272,13 @@ class InterferenceGraph(object):
 	def allocateRegisters(self):
 		_spilled = False
 		import Myx86Selector
+		self.__initGraph(self.__ir)
+		self.__calculateLiveSets()
+		self.drawEdges(self.__ir)
 		while True:
 			#self.__ir = self.__reduceDuplicateMoves(self.__ir)
 			#print "-"*100
 			#Myx86Selector.Myx86Selector().prettyPrint(self.__ir)
-			self.__initGraph(self.__ir)
-			self.__calculateLiveSets()
-			self.drawEdges(self.__ir)
 			self.__resetColors()
 			self.__resetColorList()
 			self.doColor()
@@ -279,5 +292,5 @@ class InterferenceGraph(object):
 			if not _spilled:
 			#	Myx86Selector.Myx86Selector().prettyPrint(self.__ir)
 				break
-			else:
-				self.__theGraph = {}
+			#else:
+				#self.__theGraph = {}

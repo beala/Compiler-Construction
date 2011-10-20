@@ -1,6 +1,6 @@
 from compiler import *
 from compiler.ast import *
-
+import copy
 class ASTVisitor(object):
 	def visit(self, node, curScopeDict={}):
 		'''Visit a node'''
@@ -58,7 +58,9 @@ class P2Uniquify(ASTVisitor):
 	def visit_Lambda(self, ast, curScopeDict):
 		localVars = self._getLocals(ast)
 		self.uniquifyLocalNames(localVars, curScopeDict)
-		ast.code = self.visit(ast.code, curScopeDict.copy())
+		# Need to pass in a copy of curScopeDict or else subscopes will change the dict
+		# of the current scope.
+		ast.code = self.visit(ast.code, copy.deepcopy(curScopeDict))
 		# Can't write directly to argname (don't know why) so make a new
 		# argname_list and assign to ast.argnames
 		argname_list = []
@@ -69,7 +71,7 @@ class P2Uniquify(ASTVisitor):
 	def visit_Function(self, ast, curScopeDict):
 		localVars = self._getLocals(ast)
 		self.uniquifyLocalNames(localVars, curScopeDict)
-		ast.code = self.visit(ast.code, curScopeDict.copy())
+		ast.code = self.visit(ast.code, copy.deepcopy(curScopeDict))
 		# Can't write directly to argname (don't know why) so make a new
 		# argname_list and assign to ast.argnames
 		argname_list = []
@@ -81,14 +83,14 @@ class P2Uniquify(ASTVisitor):
 	def visit_Module(self, ast, curScopeDict={}):
 		localVars = self._getLocals(ast)
 		self.uniquifyLocalNames(localVars, curScopeDict)
-		ast.node = self.visit(ast.node, curScopeDict.copy())
+		ast.node = self.visit(ast.node, copy.deepcopy(curScopeDict))
 		return ast
 	def visit_Return(self, ast, curScopeDict):
-		ast.value = self.visit(ast.value, curScopeDict.copy())
+		ast.value = self.visit(ast.value, curScopeDict)
 		return ast
 	def visit_Stmt(self, ast, curScopeDict):
 		for node in ast.nodes:
-			node = self.visit(node, curScopeDict.copy())
+			node = self.visit(node, curScopeDict)
 		return ast
 	def visit_Name(self, ast, curScopeDict):
 		if not (ast.name == 'True' or ast.name == 'False'):
@@ -101,60 +103,60 @@ class P2Uniquify(ASTVisitor):
 	def visit_Const(self, ast, curScopeDict):
 		return ast
 	def visit_IfExp(self, ast, curScopeDict):
-		ast.test = self.visit(ast.test, curScopeDict.copy())
-		ast.then = self.visit(ast.then, curScopeDict.copy())
-		ast.else_ = self.visit(ast.else_, curScopeDict.copy())
+		ast.test = self.visit(ast.test, curScopeDict)
+		ast.then = self.visit(ast.then, curScopeDict)
+		ast.else_ = self.visit(ast.else_, curScopeDict)
 		return ast
 	def visit_UnarySub(self, ast, curScopeDict):
-		ast.expr = self.visit(ast.expr, curScopeDict.copy())
+		ast.expr = self.visit(ast.expr, curScopeDict)
 		return ast
 	def visit_Add(self, ast, curScopeDict):
-		ast.left = self.visit(ast.left, curScopeDict.copy())
-		ast.right = self.visit(ast.right, curScopeDict.copy())
+		ast.left = self.visit(ast.left, curScopeDict)
+		ast.right = self.visit(ast.right, curScopeDict)
 		return ast
 	def visit_Discard(self, ast, curScopeDict):
-		ast.expr = self.visit(ast.expr, curScopeDict.copy())
+		ast.expr = self.visit(ast.expr, curScopeDict)
 		return ast
 	def visit_Printnl(self, ast, curScopeDict):
-		ast.nodes[0] = self.visit(ast.nodes[0], curScopeDict.copy())
+		ast.nodes[0] = self.visit(ast.nodes[0], curScopeDict)
 		return ast
 	def visit_And(self, ast, curScopeDict):
 		for operand in ast.nodes:
-			operand = self.visit(operand, curScopeDict.copy())
+			operand = self.visit(operand, curScopeDict)
 		return operand
 	def visit_Or(self, ast, curScopeDict):
 		for operand in ast.nodes:
-			operand = self.visit(operand, curScopeDict.copy())
+			operand = self.visit(operand, curScopeDict)
 		return ast
 	def visit_Not(self, ast, curScopeDict):
-		ast.expr = self.visit(ast.expr, curScopeDict.copy())
+		ast.expr = self.visit(ast.expr, curScopeDict)
 		return ast
 	def visit_List(self, ast, curScopeDict):
 		for element in ast.nodes:
-			element = self.visit(element, curScopeDict.copy())
+			element = self.visit(element, curScopeDict)
 		return ast
 	def visit_Dict(self, ast, curScopeDict):
 		for element in ast.items:
-			element[0] = self.visit(element[0], curScopeDict.copy())
-			element[1] = self.visit(element[1], curScopeDict.copy())
+			element[0] = self.visit(element[0], curScopeDict)
+			element[1] = self.visit(element[1], curScopeDict)
 		return ast
 	def visit_Subscript(self, ast, curScopeDict):
-		ast.expr = self.visit(ast.expr, curScopeDict.copy())
+		ast.expr = self.visit(ast.expr, curScopeDict)
 		for sub in ast.subs:
-			sub = self.visit(sub, curScopeDict.copy())
+			sub = self.visit(sub, curScopeDict)
 		return ast
 	def visit_Compare(self, ast, curScopeDict):
-		ast.expr = self.visit(ast.expr, curScopeDict.copy())
-		ast.ops[1] = self.visit(ast.ops[1], curScopeDict.copy())
+		ast.expr = self.visit(ast.expr, curScopeDict)
+		ast.ops[1] = self.visit(ast.ops[1], curScopeDict)
 		return ast
 	def visit_CallFunc(self, ast, curScopeDict):
-		ast.node = self.visit(ast.node, curScopeDict.copy())
+		ast.node = self.visit(ast.node, curScopeDict)
 		for arg in ast.args:
-			arg = self.visit(arg, curScopeDict.copy())
+			arg = self.visit(arg, curScopeDict)
 		return ast
 	def visit_Assign(self, ast, curScopeDict):
-		ast.nodes[0] = self.visit(ast.nodes[0], curScopeDict.copy())
-		ast.expr = self.visit(ast.expr, curScopeDict.copy())
+		ast.nodes[0] = self.visit(ast.nodes[0], curScopeDict)
+		ast.expr = self.visit(ast.expr, curScopeDict)
 		return ast
 
 	# Debugging methods: #############################################################################

@@ -24,21 +24,27 @@ class P2Uniquify(ASTVisitor):
 			return local_vars
 		elif isinstance(node, Function):
 			local_vars += [node.name]
-			local_vars += stmt.argnames
-			for stmt in node.code
+			local_vars += node.argnames
+			for stmt in node.code.nodes:
 				local_vars += self._getLocals(stmt)
 			return local_vars
 		elif isinstance(node, Lambda):
 			local_vars += node.argnames
-			for stmt in node.code
-				local_vars += self._getLocals(stmt)
+			local_vars += self._getLocals(node.code)
 			return local_vars
 		elif isinstance(node, Module):
-			for stmt in node.node.nodes
-				local_vars += self.getLocals(stmt)
+			for stmt in node.node.nodes:
+				local_vars += self._getLocals(stmt)
 			return local_vars
-		else
-			raise TypeError("Uh oh! What's a " + str(node.__class__.__name___) + "????")
+		elif isinstance(node, IfExp):
+			# I don't think there can be an assign inside IfExpr, but just in case...
+			local_vars += self._getLocals(node.test)
+			local_vars += self._getLocals(node.then)
+			local_vars += self._getLocals(node.else_)
+			return local_vars
+		return []
+		#else:
+		#	raise TypeError("Uh oh! What's a " + str(node.__class__.__name___) + "????")
 				
 	# Desc:	Returns a list of variables that are local to the scope it's given.
 	# Args:	stmt_list: A list of AST nodes that represents an arbitrary scope.
@@ -75,34 +81,47 @@ class P2Uniquify(ASTVisitor):
 
 	def rename(self, curScopeDict, nameNode):
 		nameNode.name = curScopeDict[nameNode.name]
+
+	def renameStr(self, curScopeDict, nameStr):
+		return curScopeDict[nameStr]
+
 	def uniquifyLocalNames(self, localList, curScopeDict):
 		for var in localList:
 			curScopeDict[var] = "{"+var+str(self.globalCounter)
 			self.globalCounter += 1
+
 	# Visitor Functions: #######################################################################################
 
 	def visit_Lambda(self, ast, curScopeDict):
 		# Convert all Lambdas to contain a Stmt node in the 'code' attribute to mirror
 		# Function nodes.
-		newRet = Return(ast.code)
-		ast = Lambda([Name(name) for name in ast.argnames] , ast.defaults, ast.flags, Stmt([newRet]))
-		localVars = self._getLocals(Stmt([ast]))
+		#newRet = Return(ast.code)
+		#ast = Lambda([Name(name) for name in ast.argnames] , ast.defaults, ast.flags, Stmt([newRet]))
+		localVars = self._getLocals(ast)
 		self.uniquifyLocalNames(localVars, curScopeDict)
 		ast.code = self.visit(ast.code, curScopeDict)
+		# Can't write directly to argname (don't know why) so make a new
+		# argname_list and assign to ast.argnames
+		argname_list = []
 		for argname in ast.argnames:
-			argname = self.visit(argname, curScopeDict)
+			argname_list += [self.renameStr(curScopeDict, argname)]
+		ast.argnames = argname_list
 		return ast
 	def visit_Function(self, ast, curScopeDict):
-		ast = Function(ast.decorators, Name(ast.name), [Name(name) for name in ast.argnames], ast.defaults, ast.flags, ast.doc, ast.code) 
-		localVars = self._getLocals(Stmt([ast]))
+		#ast = Function(ast.decorators, Name(ast.name), [Name(name) for name in ast.argnames], ast.defaults, ast.flags, ast.doc, ast.code) 
+		localVars = self._getLocals(ast)
 		self.uniquifyLocalNames(localVars, curScopeDict)
 		ast.code = self.visit(ast.code, curScopeDict)
+		# Can't write directly to argname (don't know why) so make a new
+		# argname_list and assign to ast.argnames
+		argname_list = []
 		for argname in ast.argnames:
-			argname = self.visit(argname, curScopeDict)
-		ast.name = self.visit(ast.name, curScopeDict)
+			argname_list  += [self.renameStr(curScopeDict, argname)]
+		ast.argnames = argname_list
+		ast.name = self.renameStr(curScopeDict, ast.name)
 		return ast
 	def visit_Module(self, ast, curScopeDict={}):
-		localVars = self._getLocals(ast.node)
+		localVars = self._getLocals(ast)
 		self.uniquifyLocalNames(localVars, curScopeDict)
 		ast.node = self.visit(ast.node, curScopeDict)
 		return ast
@@ -115,7 +134,7 @@ class P2Uniquify(ASTVisitor):
 		return ast
 	def visit_Name(self, ast, curScopeDict):
 		if not (ast.name == 'True' or ast.name == 'False'):
-			self.rename(curScopeDict, ast)
+			ast.name = self.renameStr(curScopeDict, ast.name)
 		return ast
 	def visit_AssName(self, ast, curScopeDict):
 		self.rename(curScopeDict, ast)

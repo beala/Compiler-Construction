@@ -19,3 +19,17 @@ class LocalVars(Node):
 		self.local_vars = local_vars
 	def __repr__(self):
 		return 'LocalVars(' + str(self.local_vars) + ')'
+
+class GetFunPtr(Node):
+	name = None
+	def __init__(self, name):
+		self.name = name
+	def __repr__(self):
+		return 'GetFunPtr(' + str(self.name) + ')'
+
+class GetFreeVars(Node):
+	name = None
+	def __init__(self, name):
+		self.name = name
+	def __repr__(self):
+		return 'GetFreeVars(' + str(self.name) + ')'

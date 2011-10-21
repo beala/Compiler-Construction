@@ -18,12 +18,21 @@ class P2Uniquify(ASTVisitor):
 	uniqueNameCounter = 0
 	# Private Functions: ######################################################################################
 
+	# Desc: This returns a list of local variables in a given scope and it's subscopes.
+	# 			Scopes in Python begin at function definitions, so the input is a Function
+	#			or Lambda or Module node (the 'main' function, so to speak).
+	# Args:	A Function, Lambda, or Module node.
+	# Ret:	A list of strings, where the string are the names of variables local to the
+	#			given scope.
 	def _getLocals(self, node):
 		local_vars = []
+		# Base case. If a variable is assigned to, it's local.
 		if isinstance(node, Assign):
 			local_vars += [node.nodes[0].name]
 			return local_vars
 		elif isinstance(node, Function):
+ 			# Careful! A function's name is local to the scope *above* it.
+			# We must account for this in the visitor functions below.
 			local_vars += [node.name]
 			local_vars += node.argnames
 			for stmt in node.code.nodes:
@@ -45,9 +54,17 @@ class P2Uniquify(ASTVisitor):
 			return local_vars
 		return []
 
+	# Desc: Take a variable name that hasn't be renamed yet, and return
+	#			what it should be renamed to.
+	# Args:	A variable's name, as a string.
+	# Ret:	The variable's new uniquified name (as a string).
 	def renameToUnique(self, curScopeDict, nameStr):
 		return curScopeDict[nameStr]
 
+	# Desc: Add a list of local variables to the dictionary and generate
+	#			a new uniquified name for them.
+	# Args:	A list of strings (variable names) and a dictionary with non unique names mapped to uniquified names.
+	# Ret:	Dictionary with the new uniquified names added. 
 	def uniquifyLocalNames(self, localList, curScopeDict):
 		for var in localList:
 			curScopeDict[var] = var+str(self.uniqueNameCounter)+"*"
@@ -56,7 +73,9 @@ class P2Uniquify(ASTVisitor):
 	# Visitor Functions: #######################################################################################
 
 	def visit_Lambda(self, ast, curScopeDict):
+		# Get all the variables in this scope and below that are local.
 		localVars = self._getLocals(ast)
+		# Add them to the dict under a new unique name.
 		self.uniquifyLocalNames(localVars, curScopeDict)
 		# Need to pass in a copy of curScopeDict or else subscopes will change the dict
 		# of the current scope.
@@ -197,7 +216,7 @@ class P2Uniquify(ASTVisitor):
 				print '\t' * tabcount + 'EndLambda'
 			elif isinstance(node, Function):
 				print '\t' * tabcount + 'def ' + str(node.name) + '(' + str(node.argnames) + '):'
-				self.print_ast(Stmt([node.code]), tabcount+1)
+				self.print_ast(node.code, tabcount+1)
 				print '\t' * tabcount + 'EndFunc'
 			else:
 				print '\t' * (tabcount) + str(node)

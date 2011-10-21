@@ -27,7 +27,6 @@ class P1Explicate(ASTVisitor):
 	# Visitor Methods: ###########################################################################
 	def visit_Module(self, node):
 		newModule = Module(None, self.visit(node.node))
-		newModule.localVars = node.localVars
 		return newModule
 
 	def visit_Stmt(self, node):

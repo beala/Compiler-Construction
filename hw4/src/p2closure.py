@@ -17,11 +17,17 @@ class P2Closure(ASTVisitor):
 		self._curTmpVar += 1
 		return "closure" + str(self._curTmpVar)
 
+	def _createMainFunc(self, fun_list, main_ast):
+		mainFunc = Function(None, Name('main'), None, None, 0, None, Stmt(main_ast.node.nodes + [Return(Const(0))]))
+		mainFunc.localVars = main_ast.localVars
+		return fun_list + [mainFunc]
+	
 	# Visitor Methods: ######################################################################################
 	def visit_Module(self, node):
 		(body, funs) = self.visit(node.node)
-		return Module(node.doc, body), funs
-
+		newModule = Module(node.doc, body)
+		newModule.localVars = node.localVars
+		return (newModule, funs)
 	def visit_Stmt(self, node):
 		nodeList = []
 		funList = []
@@ -29,7 +35,7 @@ class P2Closure(ASTVisitor):
 			(stmt, funs) = self.visit(element)
 			nodeList.append(stmt)
 			funList.extend(funs)
-		return Stmt(nodeList), funs
+		return (Stmt(nodeList), funList)
 
 	def visit_Lambda(self, node):
 		# Recurse on the body to get the 'newbody'
@@ -39,10 +45,11 @@ class P2Closure(ASTVisitor):
 		# Create function definition
 		# TODO: Put freevar code in 'newCodeHeader' after we implement heapify
 		newCodeHeader = []
-		newCode = [Return(newBody)]
-		newFunDef = Function(None, globalName, node.argnames, node.defaults, node.flags, None, Stmt(newCodeHeader + newCode))
+		newCode = newBody.nodes
+		newFunDef = Function(None, Name(globalName), node.argnames, node.defaults, node.flags, None, Stmt(newCodeHeader + newCode))
+		newFunDef.localVars = node.localVars
 		# TODO: Add freevar code to CreateClosure (after we implement heapify)
-		return (CreateClosure(globalName, []), funs.append(newFunDef)) 
+		return (CreateClosure(Name(globalName), []), funs + [newFunDef]) 
 
 	def visit_CallFunc(self, node):
 		if node.node.name == 'input':
@@ -61,22 +68,23 @@ class P2Closure(ASTVisitor):
 		
 		# TODO: Populate this list once we get heapify working
 		freeVars = []
-		newTmpVar = self._getTmpVar()
-		newLet = Let(newTmpVar, body_name, CallUserDef(GetFunPtr(newTmpVar)), GetFreeVars(newTmpVar) + body_arg)
+		newTmpVar = Name(self._makeTmpVar())
+		newLet = Let(newTmpVar, body_name, CallUserDef(GetFunPtr(newTmpVar), [GetFreeVars(newTmpVar)] + body_arg))
 		return (newLet, funs_arg + funs_name)
 
 	def visit_Printnl(self, node):
-		(body_nodes, fun_nodes) = self.visit(node.nodes)
-		return (Printnl(body_nodes, node.dest), fun_nodes)
+		(body_nodes, fun_nodes) = self.visit(node.nodes[0])
+		return (Printnl([body_nodes], node.dest), fun_nodes)
 
 	def visit_Const(self, node):
 		return (node, [])
-
+	def visit_Name(self, node):
+		return (node, [])
 	def visit_Assign(self, node):
 		body_node = []
 		funs_node = []
-		for node in node.nodes
-			(body, funs) = self.visit(node)
+		for element in node.nodes:
+			(body, funs) = self.visit(element)
 			body_node += [body]
 			funs_node += funs
 		(body_expr, funs_expr) = self.visit(node.expr)
@@ -116,6 +124,14 @@ class P2Closure(ASTVisitor):
 		(body_ops, funs_ops) = self.visit(node.ops[0][1])
 		return (Compare(body_expr, [(node.ops[0][0], body_ops)]), funs_expr + funs_ops)
 	
+	def visit_IntegerCompare(self, node):
+		(body_expr, funs_expr) = self.visit(node.expr)
+		(body_ops, funs_ops) = self.visit(node.ops[0][1])
+		return (IntegerCompare(body_expr, [(node.ops[0][0], body_ops)]), funs_expr + funs_ops)
+	def visit_BigCompare(self, node):
+		(body_expr, funs_expr) = self.visit(node.expr)
+		(body_ops, funs_ops) = self.visit(node.ops[0][1])
+		return (BigCompare(body_expr, [(node.ops[0][0], body_ops)]), funs_expr + funs_ops)
 	def visit_IfExp(self, node):
 		(body_test, funs_test) = self.visit(node.test)
 		(body_then, funs_then) = self.visit(node.then)
@@ -159,18 +175,21 @@ class P2Closure(ASTVisitor):
 	def visit_InjectFrom(self, node):
 		(arg, funs_arg) = self.visit(node.arg)
 		(typ, funs_typ) = self.visit(node.typ)
-		return (InjectFrom(typ, arg), funs_arg + funs_type)		
+		return (InjectFrom(typ, arg), funs_arg + funs_typ)		
 
 	def visit_ProjectTo(self, node):
 		(arg, funs_arg) = self.visit(node.arg)
 		(typ, funs_typ) = self.visit(node.typ)
-		return (ProjectTo(typ, arg), funs_arg + funs_type)		
+		return (ProjectTo(typ, arg), funs_arg + funs_typ)		
+
 	def visit_GetTag(self, node):
 		(arg, funs_arg) = self.visit(node.arg)
 		return (GetTag(arg), funs_arg)
+
 	def visit_Discard(self, node):
 		(expr, funs_expr) = self.visit(node.expr)
 		return (Discard(expr), funs_expr)
+	
 
 	def visit_BigAdd(self, node):
 		(body_left, funs_left) = self.visit(node.left)
@@ -183,6 +202,11 @@ class P2Closure(ASTVisitor):
 		(body_right, funs_right) = self.visit(node.right)
 
 		return (IntegerAdd((body_left, body_right) ), funs_left + funs_right)
+	
+	# Public Methods: #######################################################################################
+	def doClosure(self, ast):
+		(main_ast, fun_list) = self.visit(ast)
+		return self._createMainFunc(fun_list, main_ast)
 
 if __name__ == "__main__":
 	import sys 
@@ -201,10 +225,12 @@ if __name__ == "__main__":
 	to_explicate = P2Uniquify().visit(to_explicate)
 	P2Uniquify().print_ast(to_explicate.node)
 	print "-"*20 + "Explicated AST" + "-"*20
-	to_closure_convert = P2Explicate().visit(to_explicate).node)
-	P2Uniquify().print_ast(to_closure_convert)
+	to_closure_convert = P2Explicate().visit(to_explicate)
+	P2Uniquify().print_ast(to_closure_convert.node)
 	(ast, fun_list) = P2Closure().visit(to_closure_convert)
 	print "-"*20 + "Global Func List" + "-"*20
-	P2Uniquify().print_ast(fun_list) 
+	P2Uniquify().print_ast(Stmt(fun_list)) 
 	print "-"*20 + "Closure Converted AST" + "-"*20
-	P2Uniquify().print_ast(ast) 
+	P2Uniquify().print_ast(ast.node)
+	print "-"*20 + "Final Func List" + "-"*20
+	P2Uniquify().print_ast(Stmt(P2Closure().doClosure(to_closure_convert)))

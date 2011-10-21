@@ -9,3 +9,4 @@ class ASTVisitor(object):
 	def default(self, node):
 		'''Visit node children'''
 		print "Uh oh: A method doesn't exist for this node type: %s" % node.__class__.__name__
+		import pdb; pdb.set_trace()

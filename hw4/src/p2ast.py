@@ -6,19 +6,12 @@ class CreateClosure(Node):
 	def __init__(self, name, env):
 		self.name = name
 		self.env = env
-	def __repr__(self)
+	def __repr__(self):
 		return "CreateClosure(" + str(self.name) + " ," + str(self.env) + ")"
 
 class CallUserDef(CallFunc):
 	def __repr__(self):
 		return 'CallUserDef(' + str(self.node) + " ," + str(self.args) + ")"
-
-class LocalVars(Node):
-	local_vars = []
-	def __init__(self, local_vars)
-		self.local_vars = local_vars
-	def __repr__(self):
-		return 'LocalVars(' + str(self.local_vars) + ')'
 
 class GetFunPtr(Node):
 	name = None

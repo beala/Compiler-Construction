@@ -192,7 +192,7 @@ class P2Uniquify(ASTVisitor):
 
 	def visit_Compare(self, ast, curScopeDict):
 		ast.expr = self.visit(ast.expr, curScopeDict)
-		ast.ops[1] = self.visit(ast.ops[1], curScopeDict)
+		ast.ops[0] = (ast.ops[0][0], self.visit(ast.ops[0][1], curScopeDict))
 		return ast
 
 	def visit_CallFunc(self, ast, curScopeDict):

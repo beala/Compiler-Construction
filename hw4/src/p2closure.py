@@ -123,7 +123,10 @@ class P2Closure(ASTVisitor):
 		(body_expr, funs_expr) = self.visit(node.expr)
 		(body_ops, funs_ops) = self.visit(node.ops[0][1])
 		return (Compare(body_expr, [(node.ops[0][0], body_ops)]), funs_expr + funs_ops)
-	
+	def visit_IsCompare(self, node):
+		(body_expr, funs_expr) = self.visit(node.expr)
+		(body_ops, funs_ops) = self.visit(node.ops[0][1])
+		return (IsCompare(body_expr, [(node.ops[0][0], body_ops)]), funs_expr + funs_ops)
 	def visit_IntegerCompare(self, node):
 		(body_expr, funs_expr) = self.visit(node.expr)
 		(body_ops, funs_ops) = self.visit(node.ops[0][1])

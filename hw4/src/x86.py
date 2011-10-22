@@ -295,7 +295,7 @@ class CallStar(Call):
 	numOperands = 1
 	def __init__(self, operand1):
 		super(CallStar, self).__init__(operand1)
-		self.instruction = "call*"
+		self.instruction = "call *"
 		self.operandList.append(operand1)
 	def __str__(self):
 		return "%s %s" % (self.instruction, self.operandList[0])
@@ -316,3 +316,9 @@ class Ret(x86):
 	def doCalculateLiveSet(self,currentLiveSet):
 		self.liveSetBefore = currentLiveSet
 		return self.liveSetBefore
+class FunctionLabel(Label):
+	def doCalculateLiveSet(self, currentLiveSet):
+		self.liveSetBefore = currentLiveSet
+		return self.liveSetBefore
+	def __str__(self):
+		return "\n.globl "+self.instruction+"\n"+ self.instruction+":"

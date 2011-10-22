@@ -75,6 +75,7 @@ class Myx86Selector:
 		elif isinstance(ast, Function):
 			myIRList = []
 			#preamble
+			myIRList.append(x86.FunctionLabel(ast.name.name))
 			myIRList.append(x86.Pushl(x86.Register('ebp')))
 			myIRList.append(x86.Movl(x86.Register('esp'),x86.Register('ebp')))
 			

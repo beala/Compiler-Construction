@@ -18,6 +18,7 @@ class csci4555_compiler:
 		explicated_ast = p1explicate.P1Explicate().visit(compiler.parseFile(codefile))
 		flattened_ast = p1flattener.P1ASTFlattener().visit(explicated_ast)
 		ir = Myx86Selector.Myx86Selector().generate_x86_code(flattened_ast)
+		#ir = Myx86Selector.Myx86Selector().reduceExtraMoves(ir)
 		#x86IRObj.calculateLiveSets()
 		self.my_graph = InterferenceGraph.InterferenceGraph(ir)
 		#self.my_graph.drawEdges()
@@ -34,9 +35,30 @@ class csci4555_compiler:
 		#print x86IRObj.emitx86Text()
 
 if __name__ == "__main__":
+	import sys 
+	import compiler
+	import os
+	from p2uniquify import *
+	from p2explicate import *
+	from p2closure import *
+	from p2flattener import *
+	from Myx86Selector import *
+	from InterferenceGraph import *
+	from p1removex86ifs import *
 	myfile = sys.argv[1]
 	basename = myfile[:len(myfile)-3]
-	compileObj = csci4555_compiler(myfile)
+	to_explicate = compiler.parseFile(sys.argv[1])
+	to_explicate = P2Uniquify().visit(to_explicate)
+	to_closure_convert = P2Explicate().visit(to_explicate)
+	(ast, fun_list) = P2Closure().visit(to_closure_convert)
+	to_flatten = P2Closure().doClosure(to_closure_convert)
+	flattened = P2ASTFlattener().visit(to_flatten)
 	file = open(basename+".s","w")
-	file.write(compileObj.getColoredIR())
+	for func in flattened:
+		tmpIR = Myx86Selector().generate_x86_code(func)
+		ig = InterferenceGraph(tmpIR)
+		coloredIR=ig.allocateRegisters()
+		no_ifs = P1Removex86Ifs(coloredIR).removeIfs()
+		ig.setIR(no_ifs)
+		file.write(ig.emitColoredIR())
 	file.close()

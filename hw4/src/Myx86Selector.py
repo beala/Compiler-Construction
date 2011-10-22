@@ -86,9 +86,21 @@ class Myx86Selector:
 			#push callee-save registers
 			for register in self._calleeSaveRegisters:
 				myIRList.append(x86.Pushl(register))
-			
-			#move parameters to local location
+		
+			#handle closure first
 			counter = 8
+			if len(ast.argnames) > 0:
+				counter = 12
+				closureList = ast.argnames[0]
+				ast.argnames = ast.argnames[1:]
+				subs_counter = 0
+				for closureElement in closureList.nodes:
+					myIRList.append(x86.Pushl(x86.ConstNode(subs_counter)))
+					myIRList.append(x86.Pushl(x86.MemLoc(8)))
+					myIRList.append(x86.Call('get_subscript'))
+					myIRList.append(x86.Movl(x86.Register('eax'),self._update_dict_vars(closureElement.name)))
+					subs_counter += 1
+			#move parameters to local location
 			for arg in ast.argnames:
 				myIRList.append(x86.Movl(x86.MemLoc(counter), self._update_dict_vars(arg)))	
 				counter += 4

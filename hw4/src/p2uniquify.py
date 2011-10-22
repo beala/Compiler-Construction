@@ -185,8 +185,10 @@ class P2Uniquify(ASTVisitor):
 
 	def visit_Subscript(self, ast, curScopeDict):
 		ast.expr = self.visit(ast.expr, curScopeDict)
+		mySubs = []
 		for sub in ast.subs:
-			sub = self.visit(sub, curScopeDict)
+			mySubs += [self.visit(sub, curScopeDict)]
+		ast.subs = mySubs
 		return ast
 
 	def visit_Compare(self, ast, curScopeDict):

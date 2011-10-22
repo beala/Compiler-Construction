@@ -13,7 +13,14 @@ def getLocals(node):
 	local_vars = []
 	# Base case. If a variable is assigned to, it's local.
 	if isinstance(node, Assign):
-		local_vars += [node.nodes[0].name]
+		if isinstance(node.nodes[0], AssName):
+			local_vars += [node.nodes[0].name]
+		elif isinstance(node.nodes[0], Name):
+			local_vars += [node.nodes[0].name]
+		elif isinstance(node.nodes[0], Subscript):
+			local_vars += getLocals(node.expr)
+			local_vars += getLocals(node.nodes[0].expr)
+			local_vars += getLocals(node.nodes[0].subs)
 		return local_vars
 	elif isinstance(node, Function):
 		# Careful! A function's name is local to the scope *above* it.

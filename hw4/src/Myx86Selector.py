@@ -112,6 +112,7 @@ class Myx86Selector:
 			myIRList.append(x86.CallStar(self.getTmpVar()))
 			#pop arguments
 			myIRList.append(x86.Addl(x86.ConstNode(len(ast.args)*4),x86.Register('esp')))
+			myIRList.append(x86.Movl(x86.Register('eax'),self.makeTmpVar()))
 			return myIRList		
 		elif isinstance(ast, CreateClosure):
 			myIRList = []
@@ -234,13 +235,14 @@ class Myx86Selector:
 				myIRList.append(x86.Call('project_int'))
 			elif (isinstance(typExpr,Const) and typExpr.value == 1):
 				myIRList.append(x86.Call('project_bool'))
-			elif (isinstance(typExpr,Const) and typExpr.value == 3):
+			elif (isinstance(typExpr,Const) and (typExpr.value == 3 or typExpr.value == 2)):
 				myIRList.append(x86.Call('project_big'))
 			else:
 				myIRList.append(x86.Ifx86([x86.Cmpl(x86.ConstNode(0),typExpr)], [x86.Call('project_int')], \
 								[x86.Ifx86([x86.Cmpl(x86.ConstNode(1),typExpr)], [x86.Call('project_bool')], \
+								[x86.Ifx86([x86.Cmpl(x86.ConstNode(2),typExpr)], [x86.Call('project_big')], \
 								[x86.Ifx86([x86.Cmpl(x86.ConstNode(3),typExpr)], [x86.Call('project_big')], \
-								[])])]))
+								[])])])]))
 			myIRList.append(x86.Movl(x86.Register('eax'),resultVar))
 			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			return myIRList
@@ -255,13 +257,14 @@ class Myx86Selector:
 				myIRList.append(x86.Call('inject_int'))
 			elif (isinstance(typExpr,Const) and typExpr.value == 1):
 				myIRList.append(x86.Call('inject_bool'))
-			elif (isinstance(typExpr,Const) and typExpr.value == 3):
+			elif (isinstance(typExpr,Const) and (typExpr.value == 3 or typExpr.value == 2)):
 				myIRList.append(x86.Call('inject_big'))
 			else:
 				myIRList.append(x86.Ifx86([x86.Cmpl(x86.ConstNode(0),typExpr)], [x86.Call('inject_int')], \
 						[x86.Ifx86([x86.Cmpl(x86.ConstNode(1),typExpr)], [x86.Call('inject_bool')], \
+						[x86.Ifx86([x86.Cmpl(x86.ConstNode(2),typExpr)], [x86.Call('inject_big')], \
 						[x86.Ifx86([x86.Cmpl(x86.ConstNode(3),typExpr)], [x86.Call('inject_big')], \
-						[])])]))
+						[])])])]))
 			myIRList.append(x86.Movl(x86.Register('eax'),resultVar))
 			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			return myIRList

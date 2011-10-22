@@ -33,9 +33,9 @@ class P2Explicate(P1Explicate):
 		newArgs = []
 		newArgs = [self.visit(argument) for argument in node.args]
 		node.args = newArgs
-		myExpr = Name(self._makeTmpVar())
-		return Let(myExpr, node, InjectFrom(GetTag(myExpr), myExpr))	
-
+		#myExpr = Name(self._makeTmpVar())
+		#return Let(myExpr, node, InjectFrom(GetTag(myExpr), myExpr))	
+		return node
 if __name__ == '__main__':
 	import sys 
 	import compiler

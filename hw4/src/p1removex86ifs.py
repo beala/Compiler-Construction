@@ -1,11 +1,12 @@
 from x86 import *
-
+import random
 class P1Removex86Ifs:
 	__labelNumber = 0
 	__myIR = None
+	__randPrefix = None
 	def __makeLabel(self):
 		self.__labelNumber += 1
-		return "label"+str(self.__labelNumber)
+		return "label"+str(self.__labelNumber) + '_' + str(self.__randPrefix) 
 	def removeIfStructure(self,ifx86Node):
 		myNewInstructionList = []
 		elseLabel = self.__makeLabel()
@@ -35,7 +36,8 @@ class P1Removex86Ifs:
 
 	def __init__(self,x86IR):
 		self.__myIR = x86IR
-
+		random.seed()
+		self.__randPrefix = random.randint(0,9999)
 	def removeIfs(self):
 		myReturnIr = []
 		for instruction in self.__myIR:

@@ -256,7 +256,7 @@ class Negl(x86):
 		super(Negl, self).__init__()
 		self.instruction = "negl"
 		if (isinstance(operand1, Node)):
-			SELF.OPErandList.append(operand1)
+			self.operandList.append(operand1)
 		else:
 			self.operandList.append(Node)
 	def __str__(self):

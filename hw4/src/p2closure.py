@@ -52,7 +52,7 @@ class P2Closure(ASTVisitor):
 		return (CreateClosure(Name(globalName), InjectFrom(Const(3), List([]))), funs + [newFunDef]) 
 
 	def visit_CallFunc(self, node):
-		if node.node.name == 'input':
+		if isinstance(node.node, Name) and node.node.name == 'input':
 			return (node, [])
 		
 		# Recurse into name and arguments
@@ -67,9 +67,8 @@ class P2Closure(ASTVisitor):
 			funs_arg += funs2
 		
 		# TODO: Populate this list once we get heapify working
-		freeVars = []
 		newTmpVar = Name(self._makeTmpVar())
-		newLet = Let(newTmpVar, body_name, CallUserDef(GetFunPtr(newTmpVar), [GetFreeVars(newTmpVar)] + body_arg))
+		newLet = Let(newTmpVar, body_name, CallUserDef(GetFunPtr(newTmpVar), List(body_arg)))
 		return (newLet, funs_arg + funs_name)
 
 	def visit_Printnl(self, node):

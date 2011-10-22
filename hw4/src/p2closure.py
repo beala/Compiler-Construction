@@ -18,7 +18,7 @@ class P2Closure(ASTVisitor):
 		return "closure" + str(self._curTmpVar)
 
 	def _createMainFunc(self, fun_list, main_ast):
-		mainFunc = Function(None, Name('main'), None, None, 0, None, Stmt(main_ast.node.nodes + [Return(Const(0))]))
+		mainFunc = Function(None, Name('main'), [], None, 0, None, Stmt(main_ast.node.nodes + [Return(Const(0))]))
 		mainFunc.localVars = main_ast.localVars
 		return fun_list + [mainFunc]
 	

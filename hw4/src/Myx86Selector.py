@@ -7,8 +7,8 @@ import sys
 import string
 import x86
 import os
-from p1explicate import *
-from p1flattener import *
+from p2explicate import *
+from p2flattener import *
 import p1ast
 import base64
 from p2getlocals import *
@@ -103,14 +103,14 @@ class Myx86Selector:
 		elif isinstance(ast, CallUserDef):
 			myIRList = []
 			#push arguments
-			for arg in reversed(ast.argnames):
+			for arg in reversed(ast.args):
 				myIRList += self.generate_x86_code(arg)
 				myIRList.append(x86.Pushl(self.getTmpVar()))
 			#call function
 			myIRList += self.generate_x86_code(ast.node)
 			myIRList.append(x86.CallStar(self.getTmpVar()))
 			#pop arguments
-			myIRList.append(x86.Addl(x86.ConstNode(len(ast.argnames)*4),x86.Register('esp')))
+			myIRList.append(x86.Addl(x86.ConstNode(len(ast.args)*4),x86.Register('esp')))
 			return myIRList		
 		elif isinstance(ast, CreateClosure):
 			myIRList = []
@@ -128,6 +128,7 @@ class Myx86Selector:
 			myIRList.append(x86.Call('get_free_vars'))
 			myIRList.append(x86.Movl(x86.Register('eax'), self.makeTmpVar()))
 			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
+			return myIRList
 		elif isinstance(ast, GetFunPtr):
 			myIRList = []
 			myIRList += self.generate_x86_code(ast.name)
@@ -135,6 +136,7 @@ class Myx86Selector:
 			myIRList.append(x86.Call('get_fun_ptr'))
 			myIRList.append(x86.Movl(x86.Register('eax'), self.makeTmpVar()))
 			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
+			return myIRList
 		elif isinstance(ast, Return):
 			ir_list = self.generate_x86_code(ast.value)
 			return ir_list + [x86.Movl(self.getTmpVar(),x86.Register('eax'))]
@@ -493,7 +495,7 @@ if __name__ == "__main__":
 	print "-"*20 + "x86IR" + "-"*20
 	ir_list = []
 	for func in flattened:
-		ir_list += [Myx86Selector().generated_x86_code(func)]
+		ir_list += [Myx86Selector().generate_x86_code(func)]
 	for func in ir_list:
 		Myx86Selector().prettyPrint(func)
 

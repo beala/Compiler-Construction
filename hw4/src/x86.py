@@ -23,12 +23,17 @@ class Register(Node):
 class MemLoc(Node):
 	def __init__(self, offset):
 		self.offset = offset #caller specifies +/-
-	def __str__(self)
-		return "%s(%ebp)" % str(self.offset)
-	def __eq__(self, other)
+	def __str__(self):
+		return "%s(%%ebp)" % str(self.offset)
+	def __eq__(self, other):
 		if not isinstance(other, MemLoc):
 			return False
 		return self.offset == other.offset
+class AddressLabel(Node):
+	def __init__(self, myValue):
+		self.myValue = myValue
+	def __str__(self):
+		return '$' + ("%s" % self.myValue)
 class VarNode(Node):
 	spillable = True
 	saturation = 0
@@ -251,7 +256,7 @@ class Negl(x86):
 		super(Negl, self).__init__()
 		self.instruction = "negl"
 		if (isinstance(operand1, Node)):
-			self.operandList.append(operand1)
+			SELF.OPErandList.append(operand1)
 		else:
 			self.operandList.append(Node)
 	def __str__(self):
@@ -289,15 +294,11 @@ class Call(x86):
 class CallStar(Call):
 	numOperands = 1
 	def __init__(self, operand1):
-		super(CallStar, self).__init__()
+		super(CallStar, self).__init__(operand1)
 		self.instruction = "call*"
 		self.operandList.append(operand1)
 	def __str__(self):
-		return "%s %s" % (self.instruction, self.operandList[0]
-
-class AddressLabel(Label):
-	def __str__(self):
-		return "$%s" % self.instruction
+		return "%s %s" % (self.instruction, self.operandList[0])
 
 class Leave(x86):
 	numOperands = 0

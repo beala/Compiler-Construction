@@ -73,11 +73,13 @@ class P1Explicate(ASTVisitor):
 		rExpr = self.visit(node.right)
 		tmpVarLeft = Name(self._makeTmpVar())
 		tmpVarRight = Name(self._makeTmpVar())
+		########## NEW/REF EXPLICATE
+		#return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, \
+		#			IfExp(self._compareEqType(GetTag(tmpVarLeft), self._typeMap['int']), InjectFrom(self._typeMap['int'], IntegerAdd((ProjectTo(self._typeMap['int'],tmpVarLeft), ProjectTo(self._typeMap['int'], tmpVarRight)))), \
+		#			IfExp(self._compareEqType(GetTag(tmpVarLeft), self._typeMap['bool']), InjectFrom(self._typeMap['int'], IntegerAdd((ProjectTo(self._typeMap['bool'],tmpVarLeft), ProjectTo(self._typeMap['bool'],tmpVarRight)))), \
+		#			InjectFrom(self._typeMap['big'],BigAdd((ProjectTo(self._typeMap['big'],tmpVarLeft), ProjectTo(self._typeMap['big'],tmpVarRight))))))))
+		########## OLD EXPLICATE
 		return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, \
-					#IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'])]), InjectFrom(self._typeMap['int'], IntegerAdd((ProjectTo(self._typeMap['int'],tmpVarLeft), ProjectTo(self._typeMap['int'],tmpVarRight)))), CallFunc(Name('type_error'),[]))))
-					#IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'])]), InjectFrom(self._typeMap['int'], IntegerAdd((ProjectTo(self._typeMap['int'],tmpVarLeft), ProjectTo(self._typeMap['int'],tmpVarRight)))),	\
-					#IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']),self._compareEqType(tmpVarRight,self._typeMap['bool'])] ), InjectFrom(self._typeMap['int'], IntegerAdd((ProjectTo(self._typeMap['int'],tmpVarLeft), ProjectTo(self._typeMap['bool'],tmpVarRight)))), CallFunc(Name('type_error'), [])))))
-					
 					IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'])]), InjectFrom(self._typeMap['int'], IntegerAdd((ProjectTo(self._typeMap['int'],tmpVarLeft), ProjectTo(self._typeMap['int'],tmpVarRight)))),	\
 					IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']),self._compareEqType(tmpVarRight,self._typeMap['bool'])] ), InjectFrom(self._typeMap['int'], IntegerAdd((ProjectTo(self._typeMap['int'],tmpVarLeft), ProjectTo(self._typeMap['bool'],tmpVarRight)))), \
 					IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['bool']),self._compareEqType(tmpVarRight,self._typeMap['int'])] ), InjectFrom(self._typeMap['int'], IntegerAdd((ProjectTo(self._typeMap['bool'],tmpVarLeft), ProjectTo(self._typeMap['int'],tmpVarRight)))), \

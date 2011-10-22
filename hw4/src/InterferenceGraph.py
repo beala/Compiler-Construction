@@ -7,7 +7,8 @@ class InterferenceGraph(object):
 	__theGraph = {} #`VarNode => set([adjacent VarNodes])
 	__ir = []
 	__registers = [Register('ecx'),Register('edx'),Register('eax')]
-	__listColors = {1:'eax',2:'ebx',3:'ecx',4:'edx'}
+	__listColors = {1:'eax',2:'ebx',3:'ecx',4:'edx',5: 'edi', 6:'esi'}
+	__regNum = 6
 	__stackOffset = 4
 	__currentTmpVar = 0
 	def makeTmpVar(self):
@@ -204,7 +205,7 @@ class InterferenceGraph(object):
 				if  isinstance(operand,VarNode) and isinstance(operand.color,int):
 					if self.__listColors.get(operand.color) == None:
 						import pdb; pdb.set_trace()
-					if (operand.color <= 4):
+					if (operand.color <= self.__regNum):
 						operand.color = "%"+str(self.__listColors.get(operand.color))
 					else:
 						operand.color = "-"+str(self.__listColors.get(operand.color))+"(%ebp)"
@@ -214,7 +215,7 @@ class InterferenceGraph(object):
 		for node in self.__theGraph:
 			node.color=-1
 	def __resetColorList(self):
-		self.__listColors = {1:'eax',2:'ebx',3:'ecx',4:'edx'}
+		self.__listColors = {1:'eax',2:'ebx',3:'ecx',4:'edx',5:'edi',6:'esi'}
 		self.__stackOffset = 4
 	def __calculateLiveSets(self):
  		previousLiveSet = set()
@@ -239,7 +240,7 @@ class InterferenceGraph(object):
 				#Continue to next instruction
 				continue
 			if instruction.numOperands == 2 and isinstance(instruction.operandList[0],VarNode) and isinstance(instruction.operandList[1],VarNode):
-				if instruction.operandList[0].color > 4 and instruction.operandList[1].color > 4:
+				if instruction.operandList[0].color > self.__regNum and instruction.operandList[1].color > self.__regNum:
 					#insert spill code
 					#if isinstance(instruction, Movl):
 					#	secondArg = instruction.operandList[1]

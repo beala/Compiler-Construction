@@ -1,6 +1,8 @@
 from compiler import *
 from compiler.ast import *
 import copy
+from p2getlocals import *
+
 class ASTVisitor(object):
 	def visit(self, node, curScopeDict={}):
 		'''Visit a node'''
@@ -36,21 +38,21 @@ class P2Uniquify(ASTVisitor):
 			local_vars += [node.name]
 			local_vars += node.argnames
 			for stmt in node.code.nodes:
-				local_vars += self._getLocals(stmt)
+				local_vars += getLocals(stmt)
 			return local_vars
 		elif isinstance(node, Lambda):
 			local_vars += node.argnames
-			local_vars += self._getLocals(node.code)
+			local_vars += getLocals(node.code)
 			return local_vars
 		elif isinstance(node, Module):
 			for stmt in node.node.nodes:
-				local_vars += self._getLocals(stmt)
+				local_vars += getLocals(stmt)
 			return local_vars
 		elif isinstance(node, IfExp):
 			# I don't think there can be an assign inside IfExpr, but just in case...
-			local_vars += self._getLocals(node.test)
-			local_vars += self._getLocals(node.then)
-			local_vars += self._getLocals(node.else_)
+			local_vars += getLocals(node.test)
+			local_vars += getLocals(node.then)
+			local_vars += getLocals(node.else_)
 			return local_vars
 		return []
 
@@ -67,14 +69,14 @@ class P2Uniquify(ASTVisitor):
 	# Ret:	Dictionary with the new uniquified names added. 
 	def uniquifyLocalNames(self, localList, curScopeDict):
 		for var in localList:
-			curScopeDict[var] = var+str(self.uniqueNameCounter)+"*"
+			curScopeDict[var] = var+str(self.uniqueNameCounter)
 			self.uniqueNameCounter += 1
 
 	# Visitor Functions: #######################################################################################
 
 	def visit_Lambda(self, ast, curScopeDict):
 		# Get all the variables in this scope and below that are local.
-		localVars = self._getLocals(ast)
+		localVars = getLocals(ast)
 		ast.localVars = localVars
 		# Add them to the dict under a new unique name.
 		self.uniquifyLocalNames(localVars, curScopeDict)
@@ -92,7 +94,7 @@ class P2Uniquify(ASTVisitor):
 	def visit_Function(self, ast, curScopeDict):
 		# Uniquify the function's name first, because this is actually in the outerscope.
 		ast.name = self.renameToUnique(curScopeDict, ast.name)
-		localVars = self._getLocals(ast)
+		localVars = getLocals(ast)
 		ast.localVars = localVars
 		self.uniquifyLocalNames(localVars, curScopeDict)
 		new_stmt_list = []
@@ -108,7 +110,7 @@ class P2Uniquify(ASTVisitor):
 		return ast
 
 	def visit_Module(self, ast, curScopeDict={}):
-		localVars = self._getLocals(ast)
+		localVars = getLocals(ast)
 		ast.localVars = localVars
 		self.uniquifyLocalNames(localVars, curScopeDict)
 		new_stmt_list = []

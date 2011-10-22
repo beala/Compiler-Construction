@@ -20,6 +20,15 @@ class Register(Node):
 		return self.myRegister == other.myRegister
 	def __str__(self):
 		return "%"+self.myRegister
+class MemLoc(Node):
+	def __init__(self, offset):
+		self.offset = offset #caller specifies +/-
+	def __str__(self)
+		return "%s(%ebp)" % str(self.offset)
+	def __eq__(self, other)
+		if not isinstance(other, MemLoc):
+			return False
+		return self.offset == other.offset
 class VarNode(Node):
 	spillable = True
 	saturation = 0
@@ -276,6 +285,19 @@ class Call(x86):
 		return self.liveSetBefore
 	def __str__(self):
 		return "%s %s" % (self.instruction, self.operandList[0])
+
+class CallStar(Call):
+	numOperands = 1
+	def __init__(self, operand1):
+		super(CallStar, self).__init__()
+		self.instruction = "call*"
+		self.operandList.append(operand1)
+	def __str__(self):
+		return "%s %s" % (self.instruction, self.operandList[0]
+
+class AddressLabel(Label):
+	def __str__(self):
+		return "$%s" % self.instruction
 
 class Leave(x86):
 	numOperands = 0

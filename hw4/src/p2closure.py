@@ -49,7 +49,7 @@ class P2Closure(ASTVisitor):
 		newFunDef = Function(None, Name(globalName), node.argnames, node.defaults, node.flags, None, Stmt(newCodeHeader + newCode))
 		newFunDef.localVars = node.localVars
 		# TODO: Add freevar code to CreateClosure (after we implement heapify)
-		return (CreateClosure(Name(globalName), []), funs + [newFunDef]) 
+		return (CreateClosure(Name(globalName), InjectFrom(Const(3), List([]))), funs + [newFunDef]) 
 
 	def visit_CallFunc(self, node):
 		if node.node.name == 'input':

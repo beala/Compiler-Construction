@@ -32,7 +32,7 @@ class P2Explicate(P1Explicate):
 	def visit_CallFunc(self, node):
 		if( isinstance(node.node, Name) and node.node.name == 'input'):
 			myExpr = Name(self._makeTmpVar())
-			return Let(myExpr, node, InjectFrom(GetTag(myExpr), myExpr))	
+			return Let(myExpr, node, InjectFrom(self._typeMap['int'], myExpr))	
 			
 		newArgs = []
 		newArgs = [self.visit(argument) for argument in node.args]

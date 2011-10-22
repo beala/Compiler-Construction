@@ -180,8 +180,7 @@ class P2Uniquify(ASTVisitor):
 
 	def visit_Dict(self, ast, curScopeDict):
 		for element in ast.items:
-			element[0] = self.visit(element[0], curScopeDict)
-			element[1] = self.visit(element[1], curScopeDict)
+			element = ( self.visit(element[0], curScopeDict), self.visit(element[1], curScopeDict) )
 		return ast
 
 	def visit_Subscript(self, ast, curScopeDict):
@@ -196,6 +195,8 @@ class P2Uniquify(ASTVisitor):
 		return ast
 
 	def visit_CallFunc(self, ast, curScopeDict):
+		if( isinstance(ast.node, Name) and ast.node.name == 'input'):
+			return ast
 		ast.node = self.visit(ast.node, curScopeDict)
 		for arg in ast.args:
 			arg = self.visit(arg, curScopeDict)

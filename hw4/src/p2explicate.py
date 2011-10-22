@@ -30,11 +30,15 @@ class P2Explicate(P1Explicate):
 		#pretty straight-forward, just explicate our children and return
 		return Return(self.visit(node.value))
 	def visit_CallFunc(self, node):
+		if( isinstance(node.node, Name) and node.node.name == 'input'):
+			myExpr = Name(self._makeTmpVar())
+			return Let(myExpr, node, InjectFrom(GetTag(myExpr), myExpr))	
+			
 		newArgs = []
 		newArgs = [self.visit(argument) for argument in node.args]
 		node.args = newArgs
 		#myExpr = Name(self._makeTmpVar())
-		#return Let(myExpr, node, InjectFrom(GetTag(myExpr), myExpr))	
+		#reYurn Let(myExpr, node, InjectFrom(GetTag(myExpr), myExpr))	
 		return node
 if __name__ == '__main__':
 	import sys 

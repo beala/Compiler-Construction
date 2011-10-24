@@ -125,6 +125,7 @@ class Ifx86(x86):
 			liveSetAll = liveSetAll | previousLiveSet
 		
 		self.liveSetBefore = set(liveSetAll)
+		self.liveSetBefore &= previousLiveSet
 		#import pdb; pdb.set_trace()
 		return self.liveSetBefore
 	def __str__(self):

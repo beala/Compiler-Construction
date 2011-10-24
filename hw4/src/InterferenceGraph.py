@@ -239,6 +239,11 @@ class InterferenceGraph(object):
 				instruction.operandList[2] = else_ir
 				#Continue to next instruction
 				continue
+			#special case for MemLoc nodes
+			if instruction.numOperands == 2 and ((isinstance(instruction.operandList[0], MemLoc) and (isinstance(instruction.operandList[1], VarNode) and instruction.operandList[1].color > self.__regNum)) \
+				or  (isinstance(instruction.operandList[1], MemLoc) and (isinstance(instruction.operandList[0], VarNode) and instruction.operandList[0].color > self.__regNum))):
+				(spillFlag, newInstruction) = self._makeSpillCode(instruction)
+				ir.insert(ir.index(instruction), newInstruction)	
 			if instruction.numOperands == 2 and isinstance(instruction.operandList[0],VarNode) and isinstance(instruction.operandList[1],VarNode):
 				if instruction.operandList[0].color > self.__regNum and instruction.operandList[1].color > self.__regNum:
 					#insert spill code
@@ -250,15 +255,16 @@ class InterferenceGraph(object):
 					#	ir.insert(ir.index(instruction)+1,newInstruction)
 					#	spillFlag =  True
 					if isinstance(instruction, Movl) or isinstance(instruction, Addl) or isinstance(instruction, Cmpl):
-						if instruction.operandList[0].spillable == False or instruction.operandList[1].spillable == False:
-							#If one of the operands is already unspillable, don't make spill code for the spill code!
-							spillFlag = True
-							continue
-						firstArg = instruction.operandList[0]
-						newTmpVar = VarNode(self.makeTmpVar())
-						newTmpVar.spillable = False
-						newInstruction = Movl(firstArg, newTmpVar)
-						instruction.operandList[0] = newTmpVar
+						(spillFlag, newInstruction) = self._makeSpillCode(instruction)
+						#if instruction.operandList[0].spillable == False or instruction.operandList[1].spillable == False:
+						#	#If one of the operands is already unspillable, don't make spill code for the spill code!
+						#	spillFlag = True
+						#	continue
+						#firstArg = instruction.operandList[0]
+						#newTmpVar = VarNode(self.makeTmpVar())
+						#newTmpVar.spillable = False
+						#newInstruction = Movl(firstArg, newTmpVar)
+						#instruction.operandList[0] = newTmpVar
 						#update graph and livesets to incorporate newly added variable
 						#for myNeighbor in firstArg.liveSetAfter:
 						#	self.insertConnection(myNeighbor,newTmpVar)
@@ -266,17 +272,36 @@ class InterferenceGraph(object):
 						#self.insertConnection(newTmpVar, instruction.operandList[1])
 						#for myNeighbor in instruction.operandList[1].liveSetAfter:
 						#	self.insertConnection(myNeighbor,newTmpVar)
-						newInstruction.liveSetBefore = copy.copy(instruction.liveSetBefore)
-						instruction.liveSetBefore.add(newTmpVar)
-						newInstruction.liveSetAfter = copy.copy(instruction.liveSetAfter)
-						newInstruction.liveSetAfter = newInstruction.liveSetAfter - set([instruction.operandList[1]]) | set([newTmpVar])
-						for otherLive in newInstruction.liveSetAfter:
-							self.insertConnection(otherLive, newTmpVar)
+						#newInstruction.liveSetBefore = copy.copy(instruction.liveSetBefore)
+						#instruction.liveSetBefore.add(newTmpVar)
+						#newInstruction.liveSetAfter = copy.copy(instruction.liveSetAfter)
+						#newInstruction.liveSetAfter = newInstruction.liveSetAfter - set([instruction.operandList[1]]) | set([newTmpVar])
+						#for otherLive in newInstruction.liveSetAfter:
+					#		self.insertConnection(otherLive, newTmpVar)
 						ir.insert(ir.index(instruction), newInstruction)
-						spillFlag = True
+					#	spillFlag = True
 		#End For
 		return (spillFlag, ir)
-
+	def _makeSpillCode(self, badInstruction):
+		#returns list of instructions that replace bad instruction
+		if badInstruction.operandList[0].spillable == False or badInstruction.operandList[1].spillable == False:
+			#If one of the operands is already unspillable, don't make spill code for the spill code!
+			spillFlag = True
+			return (spillFlag, badInstruction)
+		firstArg = badInstruction.operandList[0]
+		newTmpVar = VarNode(self.makeTmpVar())
+		newTmpVar.spillable = False
+		newInstruction = Movl(firstArg, newTmpVar)
+		badInstruction.operandList[0] = newTmpVar
+		newInstruction.liveSetBefore = copy.copy(badInstruction.liveSetBefore)
+		badInstruction.liveSetBefore.add(newTmpVar)
+		newInstruction.liveSetAfter = copy.copy(badInstruction.liveSetAfter)
+		newInstruction.liveSetAfter = newInstruction.liveSetAfter - set([badInstruction.operandList[1]]) | set([newTmpVar])
+		for otherLive in newInstruction.liveSetAfter:
+			self.insertConnection(otherLive, newTmpVar)
+		spillFlag = True
+		return (spillFlag, newInstruction)
+		
 	def allocateRegFunc(self, ir_list):
 		colored_ir = []
 		for ir in ir_list:

@@ -23,6 +23,7 @@ class Register(Node):
 class MemLoc(Node):
 	def __init__(self, offset):
 		self.offset = offset #caller specifies +/-
+		self.spillable = True
 	def __str__(self):
 		return "%s(%%ebp)" % str(self.offset)
 	def __eq__(self, other):

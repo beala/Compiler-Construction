@@ -77,10 +77,9 @@ class P2Uniquify(ASTVisitor):
 	def visit_Lambda(self, ast, curScopeDict):
 		# Get all the variables in this scope and below that are local.
 		localVars = getLocals(ast)
-		#ast.localVars = localVars
+		ast.localVars = localVars
 		# Add them to the dict under a new unique name.
 		self.uniquifyLocalNames(localVars, curScopeDict)
-		ast.localVars = [curScopeDict[value] for value in localVars]
 		# Need to pass in a copy of curScopeDict or else subscopes will change the dict
 		# of the current scope.
 		ast.code = self.visit(ast.code, copy.deepcopy(curScopeDict))
@@ -96,8 +95,8 @@ class P2Uniquify(ASTVisitor):
 		# Uniquify the function's name first, because this is actually in the outerscope.
 		ast.name = self.renameToUnique(curScopeDict, ast.name)
 		localVars = getLocals(ast)
+		ast.localVars = localVars
 		self.uniquifyLocalNames(localVars, curScopeDict)
-		ast.localVars = [curScopeDict[value] for value in localVars]
 		new_stmt_list = []
 		for node in ast.code.nodes:
 			new_stmt_list += [self.visit(node, copy.deepcopy(curScopeDict))]
@@ -112,8 +111,8 @@ class P2Uniquify(ASTVisitor):
 
 	def visit_Module(self, ast, curScopeDict={}):
 		localVars = getLocals(ast)
+		ast.localVars = localVars
 		self.uniquifyLocalNames(localVars, curScopeDict)
-		ast.localVars = [curScopeDict[value] for value in localVars]
 		new_stmt_list = []
 		for node in ast.node.nodes:
 			new_stmt_list += [self.visit(node, copy.deepcopy(curScopeDict))]

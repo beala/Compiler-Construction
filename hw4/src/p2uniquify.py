@@ -163,7 +163,7 @@ class P2Uniquify(ASTVisitor):
 	def visit_And(self, ast, curScopeDict):
 		for operand in ast.nodes:
 			operand = self.visit(operand, curScopeDict)
-		return operand
+		return ast
 
 	def visit_Or(self, ast, curScopeDict):
 		for operand in ast.nodes:

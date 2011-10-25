@@ -80,7 +80,7 @@ class Myx86Selector:
 			myIRList.append(x86.Movl(x86.Register('esp'),x86.Register('ebp')))
 			
 			#allocate spillage stack-space
-			localList = set(getLocals().getLocals(ast))
+			localList = set(P2GetLocals().getLocals(ast))
 			myIRList.append(x86.Subl(x86.ConstNode(len(localList)*4),x86.Register('esp')))
 			
 			#push callee-save registers

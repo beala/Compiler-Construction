@@ -40,7 +40,7 @@ class P2Uniquify(ASTVisitor):
 
 	def visit_Lambda(self, ast, curScopeDict):
 		# Get all the variables in this scope and below that are local.
-		localVars = getLocals.getLocals(ast)
+		localVars = P2GetLocals().getLocals(ast)
 		#ast.localVars = localVars
 		# Add them to the dict under a new unique name.
 		self.uniquifyLocalNames(localVars, curScopeDict)
@@ -59,7 +59,7 @@ class P2Uniquify(ASTVisitor):
 	def visit_Function(self, ast, curScopeDict):
 		# Uniquify the function's name first, because this is actually in the outerscope.
 		ast.name = self.renameToUnique(curScopeDict, ast.name)
-		localVars = getLocals().getLocals(ast)
+		localVars = P2GetLocals().getLocals(ast)
 		self.uniquifyLocalNames(localVars, curScopeDict)
 		ast.localVars = [curScopeDict[value] for value in localVars]
 		new_stmt_list = []
@@ -75,7 +75,7 @@ class P2Uniquify(ASTVisitor):
 		return ast
 
 	def visit_Module(self, ast, curScopeDict={}):
-		localVars = getLocals().getLocals(ast)
+		localVars = P2GetLocals().getLocals(ast)
 		self.uniquifyLocalNames(localVars, curScopeDict)
 		ast.localVars = [curScopeDict[value] for value in localVars]
 		new_stmt_list = []

@@ -2,7 +2,7 @@
 from compiler import *
 from compiler.ast import *
 
-class getLocals(object):
+class P2GetLocals(object):
 
 # Desc: This returns a list of local variables in a given scope and it's subscopes.
 # 			Scopes in Python begin at function definitions, so the input is a Function
@@ -14,8 +14,8 @@ class getLocals(object):
 	def getLocals(self, node):
 		return self._getLocals(node, True)
 
-	def getLocalsBelow(self, node, False):
-		pass
+	def getLocalsInCurrentScope(self, node):
+		return self._getLocals(node, False)
 
 	def _getLocals(self, node, doSubScopes, recurDepth=0):
 		local_vars = []

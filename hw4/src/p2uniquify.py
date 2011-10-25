@@ -20,42 +20,6 @@ class P2Uniquify(ASTVisitor):
 	uniqueNameCounter = 0
 	# Private Functions: ######################################################################################
 
-	# Desc: This returns a list of local variables in a given scope and it's subscopes.
-	# 			Scopes in Python begin at function definitions, so the input is a Function
-	#			or Lambda or Module node (the 'main' function, so to speak).
-	# Args:	A Function, Lambda, or Module node.
-	# Ret:	A list of strings, where the string are the names of variables local to the
-	#			given scope.
-	def _getLocals(self, node):
-		local_vars = []
-		# Base case. If a variable is assigned to, it's local.
-		if isinstance(node, Assign):
-			local_vars += [node.nodes[0].name]
-			return local_vars
-		elif isinstance(node, Function):
- 			# Careful! A function's name is local to the scope *above* it.
-			# We must account for this in the visitor functions below.
-			local_vars += [node.name]
-			local_vars += node.argnames
-			for stmt in node.code.nodes:
-				local_vars += getLocals(stmt)
-			return local_vars
-		elif isinstance(node, Lambda):
-			local_vars += node.argnames
-			local_vars += getLocals(node.code)
-			return local_vars
-		elif isinstance(node, Module):
-			for stmt in node.node.nodes:
-				local_vars += getLocals(stmt)
-			return local_vars
-		elif isinstance(node, IfExp):
-			# I don't think there can be an assign inside IfExpr, but just in case...
-			local_vars += getLocals(node.test)
-			local_vars += getLocals(node.then)
-			local_vars += getLocals(node.else_)
-			return local_vars
-		return []
-
 	# Desc: Take a variable name that hasn't be renamed yet, and return
 	#			what it should be renamed to.
 	# Args:	A variable's name, as a string.
@@ -76,7 +40,7 @@ class P2Uniquify(ASTVisitor):
 
 	def visit_Lambda(self, ast, curScopeDict):
 		# Get all the variables in this scope and below that are local.
-		localVars = getLocals(ast)
+		localVars = getLocals.getLocals(ast)
 		#ast.localVars = localVars
 		# Add them to the dict under a new unique name.
 		self.uniquifyLocalNames(localVars, curScopeDict)
@@ -95,7 +59,7 @@ class P2Uniquify(ASTVisitor):
 	def visit_Function(self, ast, curScopeDict):
 		# Uniquify the function's name first, because this is actually in the outerscope.
 		ast.name = self.renameToUnique(curScopeDict, ast.name)
-		localVars = getLocals(ast)
+		localVars = getLocals().getLocals(ast)
 		self.uniquifyLocalNames(localVars, curScopeDict)
 		ast.localVars = [curScopeDict[value] for value in localVars]
 		new_stmt_list = []
@@ -111,7 +75,7 @@ class P2Uniquify(ASTVisitor):
 		return ast
 
 	def visit_Module(self, ast, curScopeDict={}):
-		localVars = getLocals(ast)
+		localVars = getLocals().getLocals(ast)
 		self.uniquifyLocalNames(localVars, curScopeDict)
 		ast.localVars = [curScopeDict[value] for value in localVars]
 		new_stmt_list = []

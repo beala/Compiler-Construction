@@ -1,10 +1,13 @@
 from astvisitor import *
-
+from p2getlocals import *
+debug = False
 class P2GetFreeVars(ASTVisitor):
+	_reservedNames = ['input', 'type_error']
 	#return a set of strings - free variable names
 	def visit_Module(self, node):
 		freeVars = self.visit(node.node)
-		return freeVars - set(node.localVars)
+		localVars = getLocals(node)
+		return freeVars - set(localVars)
 	def visit_Stmt(self, node):
 		freeVars = set()
 		for stmt in node.nodes:
@@ -12,7 +15,10 @@ class P2GetFreeVars(ASTVisitor):
 		return freeVars
 	def visit_Lambda(self, node):
 		freeVars = self.visit(node.code)
-		return freeVars - set(node.localVars) - set(node.argnames)
+		localVars = getLocals(node)
+		if debug:
+			print str(node.argnames) + ": " + str(freeVars - set(localVars) - set(node.argnames))
+		return freeVars - set(localVars) - set(node.argnames)
 	def visit_Name(self, node):
 		if node.name == 'True' or node.name == 'False':
 			return set([])
@@ -29,11 +35,13 @@ class P2GetFreeVars(ASTVisitor):
 		return set([])
 	def visit_CallFunc(self, node):
 		#at this stage, CallFunc are only runtime functions?
+		if node.node.name in self._reservedNames:
+			return set([])
 		argSet = set([])
 		for element in node.args:
 			argSet |= self.visit(element)
-		#nameSet = self.visit(node.node)
-		return argSet #| nameSet
+		nameSet = self.visit(node.node)
+		return argSet | nameSet
 	def visit_Add(self, node):
 		return self.visit(node.left) | self.visit(node.right)
 	def visit_IntegerAdd(self, node):
@@ -103,3 +111,25 @@ class P2GetFreeVars(ASTVisitor):
 	def visit_IntegerAdd(self, node):
 		return self.visit_Add(node)
 
+if __name__ == "__main__":
+	import sys 
+	import compiler
+	import os
+	from p2uniquify import *
+	from p2explicate import *
+	print "-"*20 + "Parsed AST" + "-"*20 
+	if os.path.isfile(sys.argv[1]):
+		print compiler.parseFile(sys.argv[1])
+		to_explicate = compiler.parseFile(sys.argv[1])
+	else:
+		print compiler.parse(sys.argv[1])
+		to_explicate = compiler.parse(sys.argv[1])
+	print "-"*20 + "Uniquified AST" + "-"*20
+	to_explicate = P2Uniquify().visit(to_explicate)
+	P2Uniquify().print_ast(to_explicate.node)
+	print "-"*20 + "Explicated AST" + "-"*20
+	explicated = P2Explicate().visit(to_explicate)
+	P2Uniquify().print_ast(explicated.node)
+	print "-"*20 + "Free Vars List" + "-"*20
+	debug = True
+	P2GetFreeVars().visit(explicated)

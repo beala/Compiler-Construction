@@ -223,3 +223,26 @@ class P2Heapify(ASTVisitor):
 
 	def visit_CallUserDef(self, ast):
 		return self._visit_Calls(self, ast, lambda node, args: CallUserDef(node, args))
+
+if __name__ == "__main__":
+	import sys 
+	import compiler
+	import os
+	from p2uniquify import *
+	from p2explicate import *
+	print "-"*20 + "Parsed AST" + "-"*20 
+	if os.path.isfile(sys.argv[1]):
+		print compiler.parseFile(sys.argv[1])
+		to_explicate = compiler.parseFile(sys.argv[1])
+	else:
+		print compiler.parse(sys.argv[1])
+		to_explicate = compiler.parse(sys.argv[1])
+	print "-"*20 + "Uniquified AST" + "-"*20
+	to_explicate = P2Uniquify().visit(to_explicate)
+	P2Uniquify().print_ast(to_explicate.node)
+	print "-"*20 + "Explicated AST" + "-"*20
+	explicated = P2Explicate().visit(to_explicate)
+	P2Uniquify().print_ast(explicated.node)
+	print "-"*20 + "Heapified AST" + "-"*20
+	heapified = P2Heapify().visit(explicated)
+	P2Uniquify().print_ast(heapified.node)

@@ -19,7 +19,21 @@ class P2Heapify(ASTVisitor):
 	def _makeSubAssign(self, lhs, element, rhs):
 		return Assign([Subscript(Name(lhs), 'OP_ASSIGN', [Const(element)])], rhs)
 
+	# Generic function to iterate over a list and visit each item.
+	def _iterate_over_and_visit(self, toIterate):
+		bodyList = []
+		freeBelowList = []
+		for item in toIterate:
+			(freeBelow, body) = self.visit(item)
+			freeBelow += freeBelowList
+			bodyList.append(body)
+		return (freeBelow, bodyList)
+
 	# Visitor Methods: #############################################################################################################
+	# Notes: Return a tuple of the values that are free in the current scope and below, along with the AST modified in the necessary
+	# 	ways. Only nodes that are the beginning of a new scope should add names to the first element of the tuple (other nodes
+	#	should just return whatever they've recieved from their children. The list of freeVars is a list of *strings* not Name() nodes.
+	
 	def visit_Module(self, ast):
 		(freeBelow, body) = self.visit(ast.node)
 		localInits = []
@@ -69,12 +83,7 @@ class P2Heapify(ASTVisitor):
 		return (freeHere, newLambda)
 
 	def visit_Stmt(self, ast):
-		freeBelow = []
-		bodies = []
-		for stmt in ast.nodes:
-			(free, body) = self.visit(stmt)
-			freeBelow += free
-			bodies += body
+		(freeBelow, bodies) = self._iterate_over_and_visit(ast.nodes)
 		return (freeBelow, Stmt(bodies))
 			
 	def visit_Name(self, ast):
@@ -87,10 +96,94 @@ class P2Heapify(ASTVisitor):
 		if isinstance(ast.nodes[0], AssName) and ast.nodes[0].name in self._toHeapify:
 			return ([], self._makeSubAssign(ast.nodes[0].name, 0, body))
 			
-		return ([], Assign(ast.nodes, body))
-
 	# Handled by visit_Assign
 	def visit_AssName(self, ast):
 		pass		
 
 	#uninteresting -- recurse
+	def visit_Printnl(self, ast):
+		(freeBelow, body) = self.visit(ast.nodes[0])
+		return (freeBelow, Printnl([body], ast.dest)
+
+	def visit_Const(self,ast):
+		return ([], ast)
+
+	def visit_CallFunc(self, ast):
+		(nodeFreeBelow, nodeBody) = self.visit(ast.node)
+		(argsFreeBelow, argsBody) = self._iterate_over_and_visit(ast.args)
+		return (argsFreeBelow + nodeFreeBelow, CallFunc(nodeBody, argsBody)
+
+	# Generic function for visiting IntegerAdd, BigAdd, etc.
+	# makeNodeFunc is a function that returns the correct type of node (IntegerAdd(), BigAdd(), etc)
+	def _visit_Adds(self, ast, makeNodeFunc):
+		(leftFreeBelow, leftBody) = self.visit(ast.left)
+		(rightFreeBelow, rightBody) = self.visit(ast.right)
+		return(leftFreeBelow + rightFreeBelow, makeNodeFunc(leftBody, rightBody))
+		
+	def visit_Add(self, ast):
+		return self._visit_Adds(ast, lambda l, r: Add((l, r)))
+
+	def visit_IntegerAdd(self,ast):
+		 return self._visit_Adds(ast, lambda l,r: IntegerAdd((l,r,)))
+
+	def visit_BigAdd(self, ast):
+		return self._visit_Adds(ast, lambda l,r: BigAdd((l, r)))
+
+	def _visit_Nodes(self, ast, makeNodeFunc):
+		(nodesFreeBelow, nodesBody) = self._iterate_over_and_visit(ast.nodes)
+		return (nodesFreeBelow, makeNodeFunc(nodesBody))
+
+	def visit_Or(self, ast):
+		return self._visit_Nodes(ast, lambda nodes: Or(nodes))
+
+	def visit_And(self, ast):
+		return self._visit_Nodes(ast, lambda nodes: And(nodes))
+
+	def visit_List(self, ast):
+		return self._visit_Nodes(ast, lambda nodes: List(nodes))
+
+	def _visit_expr(self, ast, makeNodeFunc):
+		(freeBelow, body) = self.visit(ast.expr)
+		return (freeBelow, makeNodeFunc(body))
+	
+	def visit_UnarySub(self, ast):
+		return self._visit_expr(ast, lambda expr: UnarySub(expr))
+
+	def visit_Not(self, ast):
+		return self._visit_expr(ast, lambda expr: Not(expr))
+
+	def visit_Discard(self, ast):
+		return self._visit_expr(ast, lambda expr: Discard(expr))
+
+	def _visit_Compares(self, ast, makeNodeFunc):
+		(exprFreeBelow, exprBody) = self.visit(ast.expr)
+		return (exprFreeBelow, makeNodeFunc(exprBody, ast.ops))
+
+	def visit_Compare(self, ast):
+		return self._visit_Compares(ast, lambda expr, ops: Compare(expr, ops))
+
+	def visit_IntegerCompare(self, ast):
+		return self._visit_Compares(ast, lambda expr, ops: IntegerCompare(expr, ops))
+
+	def visit_BigCompare(self, ast):
+		return self._visit_Compares(ast, lambda expr, ops: BigCompare(expr, ops))
+
+	def visit_Dict(self, ast):
+		itemsBody = []
+		itemsFreeBelow = []
+		for item in ast.items:
+			(vFreeBelow, vBody) = self.visit(item[0])
+			(kFreeBelow, kBody) = self.visit(item[1])
+			itemsBody.append((vBody, kBody))
+			itemsFreeBelow += vFreeBelow + kFreeBelow	
+		return (itemsFreeBelow, Dict(itemsBody))
+
+	def visit_Subscript(self, ast):
+		(exprFreeBelow, exprBody) = self.visit(ast.expr)
+		(subsFreeBelow, subsBody) = self._iterate_over_and_visit(ast.subs)
+		return (exprFreeBelow + subsFreeBelow, Subscript(exprBody, ast.flags, subsBody))
+
+	def visit_Return(self, ast):
+		return self._visit_expr(ast, lambda values: Return(value))
+
+	

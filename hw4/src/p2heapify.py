@@ -25,9 +25,12 @@ class P2Heapify(ASTVisitor):
 		freeBelowList = []
 		for item in toIterate:
 			(freeBelow, body) = self.visit(item)
-			freeBelow += freeBelowList
+			freeBelowList += freeBelow
 			bodyList.append(body)
-		return (freeBelow, bodyList)
+		return (freeBelowList, bodyList)
+
+	def _setToList(self, set_):
+		return [item for item in set_]
 
 	# Visitor Methods: #############################################################################################################
 	# Notes: Return a tuple of the values that are free in the current scope and below, along with the AST modified in the necessary
@@ -38,16 +41,17 @@ class P2Heapify(ASTVisitor):
 		(freeBelow, body) = self.visit(ast.node)
 		localInits = []
 		for var in freeBelow:
-			localInits += self._makeAssign(var, List([0]))
-		return Module(None, Stmt(localInits + body))
+			localInits.append(self._makeAssign(var, List([0])))
+		return Module(None, Stmt(localInits + body.nodes))
 
 	def visit_Lambda(self, ast):
 		# Get the varaibles that are free IN THE CURRENT SCOPE. These need to be heapified.
 			# Get everything free BELOW AND IN THE CURRENT SCOPE
 			# Subtract out everything LOCAL IN THE CURRENT SCOPE
-		freeVars = P2GetFreeVars().visit(node)
+		freeVars = P2GetFreeVars().visit(ast)
 		localHere = P2GetLocals().getLocalsInCurrentScope(ast)
 		freeHere = set(freeVars) - set(localHere)
+		self._toHeapify += freeVars
 		# Get the parameters that need to be heapified: P_h
 		argsToHeapify = set(ast.argnames) & freeHere
 		# Make a new argnames with the heapified parameters renamed: P'
@@ -63,38 +67,38 @@ class P2Heapify(ASTVisitor):
 			ast.argnames[argToRename] = newName
 		# Assign a one element list to each element in P_h: paramAllocs
 		paramAllocs = []
-		for arg in ast.argsToHeapify:
+		for arg in argsToHeapify:
 			paramAllocs.append(self._makeAssign(arg, List([0])))
 		# Set the variables in P_h (argsToHeapify) to the cooresponding parameters in P' (new argnames) (assign to the first element in each P_h element)
 		paramInits = []
-		for arg in ast.argsToHeapify:
-			paramInits.append(self._makeSubAssign(arg, 0, Name(paramNameMap[arg]))
+		for arg in argsToHeapify:
+			paramInits.append(self._makeSubAssign(arg, 0, Name(paramNameMap[arg])))
 		# Get the local variables that need to be heapified: L_h. These are variables that are local here, but free below.
 			# Get variables local to JUST THIS subscope.
 			# Get variables free in JUST THE SUBSCOPES BELOW TODO: modify freevars function to do this
 		# Assign a 1 element list to each element in L_h
-		(freeBelow, body) = self.visit(node.body)
-		heapifyHere = freeBelow & localHere
+		(freeBelow, body) = self.visit(ast.code)
+		heapifyHere = set(freeBelow) & set(localHere)
 		localInits = []
 		for var in heapifyHere:
 			localInits.append(self._makeAssign(var, List([0])))
-		self._toHeapify += localInits
-		newLambda = Lambda(ast.argnames, ast.defaults, ast.flags, Stmt( paraAllocs + paramInits + localInits + body ))
-		return (freeHere, newLambda)
+		newLambda = Lambda(ast.argnames, ast.defaults, ast.flags, Stmt( paramAllocs + paramInits + localInits + body.nodes ))
+		return (self._setToList(freeHere), newLambda)
 
 	def visit_Stmt(self, ast):
 		(freeBelow, bodies) = self._iterate_over_and_visit(ast.nodes)
 		return (freeBelow, Stmt(bodies))
 			
 	def visit_Name(self, ast):
-		if ast.name in self._toHeapify
+		if ast.name in self._toHeapify:
 			return ([], Subscript(Name(ast.name), 'OP_APPLY', [Const(0)]))
 		return ([], ast)
 
 	def visit_Assign(self, ast):
-		(freeBelow, body) = self.visit(ast.expt)
-		if isinstance(ast.nodes[0], AssName) and ast.nodes[0].name in self._toHeapify:
-			return ([], self._makeSubAssign(ast.nodes[0].name, 0, body))
+		(freeBelow, body) = self.visit(ast.expr)
+		if isinstance(ast.nodes[0], AssName) and (ast.nodes[0].name in self._toHeapify):
+			return (freeBelow, self._makeSubAssign(ast.nodes[0].name, 0, body))
+		return (freeBelow, self._makeAssign(ast.nodes[0].name, body))
 			
 	# Handled by visit_Assign
 	def visit_AssName(self, ast):
@@ -103,7 +107,7 @@ class P2Heapify(ASTVisitor):
 	#uninteresting -- recurse
 	def visit_Printnl(self, ast):
 		(freeBelow, body) = self.visit(ast.nodes[0])
-		return (freeBelow, Printnl([body], ast.dest)
+		return (freeBelow, Printnl([body], ast.dest))
 
 	def visit_Const(self,ast):
 		return ([], ast)
@@ -139,7 +143,7 @@ class P2Heapify(ASTVisitor):
 
 	def _visit_single(self, single, makeNodeFunc):
 		(freeBelow, body) = self.visit(single)
-		return (freeBelow, makeNodeFunc(single))
+		return (freeBelow, makeNodeFunc(body))
 	
 	def _visit_expr(self, ast, makeNodeFunc):
 		return self._visit_single(ast.expr, makeNodeFunc)
@@ -185,13 +189,13 @@ class P2Heapify(ASTVisitor):
 		return (exprFreeBelow + subsFreeBelow, Subscript(exprBody, ast.flags, subsBody))
 
 	def visit_Return(self, ast):
-		return self._visit_single(ast.values, lambda values: Return(value))
+		return self._visit_single(ast.value, lambda value: Return(value))
 
 	def visit_IfExp(self, ast):
 		(testFreeBelow, testBody) = self.visit(ast.test)
 		(thenFreeBelow, thenBody) = self.visit(ast.then)
 		(else_FreeBelow, else_Body) = self.visit(ast.else_)
-		return (testFreeBelow + thenFreeBelow + else_freeBelow, IfExp(testBody, thenBody, else_Body)
+		return (testFreeBelow + thenFreeBelow + else_FreeBelow, IfExp(testBody, thenBody, else_Body))
 
 	def visit_Let(self, ast):
 		(varFreeBelow, varBody) = self.visit(ast.var)
@@ -202,7 +206,7 @@ class P2Heapify(ASTVisitor):
 	def _visit_jects(self, ast, makeNodeFunc):
 		(typFreeBelow, typBody) = self.visit(ast.typ)
 		(argFreeBelow, argBody) = self.visit(ast.arg)
-		return (typFreeBelow + argFreeBelow, makeNodFunc(typBody, argBody))
+		return (typFreeBelow + argFreeBelow, makeNodeFunc(typBody, argBody))
 	
 	def visit_InjectFrom(self, ast):
 		return self._visit_jects(ast, lambda typ, arg: InjectFrom(typ, arg))
@@ -219,10 +223,37 @@ class P2Heapify(ASTVisitor):
 		return (argsFreeBelow + nodeFreeBelow, makeNodeFunc(nodeBody, argsBody))
 		
 	def visit_CallFunc(self, ast):
-		return self._visit_Calls(self, ast, lambda node, args: CallFunc(node, args))
+		return self._visit_Calls(ast, lambda node, args: CallFunc(node, args))
 
 	def visit_CallUserDef(self, ast):
-		return self._visit_Calls(self, ast, lambda node, args: CallUserDef(node, args))
+		return self._visit_Calls(ast, lambda node, args: CallUserDef(node, args))
+
+	# Debugging methods: #############################################################################
+	def print_ast(self, stmt_ast, tabcount=0):
+		for node in stmt_ast.nodes:
+			if isinstance(node, If):
+				print '\t' * tabcount + 'If: ' + str(node.tests[0][0]) + ' then:'
+				self.print_ast(node.tests[0][1], tabcount+1)
+				print '\t' * (tabcount) + 'Else: '
+				self.print_ast(node.else_, tabcount+1)
+				print '\t' * (tabcount) + 'End If'
+			elif isinstance(node, Lambda):
+				print '\t' * tabcount + 'Lambda (' + str(node.argnames) + '):'
+				self.print_ast(Stmt([node.code]), tabcount+1)
+				print '\t' * tabcount + 'EndLambda'
+			elif isinstance(node, Function):
+				print '\t' * tabcount + 'def ' + str(node.name) + '(' + str(node.argnames) + '):'
+				self.print_ast(node.code, tabcount+1)
+				print '\t' * tabcount + 'EndFunc'
+			elif isinstance(node, Assign):
+				self.indent(tabcount, str(node.nodes) + " =")
+				self.print_ast(Stmt([node.expr]), tabcount + 1)
+				self.indent(tabcount, "EndAssign")
+			else:
+				print '\t' * (tabcount) + str(node)
+
+	def indent(self, tabcount, text):
+		print ('\t' * tabcount) + str(text)
 
 if __name__ == "__main__":
 	import sys 
@@ -245,4 +276,5 @@ if __name__ == "__main__":
 	P2Uniquify().print_ast(explicated.node)
 	print "-"*20 + "Heapified AST" + "-"*20
 	heapified = P2Heapify().visit(explicated)
-	P2Uniquify().print_ast(heapified.node)
+	#print heapified	
+	P2Heapify().print_ast(heapified.node)

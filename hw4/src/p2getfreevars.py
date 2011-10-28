@@ -6,7 +6,7 @@ class P2GetFreeVars(ASTVisitor):
 	#return a set of strings - free variable names
 	def visit_Module(self, node):
 		freeVars = self.visit(node.node)
-		localVars = getLocals(node)
+		localVars = P2GetLocals().getLocals(node)
 		return freeVars - set(localVars)
 	def visit_Stmt(self, node):
 		freeVars = set()
@@ -15,7 +15,7 @@ class P2GetFreeVars(ASTVisitor):
 		return freeVars
 	def visit_Lambda(self, node):
 		freeVars = self.visit(node.code)
-		localVars = getLocals(node)
+		localVars = P2GetLocals().getLocals(node)
 		if debug:
 			print str(node.argnames) + ": " + str(freeVars - set(localVars) - set(node.argnames))
 		return freeVars - set(localVars) - set(node.argnames)

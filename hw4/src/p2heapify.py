@@ -108,11 +108,6 @@ class P2Heapify(ASTVisitor):
 	def visit_Const(self,ast):
 		return ([], ast)
 
-	def visit_CallFunc(self, ast):
-		(nodeFreeBelow, nodeBody) = self.visit(ast.node)
-		(argsFreeBelow, argsBody) = self._iterate_over_and_visit(ast.args)
-		return (argsFreeBelow + nodeFreeBelow, CallFunc(nodeBody, argsBody)
-
 	# Generic function for visiting IntegerAdd, BigAdd, etc.
 	# makeNodeFunc is a function that returns the correct type of node (IntegerAdd(), BigAdd(), etc)
 	def _visit_Adds(self, ast, makeNodeFunc):
@@ -142,9 +137,12 @@ class P2Heapify(ASTVisitor):
 	def visit_List(self, ast):
 		return self._visit_Nodes(ast, lambda nodes: List(nodes))
 
+	def _visit_single(self, single, makeNodeFunc):
+		(freeBelow, body) = self.visit(single)
+		return (freeBelow, makeNodeFunc(single))
+	
 	def _visit_expr(self, ast, makeNodeFunc):
-		(freeBelow, body) = self.visit(ast.expr)
-		return (freeBelow, makeNodeFunc(body))
+		return self._visit_single(ast.expr, makeNodeFunc)
 	
 	def visit_UnarySub(self, ast):
 		return self._visit_expr(ast, lambda expr: UnarySub(expr))
@@ -168,6 +166,9 @@ class P2Heapify(ASTVisitor):
 	def visit_BigCompare(self, ast):
 		return self._visit_Compares(ast, lambda expr, ops: BigCompare(expr, ops))
 
+	def visit_IsCompare(self, ast):
+		return self._visit_Compares(ast, lambda expr, ops: IsCompare(expr, ops))	
+
 	def visit_Dict(self, ast):
 		itemsBody = []
 		itemsFreeBelow = []
@@ -184,6 +185,41 @@ class P2Heapify(ASTVisitor):
 		return (exprFreeBelow + subsFreeBelow, Subscript(exprBody, ast.flags, subsBody))
 
 	def visit_Return(self, ast):
-		return self._visit_expr(ast, lambda values: Return(value))
+		return self._visit_single(ast.values, lambda values: Return(value))
 
+	def visit_IfExp(self, ast):
+		(testFreeBelow, testBody) = self.visit(ast.test)
+		(thenFreeBelow, thenBody) = self.visit(ast.then)
+		(else_FreeBelow, else_Body) = self.visit(ast.else_)
+		return (testFreeBelow + thenFreeBelow + else_freeBelow, IfExp(testBody, thenBody, else_Body)
+
+	def visit_Let(self, ast):
+		(varFreeBelow, varBody) = self.visit(ast.var)
+		(rhsFreeBelow, rhsBody) = self.visit(ast.rhs)
+		(bodyFreeBelow, bodyBody) = self.visit(ast.body)
+		return (varFreeBelow + rhsFreeBelow + bodyFreeBelow, Let(varBody, rhsBody, bodyBody))
+
+	def _visit_jects(self, ast, makeNodeFunc):
+		(typFreeBelow, typBody) = self.visit(ast.typ)
+		(argFreeBelow, argBody) = self.visit(ast.arg)
+		return (typFreeBelow + argFreeBelow, makeNodFunc(typBody, argBody))
 	
+	def visit_InjectFrom(self, ast):
+		return self._visit_jects(ast, lambda typ, arg: InjectFrom(typ, arg))
+
+	def visit_ProjectTo(self, ast):
+		return self._visit_jects(ast, lambda typ, arg: ProjectTo(typ, arg))
+
+	def	visit_GetTag(self, ast):
+		return self._visit_single(ast.arg, lambda arg: GetTag(arg))
+
+	def _visit_Calls(self, ast, makeNodeFunc):
+		(nodeFreeBelow, nodeBody) = self.visit(ast.node)
+		(argsFreeBelow, argsBody) = self._iterate_over_and_visit(ast.args)
+		return (argsFreeBelow + nodeFreeBelow, makeNodeFunc(nodeBody, argsBody))
+		
+	def visit_CallFunc(self, ast):
+		return self._visit_Calls(self, ast, lambda node, args: CallFunc(node, args))
+
+	def visit_CallUserDef(self, ast):
+		return self._visit_Calls(self, ast, lambda node, args: CallUserDef(node, args))

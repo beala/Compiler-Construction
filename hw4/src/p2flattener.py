@@ -34,15 +34,15 @@ class P2ASTFlattener(P1ASTFlattener):
 		return (Name(tmpVar), env_stmt + name_stmt + [newAssign])
 	def visit_CallUserDef(self, node):
 		(node_result, node_stmt) = self.visit(node.node)
-		(args_result, args_stmt) = self.visit(node.args)
-		#args_result = []
-		#args_stmt = []
-		#for element in node.args:
-		#	(result, stmt) = self.visit(element)
-		#	args_result += [result]
-		#	args_stmt += stmt
+		#(args_result, args_stmt) = self.visit(node.args)
+		args_result = []
+		args_stmt = []
+		for element in node.args:
+			(result, stmt) = self.visit(element)
+			args_result += [result]
+			args_stmt += stmt
 		tmpVar = self._makeTmpVar()
-		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], CallUserDef(node_result, [args_result]))
+		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], CallUserDef(node_result, args_result))
 		return (Name(tmpVar), node_stmt + args_stmt + [newAssign])
 	def visit_GetFunPtr(self, node):
 		(name_result, name_stmts) = self.visit(node.name)
@@ -68,6 +68,7 @@ if __name__ == "__main__":
 	import os
 	from p2uniquify import *
 	from p2explicate import *
+	from p2heapify import *
 	from p2closure import *
 	print "-"*20 + "Parsed AST" + "-"*20 
 	if os.path.isfile(sys.argv[1]):
@@ -80,15 +81,17 @@ if __name__ == "__main__":
 	to_explicate = P2Uniquify().visit(to_explicate)
 	P2Uniquify().print_ast(to_explicate.node)
 	print "-"*20 + "Explicated AST" + "-"*20
-	to_closure_convert = P2Explicate().visit(to_explicate)
-	P2Uniquify().print_ast(to_closure_convert.node)
-	(ast, fun_list) = P2Closure().visit(to_closure_convert)
+	explicated = P2Explicate().visit(to_explicate)
+	P2Uniquify().print_ast(explicated.node)
+	print "-"*20 + "Heapified AST" + "-"*20
+	heapified = P2Heapify().visit(explicated)
+	#print heapified	
+	P2Heapify().print_ast(heapified.node)
+	(ast, fun_list) = P2Closure().visit(heapified)
 	print "-"*20 + "Global Func List" + "-"*20
 	P2Uniquify().print_ast(Stmt(fun_list)) 
 	print "-"*20 + "Closure Converted AST" + "-"*20
-	P2Uniquify().print_ast(ast.node)
-	print "-"*20 + "Final Func List" + "-"*20
-	to_flatten = P2Closure().doClosure(to_closure_convert)
+	to_flatten = P2Closure().doClosure(heapified)
 	P2Uniquify().print_ast(Stmt(to_flatten))
 	print "-"*20 + "Flattened Func List" + "-"*20
 	flattened = P2ASTFlattener().visit(to_flatten)

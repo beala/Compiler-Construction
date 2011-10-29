@@ -75,7 +75,8 @@ class P2Closure(ASTVisitor):
 		
 		# TODO: Populate this list once we get heapify working
 		newTmpVar = Name(self._makeTmpVar())
-		newLet = Let(newTmpVar, body_name, CallUserDef(GetFunPtr(newTmpVar),InjectFrom(Const(3), BigAdd((GetFreeVars(newTmpVar), InjectFrom(Const(3), List(body_arg)))))))
+		#newLet = Let(newTmpVar, body_name, CallUserDef(GetFunPtr(newTmpVar),InjectFrom(Const(3), BigAdd((GetFreeVars(newTmpVar), InjectFrom(Const(3), List(body_arg)))))))
+		newLet = Let(newTmpVar, body_name, CallUserDef(GetFunPtr(newTmpVar), List( [GetFreeVars(newTmpVar)] + body_arg)))
 		return (newLet, funs_arg + funs_name)
 
 	def visit_Printnl(self, node):

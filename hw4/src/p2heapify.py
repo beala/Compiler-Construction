@@ -69,6 +69,7 @@ class P2Heapify(ASTVisitor):
 		# Assign a one element list to each element in P_h: paramAllocs
 		paramAllocs = []
 		for arg in argsToHeapify:
+			#TODO: INJECT THIS SHIT (the list)
 			paramAllocs.append(self._makeAssign(arg, List([Const(0)])))
 		# Set the variables in P_h (argsToHeapify) to the cooresponding parameters in P' (new argnames) (assign to the first element in each P_h element)
 		paramInits = []

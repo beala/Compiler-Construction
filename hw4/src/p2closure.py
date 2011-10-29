@@ -19,14 +19,12 @@ class P2Closure(ASTVisitor):
 
 	def _createMainFunc(self, fun_list, main_ast):
 		mainFunc = Function(None, Name('main'), [], None, 0, None, Stmt(main_ast.node.nodes + [Return(Const(0))]))
-		mainFunc.localVars = main_ast.localVars
 		return fun_list + [mainFunc]
 	
 	# Visitor Methods: ######################################################################################
 	def visit_Module(self, node):
 		(body, funs) = self.visit(node.node)
 		newModule = Module(node.doc, body)
-		newModule.localVars = node.localVars
 		return (newModule, funs)
 	def visit_Stmt(self, node):
 		nodeList = []
@@ -51,7 +49,6 @@ class P2Closure(ASTVisitor):
 		newCodeHeader = []
 		newCode = newBody.nodes
 		newFunDef = Function(None, Name(globalName), node.argnames, node.defaults, node.flags, None, Stmt(newCodeHeader + newCode))
-		newFunDef.localVars = node.localVars
 		# TODO: Add freevar code to CreateClosure (after we implement heapify)
 		#return (CreateClosure(Name(globalName), InjectFrom(Const(3), List(fvList))), funs + [newFunDef]) 
 		return (CreateClosure(Name(globalName), List([])), funs + [newFunDef])
@@ -220,6 +217,7 @@ if __name__ == "__main__":
 	import os
 	from p2uniquify import *
 	from p2explicate import *
+	from p2heapify import *
 	print "-"*20 + "Parsed AST" + "-"*20 
 	if os.path.isfile(sys.argv[1]):
 		print compiler.parseFile(sys.argv[1])
@@ -231,12 +229,16 @@ if __name__ == "__main__":
 	to_explicate = P2Uniquify().visit(to_explicate)
 	P2Uniquify().print_ast(to_explicate.node)
 	print "-"*20 + "Explicated AST" + "-"*20
-	to_closure_convert = P2Explicate().visit(to_explicate)
-	P2Uniquify().print_ast(to_closure_convert.node)
-	(ast, fun_list) = P2Closure().visit(to_closure_convert)
+	explicated = P2Explicate().visit(to_explicate)
+	P2Uniquify().print_ast(explicated.node)
+	print "-"*20 + "Heapified AST" + "-"*20
+	heapified = P2Heapify().visit(explicated)
+	#print heapified	
+	P2Heapify().print_ast(heapified.node)
+	(ast, fun_list) = P2Closure().visit(heapified)
 	print "-"*20 + "Global Func List" + "-"*20
 	P2Uniquify().print_ast(Stmt(fun_list)) 
 	print "-"*20 + "Closure Converted AST" + "-"*20
 	P2Uniquify().print_ast(ast.node)
 	print "-"*20 + "Final Func List" + "-"*20
-	P2Uniquify().print_ast(Stmt(P2Closure().doClosure(to_closure_convert)))
+	P2Uniquify().print_ast(Stmt(P2Closure().doClosure(heapified)))

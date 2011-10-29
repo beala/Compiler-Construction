@@ -2,7 +2,8 @@ from compiler.ast import *
 from astvisitor import *
 from p2getfreevars import *
 from p2getlocals import *
-
+from p2ast import *
+from p1ast import *
 class P2Heapify(ASTVisitor):
 	# Private Attributes: ##########################################################################################################	
 	_argRenameCounter = 0
@@ -41,7 +42,7 @@ class P2Heapify(ASTVisitor):
 		(freeBelow, body) = self.visit(ast.node)
 		localInits = []
 		for var in freeBelow:
-			localInits.append(self._makeAssign(var, List([0])))
+			localInits.append(self._makeAssign(var, List([Const(0)])))
 		return Module(None, Stmt(localInits + body.nodes))
 
 	def visit_Lambda(self, ast):
@@ -68,7 +69,7 @@ class P2Heapify(ASTVisitor):
 		# Assign a one element list to each element in P_h: paramAllocs
 		paramAllocs = []
 		for arg in argsToHeapify:
-			paramAllocs.append(self._makeAssign(arg, List([0])))
+			paramAllocs.append(self._makeAssign(arg, List([Const(0)])))
 		# Set the variables in P_h (argsToHeapify) to the cooresponding parameters in P' (new argnames) (assign to the first element in each P_h element)
 		paramInits = []
 		for arg in argsToHeapify:
@@ -81,7 +82,7 @@ class P2Heapify(ASTVisitor):
 		heapifyHere = set(freeBelow) & set(localHere)
 		localInits = []
 		for var in heapifyHere:
-			localInits.append(self._makeAssign(var, List([0])))
+			localInits.append(self._makeAssign(var, List([Const(0)])))
 		newLambda = Lambda(ast.argnames, ast.defaults, ast.flags, Stmt( paramAllocs + paramInits + localInits + body.nodes ))
 		return (self._setToList(freeHere), newLambda)
 

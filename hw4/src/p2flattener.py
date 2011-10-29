@@ -11,7 +11,6 @@ class P2ASTFlattener(P1ASTFlattener):
 	def visit_Function(self, node):
 		code_stmt = self.visit(node.code)
 		newFunction = Function(node.decorators, node.name, node.argnames, node.defaults, node.flags, node.doc, Stmt(code_stmt.nodes))
-		newFunction.localVars = node.localVars
 		return newFunction
 	#def visit_Stmt(self, node):
 	#	result_list = []
@@ -35,14 +34,15 @@ class P2ASTFlattener(P1ASTFlattener):
 		return (Name(tmpVar), env_stmt + name_stmt + [newAssign])
 	def visit_CallUserDef(self, node):
 		(node_result, node_stmt) = self.visit(node.node)
-		args_result = []
-		args_stmt = []
-		for element in node.args:
-			(result, stmt) = self.visit(element)
-			args_result += [result]
-			args_stmt += stmt
+		(args_result, args_stmt) = self.visit(node.args)
+		#args_result = []
+		#args_stmt = []
+		#for element in node.args:
+		#	(result, stmt) = self.visit(element)
+		#	args_result += [result]
+		#	args_stmt += stmt
 		tmpVar = self._makeTmpVar()
-		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], CallUserDef(node_result, args_result))
+		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], CallUserDef(node_result, [args_result]))
 		return (Name(tmpVar), node_stmt + args_stmt + [newAssign])
 	def visit_GetFunPtr(self, node):
 		(name_result, name_stmts) = self.visit(node.name)

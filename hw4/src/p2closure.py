@@ -6,12 +6,17 @@ from p2getlocals import *
 class P2Closure(ASTVisitor):
 	# Private Attributes: ###################################################################################
 	_globalFunctionCounter = 0
+	_globalFVSCounter = 0
 	_curTmpVar = 0
 
 	# Private Methods: ######################################################################################
 	def _makeGlobalName(self):
 		self._globalFunctionCounter += 1
 		return "lambda"+str(self._globalFunctionCounter)
+	
+	def _makeFreeVarsName(self):
+		self._globalFVSCounter += 1
+		return "freeVars" + str(self._globalFVSCounter)
 
 	def _makeTmpVar(self):
 		self._curTmpVar += 1
@@ -38,20 +43,21 @@ class P2Closure(ASTVisitor):
 	def visit_Lambda(self, node):
 		# Recurse on the body to get the 'newbody'
 		(newBody, funs) = self.visit(node.code)
+		# Get the freeVars. Needed to create closure.
+		freeVars = P2GetFreeVars().visit(node)
+		# Turn it into a list. (A set is unordered, which may cause problems)
+		freeVars = [Name(var) for var in freeVars]
 		# Get a name for this lambda
 		globalName = self._makeGlobalName()
 		# Create function definition
 		# TODO: Put freevar code in 'newCodeHeader' after we implement heapify
-		#fvSet = P2GetFreeVars().visit(node)
-		#fvList = []
-		#for element in fvSet:
-		#	fvList.append( Name(element))
+		freeVarsName = self._makeFreeVarsName()
 		newCodeHeader = []
+		for var in freeVars:
+			newCodeHeader.append(Assign([AssName(var.name, 'OP_ASSIGN')], Subscript(Name(freeVarsName), 'OP_APPLY', [Const(0)])))	
 		newCode = newBody.nodes
-		newFunDef = Function(None, Name(globalName), node.argnames, node.defaults, node.flags, None, Stmt(newCodeHeader + newCode))
-		# TODO: Add freevar code to CreateClosure (after we implement heapify)
-		#return (CreateClosure(Name(globalName), InjectFrom(Const(3), List(fvList))), funs + [newFunDef]) 
-		return (CreateClosure(Name(globalName), List([])), funs + [newFunDef])
+		newFunDef = Function(None, Name(globalName), [freeVarsName] + node.argnames, node.defaults, node.flags, None, Stmt(newCodeHeader + newCode))
+		return (CreateClosure(Name(globalName), InjectFrom(Const(3), List(freeVars))), funs + [newFunDef])
 	def visit_CallFunc(self, node):
 		if isinstance(node.node, Name) and node.node.name == 'input':
 			return (node, [])
@@ -69,7 +75,7 @@ class P2Closure(ASTVisitor):
 		
 		# TODO: Populate this list once we get heapify working
 		newTmpVar = Name(self._makeTmpVar())
-		newLet = Let(newTmpVar, body_name, CallUserDef(GetFunPtr(newTmpVar), List(body_arg)))
+		newLet = Let(newTmpVar, body_name, CallUserDef(GetFunPtr(newTmpVar),InjectFrom(Const(3), BigAdd((GetFreeVars(newTmpVar), InjectFrom(Const(3), List(body_arg)))))))
 		return (newLet, funs_arg + funs_name)
 
 	def visit_Printnl(self, node):

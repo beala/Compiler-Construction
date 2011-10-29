@@ -45,11 +45,13 @@ if __name__ == "__main__":
 	from Myx86Selector import *
 	from InterferenceGraph import *
 	from p1removex86ifs import *
+	from p2heapify import *
 	myfile = sys.argv[1]
 	basename = myfile[:len(myfile)-3]
 	to_explicate = compiler.parseFile(sys.argv[1])
 	to_explicate = P2Uniquify().visit(to_explicate)
-	to_closure_convert = P2Explicate().visit(to_explicate)
+	to_heapify = P2Explicate().visit(to_explicate)
+	to_closure_convert = P2Heapify().visit(to_heapify)
 	(ast, fun_list) = P2Closure().visit(to_closure_convert)
 	to_flatten = P2Closure().doClosure(to_closure_convert)
 	flattened = P2ASTFlattener().visit(to_flatten)

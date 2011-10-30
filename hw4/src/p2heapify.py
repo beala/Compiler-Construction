@@ -17,8 +17,9 @@ class P2Heapify(ASTVisitor):
 	def _makeAssign(self, lhs, rhs):
 		return Assign([AssName(lhs, 'OP_ASSIGN')], rhs)
 
+	
 	def _makeSubAssign(self, lhs, element, rhs):
-		return Assign([Subscript(Name(lhs), 'OP_ASSIGN', [Const(element)])], rhs)
+		return Assign([Subscript(Name(lhs), 'OP_ASSIGN', [InjectFrom(Const(0), Const(element))])], rhs)
 
 	# Generic function to iterate over a list and visit each item.
 	def _iterate_over_and_visit(self, toIterate):
@@ -30,8 +31,12 @@ class P2Heapify(ASTVisitor):
 			bodyList.append(body)
 		return (freeBelowList, bodyList)
 
+	# Turn a set into a list
 	def _setToList(self, set_):
 		return [item for item in set_]
+	# Assign a one element list to lhs.
+	def _assignInitList(self, lhs):
+		return self._makeAssign(lhs, InjectFrom(Const(3), List([InjectFrom(Const(0), Const(0))])))
 
 	# Visitor Methods: #############################################################################################################
 	# Notes: Return a tuple of the values that are free in the current scope and below, along with the AST modified in the necessary
@@ -42,7 +47,8 @@ class P2Heapify(ASTVisitor):
 		(freeBelow, body) = self.visit(ast.node)
 		localInits = []
 		for var in freeBelow:
-			localInits.append(self._makeAssign(var, List([Const(0)])))
+			localInits.append(self._assignInitList(var))
+			#localInits.append(self._makeAssign(var, List([Const(0)])))
 		return Module(None, Stmt(localInits + body.nodes))
 
 	def visit_Lambda(self, ast):
@@ -69,8 +75,7 @@ class P2Heapify(ASTVisitor):
 		# Assign a one element list to each element in P_h: paramAllocs
 		paramAllocs = []
 		for arg in argsToHeapify:
-			#TODO: INJECT THIS SHIT (the list)
-			paramAllocs.append(self._makeAssign(arg, List([Const(0)])))
+			paramAllocs.append(self._assignInitList(var))
 		# Set the variables in P_h (argsToHeapify) to the cooresponding parameters in P' (new argnames) (assign to the first element in each P_h element)
 		paramInits = []
 		for arg in argsToHeapify:
@@ -83,7 +88,7 @@ class P2Heapify(ASTVisitor):
 		heapifyHere = set(freeBelow) & set(localHere)
 		localInits = []
 		for var in heapifyHere:
-			localInits.append(self._makeAssign(var, List([Const(0)])))
+			localInits.append(self._assignInitList(var))
 		newLambda = Lambda(ast.argnames, ast.defaults, ast.flags, Stmt( paramAllocs + paramInits + localInits + body.nodes ))
 		return (self._setToList(freeHere), newLambda)
 
@@ -93,14 +98,23 @@ class P2Heapify(ASTVisitor):
 			
 	def visit_Name(self, ast):
 		if ast.name in self._toHeapify:
-			return ([], Subscript(Name(ast.name), 'OP_APPLY', [Const(0)]))
+			return ([], Subscript(Name(ast.name), 'OP_APPLY', [InjectFrom(Const(0), Const(0))]))
 		return ([], ast)
 
 	def visit_Assign(self, ast):
-		(freeBelow, body) = self.visit(ast.expr)
-		if isinstance(ast.nodes[0], AssName) and (ast.nodes[0].name in self._toHeapify):
-			return (freeBelow, self._makeSubAssign(ast.nodes[0].name, 0, body))
-		return (freeBelow, self._makeAssign(ast.nodes[0].name, body))
+		# TODO: Are we dealing with too many cases here? Maybe we should iterate down into
+		#	AssName (and whatever else is in ast.nodes) instead of having all these sepcial
+		#	cases.
+		(exprFreeBelow, exprBody) = self.visit(ast.expr)
+		if isinstance(ast.nodes[0], AssName): 
+			if ast.nodes[0].name in self._toHeapify:
+				return (exprFreeBelow, self._makeSubAssign(ast.nodes[0].name, 0, exprBody))
+			else:
+				return (exprFreeBelow, self._makeAssign(ast.nodes[0].name, exprBody))
+		
+		(nodesFreeBelow, nodesBody) = self._iterate_over_and_visit(ast.nodes)
+		return (exprFreeBelow + nodesFreeBelow, Assign(nodesBody, exprBody))
+		#return (freeBelow, self._makeAssign(ast.nodes[0].name, body))
 			
 	# Handled by visit_Assign
 	def visit_AssName(self, ast):

@@ -61,6 +61,8 @@ class P2Heapify(ASTVisitor):
 		localHere = P2GetLocals().getLocalsInCurrentScope(ast)
 		freeHere = set(freeVars) - set(localHere)
 		self._toHeapify += freeVars
+		allFree = P2GetFreeVars().getFreeBelow(ast.code)
+		self._toHeapify += allFree
 		# Get the parameters that need to be heapified: P_h
 		argsToHeapify = set(ast.argnames) & freeHere
 		# Make a new argnames with the heapified parameters renamed: P'

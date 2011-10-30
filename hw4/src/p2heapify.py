@@ -44,6 +44,8 @@ class P2Heapify(ASTVisitor):
 	#	should just return whatever they've recieved from their children. The list of freeVars is a list of *strings* not Name() nodes.
 	
 	def visit_Module(self, ast):
+		allFree = P2GetFreeVars().getFreeBelow(ast.node)
+		self._toHeapify += allFree
 		(freeBelow, body) = self.visit(ast.node)
 		localInits = []
 		for var in freeBelow:

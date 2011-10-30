@@ -1,8 +1,18 @@
 from astvisitor import *
 from p2getlocals import *
+from p1ast import *
+from p2ast import *
 debug = False
 class P2GetFreeVars(ASTVisitor):
 	_reservedNames = ['input', 'type_error']
+
+	def getFreeBelow(self, node):
+		freeBelow = set()
+		for stmt in node.nodes:
+			if isinstance(stmt, Assign) and isinstance(stmt.expr, InjectFrom) and isinstance(stmt.expr.arg, Lambda):
+				freeBelow |= self.visit(stmt.expr.arg)
+		return freeBelow
+
 	#return a set of strings - free variable names
 	def visit_Module(self, node):
 		freeVars = self.visit(node.node)
@@ -35,7 +45,7 @@ class P2GetFreeVars(ASTVisitor):
 		return set([])
 	def visit_CallFunc(self, node):
 		#at this stage, CallFunc are only runtime functions?
-		if node.node.name in self._reservedNames:
+		if isinstance(node.node, Name) and (node.node.name in self._reservedNames):
 			return set([])
 		argSet = set([])
 		for element in node.args:

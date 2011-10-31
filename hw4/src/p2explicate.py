@@ -36,10 +36,11 @@ class P2Explicate(P1Explicate):
 			
 		newArgs = []
 		newArgs = [self.visit(argument) for argument in node.args]
+		newNode = self.visit(node.node)
 		node.args = newArgs
 		#myExpr = Name(self._makeTmpVar())
 		#reYurn Let(myExpr, node, InjectFrom(GetTag(myExpr), myExpr))	
-		return node
+		return CallFunc(newNode, newArgs)
 if __name__ == '__main__':
 	import sys 
 	import compiler

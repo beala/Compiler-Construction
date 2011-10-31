@@ -4,10 +4,13 @@ from p2getfreevars import *
 from p2getlocals import *
 from p2ast import *
 from p1ast import *
+
+_debug = False
+
 class P2Heapify(ASTVisitor):
 	# Private Attributes: ##########################################################################################################	
 	_argRenameCounter = 0
-	_toHeapify = []
+	_toHeapify = set() 
 
 	# Private Methods: #############################################################################################################
 	def _renameArg(self, nameStr):
@@ -44,11 +47,14 @@ class P2Heapify(ASTVisitor):
 	#	should just return whatever they've recieved from their children. The list of freeVars is a list of *strings* not Name() nodes.
 	
 	def visit_Module(self, ast):
-		allFree = P2GetFreeVars().getFreeBelow(ast.node)
-		self._toHeapify += allFree
+		freeVarObj = P2GetFreeVars()
+		freeVarObj.visit(ast)
+		self._toHeapify |= set(freeVarObj.getVarsToHeapify())
+		if _debug == True:
+			print self._toHeapify
 		(freeBelow, body) = self.visit(ast.node)
 		localInits = []
-		for var in freeBelow:
+		for var in set(freeBelow):
 			localInits.append(self._assignInitList(var))
 			#localInits.append(self._makeAssign(var, List([Const(0)])))
 		return Module(None, Stmt(localInits + body.nodes))
@@ -60,14 +66,12 @@ class P2Heapify(ASTVisitor):
 		freeVars = P2GetFreeVars().visit(ast)
 		localHere = P2GetLocals().getLocalsInCurrentScope(ast)
 		freeHere = set(freeVars) - set(localHere)
-		self._toHeapify += freeVars
-		allFree = P2GetFreeVars().getFreeBelow(ast.code)
-		self._toHeapify += allFree
+		self._toHeapify |= freeVars
 		# Get the parameters that need to be heapified: P_h
 		argsToHeapify = set(ast.argnames) & freeHere
 		# Make a new argnames with the heapified parameters renamed: P'
 		paramNameMap = {}
-		for arg in argsToHeapify:
+		for arg in set(argsToHeapify):
 			# Find index of arg to be renamed
 			argToRename = ast.argnames.index(arg)
 			# Get a new name
@@ -78,11 +82,11 @@ class P2Heapify(ASTVisitor):
 			ast.argnames[argToRename] = newName
 		# Assign a one element list to each element in P_h: paramAllocs
 		paramAllocs = []
-		for arg in argsToHeapify:
+		for arg in set(argsToHeapify):
 			paramAllocs.append(self._assignInitList(var))
 		# Set the variables in P_h (argsToHeapify) to the cooresponding parameters in P' (new argnames) (assign to the first element in each P_h element)
 		paramInits = []
-		for arg in argsToHeapify:
+		for arg in set(argsToHeapify):
 			paramInits.append(self._makeSubAssign(arg, 0, Name(paramNameMap[arg])))
 		# Get the local variables that need to be heapified: L_h. These are variables that are local here, but free below.
 			# Get variables local to JUST THIS subscope.
@@ -91,7 +95,7 @@ class P2Heapify(ASTVisitor):
 		(freeBelow, body) = self.visit(ast.code)
 		heapifyHere = set(freeBelow) & set(localHere)
 		localInits = []
-		for var in heapifyHere:
+		for var in set(heapifyHere):
 			localInits.append(self._assignInitList(var))
 		newLambda = Lambda(ast.argnames, ast.defaults, ast.flags, Stmt( paramAllocs + paramInits + localInits + body.nodes ))
 		return (self._setToList(freeHere), newLambda)
@@ -281,6 +285,7 @@ if __name__ == "__main__":
 	import os
 	from p2uniquify import *
 	from p2explicate import *
+	_debug = True
 	print "-"*20 + "Parsed AST" + "-"*20 
 	if os.path.isfile(sys.argv[1]):
 		print compiler.parseFile(sys.argv[1])

@@ -4,20 +4,27 @@ from p1ast import *
 from p2ast import *
 debug = False
 class P2GetFreeVars(ASTVisitor):
+
+	# Private Attributes: ######################################################################################
 	_reservedNames = ['input', 'type_error']
+	_toHeapify = set()	
 
-	def getFreeBelow(self, node):
-		freeBelow = set()
-		for stmt in node.nodes:
-			if isinstance(stmt, Assign) and isinstance(stmt.expr, InjectFrom) and isinstance(stmt.expr.arg, Lambda):
-				freeBelow |= self.visit(stmt.expr.arg)
-		return freeBelow
+	# Public Methods: ##########################################################################################
+	# Return a list of vars to heapify.
+	def getVarsToHeapify(self):
+		return [var for var in self._toHeapify]
+	
+	# Reset the list/set of vars to heapify
+	def clearVarsToHeapify(self):
+		self._toHeapify = set()
 
-	#return a set of strings - free variable names
+	# Visitor Methods: #########################################################################################
 	def visit_Module(self, node):
 		freeVars = self.visit(node.node)
 		localVars = P2GetLocals().getLocals(node)
-		return freeVars - set(localVars)
+		freeHere = freeVars - set(localVars)
+		self._toHeapify |= freeHere
+		return freeHere
 	def visit_Stmt(self, node):
 		freeVars = set()
 		for stmt in node.nodes:
@@ -28,7 +35,9 @@ class P2GetFreeVars(ASTVisitor):
 		localVars = P2GetLocals().getLocals(node)
 		if debug:
 			print str(node.argnames) + ": " + str(freeVars - set(localVars) - set(node.argnames))
-		return freeVars - set(localVars) - set(node.argnames)
+		freeHere = freeVars - set(localVars) - set(node.argnames)
+		self._toHeapify |= freeHere
+		return freeHere
 	def visit_Name(self, node):
 		if node.name == 'True' or node.name == 'False':
 			return set([])

@@ -4,7 +4,7 @@ from p2getfreevars import *
 from p2getlocals import *
 from p2ast import *
 from p1ast import *
-
+import copy
 _debug = False
 
 class P2Heapify(ASTVisitor):
@@ -14,7 +14,7 @@ class P2Heapify(ASTVisitor):
 
 	# Private Methods: #############################################################################################################
 	def _renameArg(self, nameStr):
-		_argRenameCounter += 1
+		self._argRenameCounter += 1
 		return str(nameStr) + "heap_" + str(self._argRenameCounter)	
 	
 	def _makeAssign(self, lhs, rhs):
@@ -68,22 +68,23 @@ class P2Heapify(ASTVisitor):
 		freeHere = set(freeVars) - set(localHere)
 		self._toHeapify |= freeVars
 		# Get the parameters that need to be heapified: P_h
-		argsToHeapify = set(ast.argnames) & freeHere
+		argsToHeapify = set(ast.argnames) & self._toHeapify #freeHere
 		# Make a new argnames with the heapified parameters renamed: P'
 		paramNameMap = {}
+		renamedArgNames = copy.copy(ast.argnames)
 		for arg in set(argsToHeapify):
 			# Find index of arg to be renamed
-			argToRename = ast.argnames.index(arg)
+			argToRename = renamedArgNames.index(arg)
 			# Get a new name
-			newName = self._renameArg(ast.argnames[argToRename])
+			newName = self._renameArg(renamedArgNames[argToRename])
 			# Associate it to the old name
 			paramNameMap[arg] = newName
 			# Set the argslist to the new name
-			ast.argnames[argToRename] = newName
+			renamedArgNames[argToRename] = newName
 		# Assign a one element list to each element in P_h: paramAllocs
 		paramAllocs = []
 		for arg in set(argsToHeapify):
-			paramAllocs.append(self._assignInitList(var))
+			paramAllocs.append(self._assignInitList(arg))
 		# Set the variables in P_h (argsToHeapify) to the cooresponding parameters in P' (new argnames) (assign to the first element in each P_h element)
 		paramInits = []
 		for arg in set(argsToHeapify):
@@ -93,11 +94,11 @@ class P2Heapify(ASTVisitor):
 			# Get variables free in JUST THE SUBSCOPES BELOW TODO: modify freevars function to do this
 		# Assign a 1 element list to each element in L_h
 		(freeBelow, body) = self.visit(ast.code)
-		heapifyHere = set(freeBelow) & set(localHere)
+		heapifyHere = (self._toHeapify & set(localHere)) - set(ast.argnames)
 		localInits = []
 		for var in set(heapifyHere):
 			localInits.append(self._assignInitList(var))
-		newLambda = Lambda(ast.argnames, ast.defaults, ast.flags, Stmt( paramAllocs + paramInits + localInits + body.nodes ))
+		newLambda = Lambda(renamedArgNames, ast.defaults, ast.flags, Stmt( paramAllocs + localInits + paramInits + body.nodes ))
 		return (self._setToList(freeHere), newLambda)
 
 	def visit_Stmt(self, ast):

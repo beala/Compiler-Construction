@@ -60,8 +60,10 @@ class P2ASTFlattener(P1ASTFlattener):
 			func_list += [self.visit(func)]
 		return func_list
 	def visit_Name(self, node):
-		return (node, [])
-
+		#tmpVar = self._makeTmpVar()
+		#newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], node)
+		#return (Name(tmpVar), [newAssign])
+		return(node, [])
 if __name__ == "__main__":
 	import sys 
 	import compiler

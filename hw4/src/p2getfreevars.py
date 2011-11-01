@@ -90,6 +90,11 @@ class P2GetFreeVars(ASTVisitor):
 		returnSet |= self.visit(node.expr)
 		returnSet |= self.visit(node.ops[0][1])
 		return returnSet
+	def visit_IsCompare(self,node):
+		returnSet = set([])
+		returnSet |= self.visit(node.expr)
+		returnSet |= self.visit(node.ops[0][1])
+		return returnSet
 	def visit_IfExp(self, node):
 		return self.visit(node.test) | self.visit(node.then) | self.visit(node.else_)
 	def visit_List(self, node):

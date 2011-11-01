@@ -53,8 +53,10 @@ class P2Closure(ASTVisitor):
 		# TODO: Put freevar code in 'newCodeHeader' after we implement heapify
 		freeVarsName = self._makeFreeVarsName()
 		newCodeHeader = []
+		freeVarListOffset = 0
 		for var in freeVars:
-			newCodeHeader.append(Assign([AssName(var.name, 'OP_ASSIGN')], Subscript(Name(freeVarsName), 'OP_APPLY', [InjectFrom(Const(0), Const(0))])))	
+			newCodeHeader.append(Assign([AssName(var.name, 'OP_ASSIGN')], Subscript(Name(freeVarsName), 'OP_APPLY', [InjectFrom(Const(0), Const(freeVarListOffset))])))
+			freeVarListOffset += 1	
 		newCode = newBody.nodes
 		newFunDef = Function(None, Name(globalName), [freeVarsName] + node.argnames, node.defaults, node.flags, None, Stmt(newCodeHeader + newCode))
 		return (CreateClosure(Name(globalName), InjectFrom(Const(3), List(freeVars))), funs + [newFunDef])

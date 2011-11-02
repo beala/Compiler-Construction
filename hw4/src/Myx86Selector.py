@@ -532,14 +532,3 @@ if __name__ == "__main__":
 		ir_list += [Myx86Selector().generate_x86_code(func)]
 	for func in ir_list:
 		Myx86Selector().prettyPrint(func)
-
-#if __name__ == "__main__":
-#	import os
-#	if os.path.isfile(sys.argv[1]):
-#		explicated_ast = P1Explicate().visit(compiler.parseFile(sys.argv[1]))
-#	else:
-#		explicated_ast = P1Explicate().visit(compiler.parse(sys.argv[1]))
-#	flattened_ast = P1ASTFlattener().visit(explicated_ast)
-#	ir_list = Myx86Selector().generate_x86_code(flattened_ast)
-#	print "-" * 20 + "Pretty Print" + "-" * 20
-#	Myx86Selector().prettyPrint(ir_list)

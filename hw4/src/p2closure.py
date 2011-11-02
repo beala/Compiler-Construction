@@ -61,7 +61,7 @@ class P2Closure(ASTVisitor):
 		newFunDef = Function(None, Name(globalName), [freeVarsName] + node.argnames, node.defaults, node.flags, None, Stmt(newCodeHeader + newCode))
 		return (CreateClosure(Name(globalName), InjectFrom(Const(3), List(freeVars))), funs + [newFunDef])
 	def visit_CallFunc(self, node):
-		if isinstance(node.node, Name) and node.node.name == 'input':
+		if isinstance(node.node, Name) and (node.node.name == 'input' or node.node.name == 'type_error'):
 			return (node, [])
 		
 		# Recurse into name and arguments

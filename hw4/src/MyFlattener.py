@@ -44,9 +44,11 @@ class P0ASTFlattener(ASTVisitor):
 	
 	def visit_Assign(self,node):
 		if isinstance(node.nodes[0], Subscript):
+			# Visit elements in Subscripy
+			(subexpr, statement_list_subexpr) = self.visit(node.nodes[0].expr)
+			(subsubs, statement_list_subsubs) = self.visit(node.nodes[0].subs[0])
 			(expr, statement_list) = self.visit(node.expr)
-			(expr_nodes, statement_list_nodes) = self.visit(node.nodes[0])
-			return (statement_list + statement_list_nodes + [Assign([AssName(expr_nodes.name,'OP_ASSIGN')], expr)])
+			return (statement_list + statement_list_subexpr + statement_list_subsubs + [Assign([Subscript(subexpr,'OP_ASSIGN', [subsubs])], expr)])
 		else:
 			(expr, statement_list) = self.visit(node.expr)
 			newName = self._renameVar(node.nodes[0].name)

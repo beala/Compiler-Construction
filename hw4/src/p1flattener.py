@@ -77,17 +77,17 @@ class P1ASTFlattener(P0ASTFlattener):
 		return(Name(tmpVar), stmt_list + [newAssign])
 
 	def visit_Subscript(self, node):
-		myCurrentTemp = self._getCurrentTmpVar()
+		#myCurrentTemp = self._getCurrentTmpVar()
 		(flat_expr, stmt_list_expr) = self.visit(node.expr)
 		(flat_subs, stmt_list_subs) = self.visit(node.subs[0])
 		tmpVar = self._makeTmpVar()
-		if node.flags == 'OP_APPLY':
-			newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], Subscript(flat_expr, 'OP_APPLY', [flat_subs]))
-			return (Name(tmpVar), stmt_list_expr + stmt_list_subs + [newAssign])
-		else:
-			newAssign1 = Assign([Subscript(flat_expr, 'OP_ASSIGN', [flat_subs])], Name(myCurrentTemp))
-			newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], Subscript(flat_expr, 'OP_APPLY', [flat_subs]))
-			return (Name(tmpVar), stmt_list_expr + stmt_list_subs + [newAssign1] + [newAssign])
+		#if node.flags == 'OP_APPLY':
+		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], Subscript(flat_expr, 'OP_APPLY', [flat_subs]))
+		return (Name(tmpVar), stmt_list_expr + stmt_list_subs + [newAssign])
+		#else:
+		#	newAssign1 = Assign([Subscript(flat_expr, 'OP_ASSIGN', [flat_subs])], Name(myCurrentTemp))
+		#	newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], Subscript(flat_expr, 'OP_APPLY', [flat_subs]))
+		#	return (Name(tmpVar), stmt_list_expr + stmt_list_subs + [newAssign1] + [newAssign])
 
 	def visit_List(self,node):
 		tupleList = []

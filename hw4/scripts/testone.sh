@@ -20,7 +20,7 @@ FILE=$TESTS_DIR/$1
 	python $SRC_DIR/compile.py $FILE
 
 	# Note: WARNING MESSAGES ARE OFF
-	gcc -m32 -lm -w "$NOEXT.s" $SRC_DIR/*.c -o $EXE
+	gcc -m32 -lm -w "$NOEXT.s" $SRC_DIR/*.c -o $EXE -g
 	if [ $? != 0 ]; then
 		echo "$NOEXT_BASE gcc compile failed!"
 		break

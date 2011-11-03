@@ -168,7 +168,7 @@ class Myx86Selector:
 			x86Then = self.generate_x86_code(ast.tests[0][1])
 			x86Else = self.generate_x86_code(ast.else_)
 			compareInstruct = [x86.Pushl(resultTmpVar), x86.Call('is_true'), x86.Cmpl(x86.ConstNode(1),x86.Register('eax'))]
-			myIRList.append(x86.Ifx86(x86Test + compareInstruct,[x86.Addl(x86.ConstNode(4), x86.Register('esp'))]+x86Then,x86Else))
+			myIRList.append(x86.Ifx86(x86Test + compareInstruct, [x86.Addl(x86.ConstNode(4), x86.Register('esp'))] + x86Then,x86Else))
 			return myIRList
 		elif isinstance(ast, IsCompare):
 			myIRList += self.generate_x86_code(ast.expr)
@@ -194,6 +194,7 @@ class Myx86Selector:
 				myIRList.append(x86.Call('not_equal'))
 			newVar = self.makeTmpVar()
 			myIRList.append(x86.Movl(x86.Register('eax'),newVar))
+			myIRList.append(x86.Addl(x86.ConstNode(8), x86.Register('esp')))
 			return myIRList
 		
 		elif isinstance(ast, IntegerCompare):
@@ -213,12 +214,12 @@ class Myx86Selector:
 			lExpr = self.getTmpVar()
 			myIRList.append(x86.Pushl(lExpr))
 			myIRList.append(x86.Call('is_true'))
+			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			resultVar = self.makeTmpVar()
 			myIRList.append(x86.Ifx86([x86.Cmpl(x86.ConstNode(1),x86.Register('eax'))],[x86.Movl(lExpr, resultVar)],self.generate_x86_code(ast.nodes[1]) + [x86.Movl(self.getTmpVar(), resultVar)]))
 			secondResultVar = self.makeTmpVar()
 			myIRList.append(x86.Movl(resultVar, secondResultVar))
 			#myIRList.append(x86.Ifx86([x86.Cmpl(x86.ConstNode(1),x86.Register('eax'))],[x86.Movl(lExpr, self.makeTmpVar())],self.generate_x86_code(ast.nodes[1]) + [x86.Movl(self.getTmpVar(), self.makeTmpVar())]))
-			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			return myIRList
 			##
 			#myIRList += self.generate_x86_code(ast.nodes[1])
@@ -234,11 +235,11 @@ class Myx86Selector:
 			lExpr = self.getTmpVar()
 			myIRList.append(x86.Pushl(lExpr))
 			myIRList.append(x86.Call('is_true'))
+			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			resultVar = self.makeTmpVar()
 			myIRList.append(x86.Ifx86([x86.Cmpl(x86.ConstNode(0),x86.Register('eax'))],[x86.Movl(lExpr, resultVar)],self.generate_x86_code(ast.nodes[1]) + [x86.Movl(self.getTmpVar(), resultVar)]))
 			secondResultVar = self.makeTmpVar()
 			myIRList.append(x86.Movl(resultVar, secondResultVar))
-			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			return myIRList
 			#myIRList += self.generate_x86_code(ast.nodes[0])
 			#lExpr = self.getTmpVar()
@@ -467,7 +468,7 @@ class Myx86Selector:
 			myIRList.append(x86.Pushl(rExpr_var))
 			myIRList.append(x86.Pushl(lExpr_var))
 			myIRList.append(x86.Call('add'))
-			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
+			myIRList.append(x86.Addl(x86.ConstNode(8), x86.Register('esp')))
 			big_result_pyobj = self.makeTmpVar()
 			myIRList.append(x86.Movl(x86.Register('eax'), big_result_pyobj))
 			return myIRList

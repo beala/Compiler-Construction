@@ -54,7 +54,12 @@ class P2GetLocals(object):
 			for stmt in node.node.nodes:
 				local_vars += self._getLocals(stmt, recurDepth + 1)
 			return local_vars
-		elif isinstance(node, If) or isinstance(node, IfExp):
+		elif isinstance(node, IfExp):
+			local_vars += self._getLocals(node.test, recurDepth + 1)
+			local_vars += self._getLocals(node.then, recurDepth + 1)
+			local_vars += self._getLocals(node.else_, recurDepth + 1)
+			return local_vars
+		elif isinstance(node, If):
 			# I don't think there can be an assign inside IfExpr, but just in case...
 			local_vars += self._getLocals(node.tests[0][0], recurDepth + 1)
 			local_vars += self._getLocals(node.tests[0][1], recurDepth + 1)

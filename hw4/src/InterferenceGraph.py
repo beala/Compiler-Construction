@@ -10,6 +10,7 @@ class InterferenceGraph(object):
 	__listColors = {1:'eax',2:'ebx',3:'ecx',4:'edx',5: 'edi', 6:'esi'}
 	__regNum = 6
 	__stackOffset = 4
+	#__stackOffset = 16
 	__currentTmpVar = 0
 	def makeTmpVar(self):
 		self.__currentTmpVar += 1
@@ -217,6 +218,7 @@ class InterferenceGraph(object):
 	def __resetColorList(self):
 		self.__listColors = {1:'eax',2:'ebx',3:'ecx',4:'edx',5:'edi',6:'esi'}
 		self.__stackOffset = 4
+		#self.__stackOffset = 16
 	def __calculateLiveSets(self):
  		previousLiveSet = set()
  		for instruction in reversed(self.__ir):

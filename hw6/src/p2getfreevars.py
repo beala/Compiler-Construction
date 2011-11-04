@@ -49,6 +49,9 @@ class P2GetFreeVars(ASTVisitor):
 	def visit_Const(self, node):
 		return set([])
 	def visit_Assign(self, node):
+		# If the LHS of the assignment is a subscript, then it could be a free var.
+		if isinstance(node.nodes[0], Subscript):
+			return self.visit(node.expr) | self.visit(node.nodes[0])
 		return self.visit(node.expr)
 	def visit_AssName(self, node):
 		return set([])

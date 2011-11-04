@@ -56,15 +56,27 @@ class P2Uniquify(ASTVisitor):
 		ast.argnames = argname_list
 		return ast
 
+	# To be called if there's a Stmt list nested inside a node that marks a scope change.
+	# Instead of passing down curScopeDict, it passes a copy down so the subscopes don't
+	# modify the curScopeDict of the current scope.
+	def _visit_Stmt_Deepcopy(self, stmtNode, curScopeDict):
+		# Must iterate through the Stmt list and pass down a deepcopy of curScopeDict
+		# so that curScopeDict doesn't get modified by subscopes below.
+		new_stmt_list = []
+		for node in stmtNode.nodes:
+			new_stmt_list += [self.visit(node, copy.deepcopy(curScopeDict))]
+		return new_stmt_list
+
 	def visit_Function(self, ast, curScopeDict):
 		# Uniquify the function's name first, because this is actually in the outerscope.
 		ast.name = self.renameToUnique(curScopeDict, ast.name)
 		localVars = P2GetLocals().getLocals(ast)
 		self.uniquifyLocalNames(localVars, curScopeDict)
 		ast.localVars = [curScopeDict[value] for value in localVars]
-		new_stmt_list = []
-		for node in ast.code.nodes:
-			new_stmt_list += [self.visit(node, copy.deepcopy(curScopeDict))]
+		#new_stmt_list = []
+		#for node in ast.code.nodes:
+		#	new_stmt_list += [self.visit(node, copy.deepcopy(curScopeDict))]
+		new_stmt_list = self._visit_Stmt_Deepcopy(ast.code, curScopeDict)
 		ast.code.nodes = new_stmt_list
 		# Can't write directly to argname (don't know why) so make a new
 		# argname_list and assign to ast.argnames
@@ -78,9 +90,10 @@ class P2Uniquify(ASTVisitor):
 		localVars = P2GetLocals().getLocals(ast)
 		self.uniquifyLocalNames(localVars, curScopeDict)
 		ast.localVars = [curScopeDict[value] for value in localVars]
-		new_stmt_list = []
-		for node in ast.node.nodes:
-			new_stmt_list += [self.visit(node, copy.deepcopy(curScopeDict))]
+		#new_stmt_list = []
+		#for node in ast.node.nodes:
+		#	new_stmt_list += [self.visit(node, copy.deepcopy(curScopeDict))]
+		new_stmt_list = self.visit_Stmt_Deepcopy(ast.node, curScopeDict)
 		ast.node.nodes = new_stmt_list
 		return ast
 

@@ -99,10 +99,11 @@ class P1Explicate(ASTVisitor):
 			lastElse = Const(1)
 		return Let(tmpVarLeft, lExpr, Let(tmpVarRight, rExpr, InjectFrom(self._typeMap['bool'],  
 				IfExp( And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['int'] )]),IntegerCompare(ProjectTo(self._typeMap['int'],tmpVarLeft), [(node.ops[0][0], ProjectTo(self._typeMap['int'],tmpVarRight))]), \
+				IfExp (And( [self._compareEqType(tmpVarLeft, self._typeMap['bool']), self._compareEqType(tmpVarRight, self._typeMap['bool'] )]),IntegerCompare(ProjectTo(self._typeMap['bool'],tmpVarLeft),[(node.ops[0][0], ProjectTo(self._typeMap['bool'],tmpVarRight))]), \
 				IfExp (And( [self._compareEqType(tmpVarLeft, self._typeMap['bool']), self._compareEqType(tmpVarRight, self._typeMap['int'] )]),IntegerCompare(ProjectTo(self._typeMap['bool'],tmpVarLeft), [(node.ops[0][0], ProjectTo(self._typeMap['int'],tmpVarRight))]), \
 				IfExp (And( [self._compareEqType(tmpVarLeft, self._typeMap['int']), self._compareEqType(tmpVarRight, self._typeMap['bool'] )]),IntegerCompare(ProjectTo(self._typeMap['int'],tmpVarLeft),[(node.ops[0][0], ProjectTo(self._typeMap['bool'],tmpVarRight))]), \
 				IfExp (And( [self._compareEqType(tmpVarLeft, self._typeMap['big']), self._compareEqType(tmpVarRight, self._typeMap['big'] )]), BigCompare(ProjectTo(self._typeMap['big'],tmpVarLeft), [(node.ops[0][0], ProjectTo(self._typeMap['big'],tmpVarRight))]), \
-				lastElse )))))))	
+				lastElse ))))))))	
 
 	def visit_Or(self, node):
 		lExpr = self.visit(node.nodes[0])

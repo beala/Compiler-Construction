@@ -39,7 +39,7 @@ if __name__ == "__main__":
 	import compiler
 	import os
 	from p3uniquify import *
-	from p2explicate import *
+	from p3explicate import *
 	from p2closure import *
 	from p2flattener import *
 	from Myx86Selector import *
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 	basename = myfile[:len(myfile)-3]
 	to_explicate = compiler.parseFile(sys.argv[1])
 	to_explicate = P3Uniquify().visit(to_explicate)
-	to_heapify = P2Explicate().visit(to_explicate)
+	to_heapify = P3Explicate().visit(to_explicate)
 	to_closure_convert = P2Heapify().visit(to_heapify)
 	(ast, fun_list) = P2Closure().visit(to_closure_convert)
 	to_flatten = P2Closure().doClosure(to_closure_convert)

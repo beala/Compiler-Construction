@@ -117,7 +117,7 @@ class Ifx86(x86):
 	def doCalculateLiveSet(self, previousLiveSet):
 		liveSetAll = set()
 		# Iterate through if, then, else.
-		for number in range(3):
+		for number in reversed(range(3)):
 			# Calculate the l_before of each.
 			# previousLiveSet = set()
 			for instruction in reversed(self.operandList[number]):

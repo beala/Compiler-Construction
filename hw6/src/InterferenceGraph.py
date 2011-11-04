@@ -304,6 +304,7 @@ class InterferenceGraph(object):
 		#badInstruction.liveSetBefore.add(newTmpVar)
 		#newInstruction.liveSetAfter = copy.copy(badInstruction.liveSetAfter)
 		#newInstruction.liveSetAfter = newInstruction.liveSetAfter - set([badInstruction.operandList[1]]) | set([newTmpVar])
+		self.__theGraph[newTmpVar] = set()
 		for otherLive in newInstruction.liveSetAfter:
 			self.insertConnection(otherLive, newTmpVar)
 		spillFlag = True

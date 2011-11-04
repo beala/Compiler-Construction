@@ -207,7 +207,6 @@ class InterferenceGraph(object):
 					if self.__listColors.get(operand.color) == None:
 						import pdb; pdb.set_trace()
 					if (operand.color <= self.__regNum):
-						#import pdb; pdb.set_trace()
 						operand.color = "%"+str(self.__listColors.get(operand.color))
 					else:
 						operand.color = "-"+str(self.__listColors.get(operand.color))+"(%ebp)"
@@ -287,7 +286,7 @@ class InterferenceGraph(object):
 		return (spillFlag, ir)
 	def _makeSpillCode(self, badInstruction):
 		#returns list of instructions that replace bad instruction
-		if badInstruction.operandList[0].spillable == False or badInstruction.operandList[1].spillable == False:
+		if (badInstruction.operandList[0].spillable == False) or (badInstruction.operandList[1].spillable == False):
 			#If one of the operands is already unspillable, don't make spill code for the spill code!
 			spillFlag = True
 			return (spillFlag, badInstruction)
@@ -298,7 +297,7 @@ class InterferenceGraph(object):
 		badInstruction.operandList[0] = newTmpVar
 		# Calc new live set for badInstruction. Take the lAfter, add the read arg, and substract the written arg.
 		badInstruction.liveSetBefore = (badInstruction.liveSetAfter | set([badInstruction.operandList[0]])) - set([badInstruction.operandList[1]])
-		newInstruction.liveSetAfter = copy.deepcopy(badInstruction.liveSetBefore)
+		newInstruction.liveSetAfter = copy.copy(badInstruction.liveSetBefore)
 		# Calc live set for newInstruction. Same as comment above for badInstruct
 		newInstruction.liveSetBefore = (newInstruction.liveSetAfter | set([newInstruction.operandList[0]])) - set([newInstruction.operandList[1]])
 		#newInstruction.liveSetBefore = copy.copy(badInstruction.liveSetBefore)

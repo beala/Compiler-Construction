@@ -207,6 +207,7 @@ class InterferenceGraph(object):
 					if self.__listColors.get(operand.color) == None:
 						import pdb; pdb.set_trace()
 					if (operand.color <= self.__regNum):
+						#import pdb; pdb.set_trace()
 						operand.color = "%"+str(self.__listColors.get(operand.color))
 					else:
 						operand.color = "-"+str(self.__listColors.get(operand.color))+"(%ebp)"
@@ -295,10 +296,15 @@ class InterferenceGraph(object):
 		newTmpVar.spillable = False
 		newInstruction = Movl(firstArg, newTmpVar)
 		badInstruction.operandList[0] = newTmpVar
-		newInstruction.liveSetBefore = copy.copy(badInstruction.liveSetBefore)
-		badInstruction.liveSetBefore.add(newTmpVar)
-		newInstruction.liveSetAfter = copy.copy(badInstruction.liveSetAfter)
-		newInstruction.liveSetAfter = newInstruction.liveSetAfter - set([badInstruction.operandList[1]]) | set([newTmpVar])
+		# Calc new live set for badInstruction. Take the lAfter, add the read arg, and substract the written arg.
+		badInstruction.liveSetBefore = (badInstruction.liveSetAfter | set([badInstruction.operandList[0]])) - set([badInstruction.operandList[1]])
+		newInstruction.liveSetAfter = copy.copy(badInstruction.liveSetBefore)
+		# Calc live set for newInstruction. Same as comment above for badInstruct
+		newInstruction.liveSetBefore = (newInstruction.liveSetAfter | set([newInstruction.operandList[0]])) - set([newInstruction.operandList[1]])
+		#newInstruction.liveSetBefore = copy.copy(badInstruction.liveSetBefore)
+		#badInstruction.liveSetBefore.add(newTmpVar)
+		#newInstruction.liveSetAfter = copy.copy(badInstruction.liveSetAfter)
+		#newInstruction.liveSetAfter = newInstruction.liveSetAfter - set([badInstruction.operandList[1]]) | set([newTmpVar])
 		for otherLive in newInstruction.liveSetAfter:
 			self.insertConnection(otherLive, newTmpVar)
 		spillFlag = True
@@ -310,6 +316,7 @@ class InterferenceGraph(object):
 			self.__init__(ir)
 			self.allocateRegisters()
 			colored_ir += self.__ir
+		self.printGraph()
 		return colored_ir
 	
 	def allocateRegisters(self):
@@ -344,8 +351,8 @@ if __name__ == "__main__":
 	import sys 
 	import compiler
 	import os
-	from p2uniquify import *
-	from p2explicate import *
+	from p3uniquify import *
+	from p3explicate import *
 	from p2closure import *
 	from p2flattener import *
 	from Myx86Selector import *
@@ -357,19 +364,19 @@ if __name__ == "__main__":
 		print compiler.parse(sys.argv[1])
 		to_explicate = compiler.parse(sys.argv[1])
 	print "-"*20 + "Uniquified AST" + "-"*20
-	to_explicate = P2Uniquify().visit(to_explicate)
-	P2Uniquify().print_ast(to_explicate.node)
+	to_explicate = P3Uniquify().visit(to_explicate)
+	P3Uniquify().print_ast(to_explicate.node)
 	print "-"*20 + "Explicated AST" + "-"*20
-	to_closure_convert = P2Explicate().visit(to_explicate)
-	P2Uniquify().print_ast(to_closure_convert.node)
+	to_closure_convert = P3Explicate().visit(to_explicate)
+	P3Uniquify().print_ast(to_closure_convert.node)
 	(ast, fun_list) = P2Closure().visit(to_closure_convert)
 	print "-"*20 + "Global Func List" + "-"*20
-	P2Uniquify().print_ast(Stmt(fun_list)) 
+	P3Uniquify().print_ast(Stmt(fun_list)) 
 	print "-"*20 + "Closure Converted AST" + "-"*20
-	P2Uniquify().print_ast(ast.node)
+	P3Uniquify().print_ast(ast.node)
 	print "-"*20 + "Final Func List" + "-"*20
 	to_flatten = P2Closure().doClosure(to_closure_convert)
-	P2Uniquify().print_ast(Stmt(to_flatten))
+	P3Uniquify().print_ast(Stmt(to_flatten))
 	print "-"*20 + "Flattened Func List" + "-"*20
 	flattened = P2ASTFlattener().visit(to_flatten)
 	P2Uniquify().print_ast(Stmt(flattened))
@@ -381,4 +388,5 @@ if __name__ == "__main__":
 		Myx86Selector().prettyPrint(func)
 	print "-"*20 + "x86IR Colored" + "-"*20
 	ir_list = InterferenceGraph(ir_list[0]).allocateRegFunc(ir_list)
-	Myx86Selector().prettyPrint(func)
+	Myx86Selector().prettyPrint(ir_list)
+	

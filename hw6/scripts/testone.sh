@@ -5,7 +5,7 @@ TESTS_DIR="$SCRIPT_PATH/../tests"
 BUILD_DIR="$SCRIPT_PATH/../build"
 SRC_DIR="$SCRIPT_PATH/../src"
 
-rm $TESTS_DIR/*.s
+rm $(dirname $TESTS_DIR/$1)/*.s
 rm $BUILD_DIR/*
 
 FILE=$TESTS_DIR/$1

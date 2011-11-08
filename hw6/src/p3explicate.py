@@ -10,4 +10,4 @@ class P3Explicate(P2Explicate):
 		myTest = self.visit(node.test)
 		myBody = self.visit(node.body)
 		tmpMyTest = Name(self._makeTmpVar())
-		return Let( tmpMyTest, myTest, While(myTest, myBody, None)) 
+		return Let( tmpMyTest, myTest, While(tmpMyTest, myBody, None)) 

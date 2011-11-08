@@ -65,4 +65,10 @@ class P2GetLocals(object):
 			local_vars += self._getLocals(node.tests[0][1], recurDepth + 1)
 			local_vars += self._getLocals(node.else_, recurDepth + 1)
 			return local_vars
+		elif isinstance(node, While):
+			local_var += self._getLocals(node.test, recurDepth + 1)
+			#node.body is a Stmt object, so we have to loop through the elements
+			for element in node.body.nodes:
+				local_vars += self._getLocals(element, recurDepth + 1)
+			return local_vars
 		return []

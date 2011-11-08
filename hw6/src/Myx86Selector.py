@@ -167,9 +167,22 @@ class Myx86Selector:
 			resultTmpVar = self.getTmpVar()
 			x86Then = self.generate_x86_code(ast.tests[0][1])
 			x86Else = self.generate_x86_code(ast.else_)
-			compareInstruct = [x86.Pushl(resultTmpVar), x86.Call('is_true'), x86.Addl(x86.ConstNode(4), x86.Register('esp')), x86.Cmpl(x86.ConstNode(1),x86.Register('eax'))]
+			compareInstruct = [x86.Pushl(resultTmpVar), \
+								x86.Call('is_true'), \
+								x86.Addl(x86.ConstNode(4), x86.Register('esp')), \
+								x86.Cmpl(x86.ConstNode(1),x86.Register('eax'))]
 			myIRList.append(x86.Ifx86(x86Test + compareInstruct, x86Then, x86Else))
 			#myIRList.append(x86.Ifx86(x86Test + compareInstruct, [x86.Addl(x86.ConstNode(4), x86.Register('esp'))] + x86Then,x86Else))
+			return myIRList
+		elif isinstance(ast, While):
+			x86Test = self.generate_x86_code(ast.test)
+			testTmpVar = self.getTmpVar()
+			x86Body = self.generate_x86_code(ast.body)
+			testInstruct = [x86.Pushl(testTmpVar), \
+							x86.Call('is_true'), \
+							x86.Addl(x86.ConstNode(4), x86.Register('esp')), \
+							x86.Cmpl(x86.ConstNode(1), x86.Register('eax'))]
+			myIRList.append(x86.Whilex86(x86Test + testInstruct, x86Then, x86Else))
 			return myIRList
 		elif isinstance(ast, IsCompare):
 			myIRList += self.generate_x86_code(ast.expr)
@@ -497,10 +510,11 @@ if __name__ == "__main__":
 	import sys 
 	import compiler
 	import os
-	from p2uniquify import *
-	from p2explicate import *
-	from p2heapify import *
-	from p2closure import *
+	from p3flattener import *
+	from p3uniquify import *
+	from p3explicate import *
+	from p3heapify import *
+	from p3closure import *
 	print "-"*20 + "Parsed AST" + "-"*20 
 	if os.path.isfile(sys.argv[1]):
 		print compiler.parseFile(sys.argv[1])
@@ -509,25 +523,25 @@ if __name__ == "__main__":
 		print compiler.parse(sys.argv[1])
 		to_explicate = compiler.parse(sys.argv[1])
 	print "-"*20 + "Uniquified AST" + "-"*20
-	to_explicate = P2Uniquify().visit(to_explicate)
-	P2Uniquify().print_ast(to_explicate.node)
+	to_explicate = P3Uniquify().visit(to_explicate)
+	P3Uniquify().print_ast(to_explicate.node)
 	print "-"*20 + "Explicated AST" + "-"*20
-	explicated = P2Explicate().visit(to_explicate)
-	P2Uniquify().print_ast(explicated.node)
+	explicated = P3Explicate().visit(to_explicate)
+	P3Uniquify().print_ast(explicated.node)
 	print "-"* 20 + "Heapified AST" + "-"*20
-	heapified = P2Heapify().visit(explicated)
-	P2Heapify().print_ast(Stmt(heapified))	
+	heapified = P3Heapify().visit(explicated)
+	P3Heapify().print_ast(Stmt(heapified))	
 	print "-"*20 + "Global Func List" + "-"*20
-	(ast, fun_list) = P2Closure().visit(heapified)
-	P2Uniquify().print_ast(Stmt(fun_list)) 
+	(ast, fun_list) = P3Closure().visit(heapified)
+	P3Uniquify().print_ast(Stmt(fun_list)) 
 	print "-"*20 + "Closure Converted AST" + "-"*20
-	P2Uniquify().print_ast(ast.node)
+	P3Uniquify().print_ast(ast.node)
 	print "-"*20 + "Final Func List" + "-"*20
-	to_flatten = P2Closure().doClosure(heapified)
-	P2Uniquify().print_ast(Stmt(to_flatten))
+	to_flatten = P3Closure().doClosure(heapified)
+	P3Uniquify().print_ast(Stmt(to_flatten))
 	print "-"*20 + "Flattened Func List" + "-"*20
-	flattened = P2ASTFlattener().visit(to_flatten)
-	P2Uniquify().print_ast(Stmt(flattened))
+	flattened = P3ASTFlattener().visit(to_flatten)
+	P3Uniquify().print_ast(Stmt(flattened))
 	print "-"*20 + "x86IR" + "-"*20
 	ir_list = []
 	for func in flattened:

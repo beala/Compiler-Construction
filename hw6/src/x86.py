@@ -108,6 +108,27 @@ class x86(object):
 		return "%s" % self.instruction
 	def __repr__(self):
 		return self.__str__()
+
+class LiveSetAlg(object):
+	_instrNode = None
+	def setInstrNode(self, instructNode):
+		self._instrNode = instructNode
+
+	def doCalcLiveSetControlStruct(self, previousLiveSet): 
+		liveSetAll = set()
+		# Iterate through if, then, else.
+		for number in reversed(range(self._instrNode.numOperands)):
+			# Calculate the l_before of each.
+			# previousLiveSet = set()
+			for instruction in reversed(self._instrNode.operandList[number]):
+				previousLiveSet = instruction.doCalculateLiveSet(previousLiveSet)
+			# Union it into the l_before of the if instruction
+			liveSetAll = liveSetAll | previousLiveSet
+		
+		liveSetBefore = set(liveSetAll)
+		liveSetBefore &= previousLiveSet
+		return liveSetBefore
+
 class Ifx86(x86):
 	numOperands = 3
 	def __init__(self, test, then, else_):
@@ -115,19 +136,42 @@ class Ifx86(x86):
 		self.instruction = "_IF"
 		self.operandList = [test, then, else_]
 	def doCalculateLiveSet(self, previousLiveSet):
-		liveSetAll = set()
-		# Iterate through if, then, else.
-		for number in reversed(range(3)):
-			# Calculate the l_before of each.
-			# previousLiveSet = set()
-			for instruction in reversed(self.operandList[number]):
-				previousLiveSet = instruction.doCalculateLiveSet(previousLiveSet)
-			# Union it into the l_before of the if instruction
-			liveSetAll = liveSetAll | previousLiveSet
-		
-		self.liveSetBefore = set(liveSetAll)
-		self.liveSetBefore &= previousLiveSet
-		#import pdb; pdb.set_trace()
+		liveSetAlg = LiveSetAlg()
+		liveSetAlg.setInstrNode(self)
+		self.liveSetBefore = liveSetAlg.doCalcLiveSetControlStruct(previousLiveSet)
+		return self.liveSetBefore
+
+#		liveSetAll = set()
+#		# Iterate through if, then, else.
+#		for number in reversed(range(3)):
+#			# Calculate the l_before of each.
+#			# previousLiveSet = set()
+#			for instruction in reversed(self.operandList[number]):
+#				previousLiveSet = instruction.doCalculateLiveSet(previousLiveSet)
+#			# Union it into the l_before of the if instruction
+#			liveSetAll = liveSetAll | previousLiveSet
+#		
+#		self.liveSetBefore = set(liveSetAll)
+#		self.liveSetBefore &= previousLiveSet
+#		#import pdb; pdb.set_trace()
+#		return self.liveSetBefore
+	def __str__(self):
+		myString = ""
+		for number in range(3):
+			for instruction in self.operandList[number]:
+				myString +=  "-"*(number+1) + ">" + str(instruction)+"\n"
+		return myString
+
+class Whilex86(x86):
+	numOperands = 2
+	def __init__(self, test, then, else_):
+		super(Whilex86, self).__init__()
+		self.instrution = "_WHILE"
+		self.operandList = [test, body]
+	def doCalculateLiveSet(self, previousLiveSet):
+		liveSetAlg = LiveSetAlg()
+		liveSetAlg.setInstrNode(self)
+		self.liveSetBefore = liveSetAlg.doCalcLiveSetControlStruct(previousLiveSet)
 		return self.liveSetBefore
 	def __str__(self):
 		myString = ""

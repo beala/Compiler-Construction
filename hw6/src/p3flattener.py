@@ -9,7 +9,9 @@ class P3ASTFlattener(P2ASTFlattener):
 	def visit_While(self, node):
 		(fe1, se1) = self.visit(node.test)
 		se2 = self.visit(node.body) #is a Stmt node
-		return se1 + [While(fe1, se2, None)]
+		#whileTest = Stmt(se1+[InjectFrom(Const(0),IntegerCompare(fe1, [("==", Const(1))]))])
+		whileTest = Stmt(se1+ [fe1])
+		return [While(whileTest, se2, None)]
 
 if __name__ == "__main__":
 	import sys 

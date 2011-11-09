@@ -176,6 +176,7 @@ class Myx86Selector:
 			return myIRList
 		elif isinstance(ast, While):
 			x86Test = self.generate_x86_code(ast.test)
+			import pdb; pdb.set_trace()
 			testTmpVar = self.getTmpVar()
 			x86Body = self.generate_x86_code(ast.body)
 			testInstruct = [x86.Pushl(testTmpVar), \

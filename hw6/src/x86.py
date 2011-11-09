@@ -175,7 +175,10 @@ class Whilex86(x86):
 		return self.liveSetBefore
 	def __str__(self):
 		myString = ""
-		for number in range(3):
+		myString += "WHILE:\n"
+		myString += "\t TEST: "+str(self.operandList[0])
+		myString += "\n\t BODY:" + str(self.operandList[1])
+		for number in range(1):
 			for instruction in self.operandList[number]:
 				myString +=  "-"*(number+1) + ">" + str(instruction)+"\n"
 		return myString

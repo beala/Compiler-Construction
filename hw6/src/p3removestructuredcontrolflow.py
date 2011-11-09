@@ -28,8 +28,8 @@ class P3RemoveStructuredControlFlow:
 		return myNewInstructionList #list of flat instructions
 	def removeWhileStructure(self, node):
 		myNewInstructionList = []
-		beginLabel = "W_"+self.__makeLabel()
-		endLabel = "W_"+self.__makeLabel()
+		beginLabel = "W_BEGIN"+self.__makeLabel()
+		endLabel = "W_END"+self.__makeLabel()
 		myNewInstructionList += [Label(beginLabel)]
 		myNewInstructionList += self.removeIfs(node.operandList[0])
 		#for testInstruction in node.operandList[0]:

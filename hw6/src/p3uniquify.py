@@ -18,3 +18,27 @@ class P3Uniquify(P2Uniquify):
 		for node in ast.nodes:
 			newStmtList.append(self.visit(node,curScopeDict))
 		return Stmt(newStmtList)
+	
+	# Debugging methods: #############################################################################
+	def print_ast(self, stmt_ast, tabcount=0):
+		for node in stmt_ast.nodes:
+			if isinstance(node, If):
+				print '\t' * tabcount + 'If: ' + str(node.tests[0][0]) + ' then:'
+				self.print_ast(node.tests[0][1], tabcount+1)
+				print '\t' * (tabcount) + 'Else: '
+				self.print_ast(node.else_, tabcount+1)
+				print '\t' * (tabcount) + 'End If'
+			if isinstance(node, While):
+				print '\t' * tabcount + 'While: ' + str(node.test) + ' then:'
+				self.print_ast(node.body, tabcount+1)
+				print '\t' * (tabcount) + 'End While'
+			elif isinstance(node, Lambda):
+				print '\t' * tabcount + 'Lambda (' + str(node.argnames) + '):'
+				self.print_ast(Stmt([node.code]), tabcount+1)
+				print '\t' * tabcount + 'EndLambda'
+			elif isinstance(node, Function):
+				print '\t' * tabcount + 'def ' + str(node.name) + '(' + str(node.argnames) + '):'
+				self.print_ast(node.code, tabcount+1)
+				print '\t' * tabcount + 'EndFunc'
+			else:
+				print '\t' * (tabcount) + str(node)

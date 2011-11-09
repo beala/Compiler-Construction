@@ -40,11 +40,11 @@ if __name__ == "__main__":
 	import os
 	from p3uniquify import *
 	from p3explicate import *
-	from p2closure import *
-	from p2flattener import *
+	from p3closure import *
+	from p3flattener import *
 	from Myx86Selector import *
 	from InterferenceGraph import *
-	from p1removex86ifs import *
+	from p3removestructuredcontrolflow import *
 	from p3heapify import *
 	myfile = sys.argv[1]
 	basename = myfile[:len(myfile)-3]
@@ -52,15 +52,15 @@ if __name__ == "__main__":
 	to_explicate = P3Uniquify().visit(to_explicate)
 	to_heapify = P3Explicate().visit(to_explicate)
 	to_closure_convert = P3Heapify().visit(to_heapify)
-	(ast, fun_list) = P2Closure().visit(to_closure_convert)
-	to_flatten = P2Closure().doClosure(to_closure_convert)
-	flattened = P2ASTFlattener().visit(to_flatten)
+	(ast, fun_list) = P3Closure().visit(to_closure_convert)
+	to_flatten = P3Closure().doClosure(to_closure_convert)
+	flattened = P3ASTFlattener().visit(to_flatten)
 	file = open(basename+".s","w")
 	for func in flattened:
 		tmpIR = Myx86Selector().generate_x86_code(func)
 		ig = InterferenceGraph(tmpIR)
 		coloredIR=ig.allocateRegisters()
-		no_ifs = P1Removex86Ifs(coloredIR).removeIfs()
+		no_ifs = P3RemoveStructuredControlFlow().removeIfs(coloredIR)
 		ig.setIR(no_ifs)
 		file.write(ig.emitColoredIR())
 	file.close()

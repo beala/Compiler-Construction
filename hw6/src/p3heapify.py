@@ -14,3 +14,4 @@ class P3Heapify(P2Heapify):
 		(testFreeBelow, testBody) = self.visit(ast.tests[0][0])
 		(thenFreeBelow, thenBody) = self.visit(ast.tests[0][1])
 		(else_FreeBelow, else_Body) = self.visit(ast.else_)
+		return(testFreeBelow + thenFreeBelow+ else_FreeBelow, If([(testBody, thenBody)], else_Body))

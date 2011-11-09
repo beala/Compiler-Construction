@@ -11,29 +11,33 @@ class P3RemoveStructuredControlFlow:
 		myNewInstructionList = []
 		elseLabel = self.__makeLabel()
 		endLabel = self.__makeLabel()
-
-		for testInstruction in ifx86Node.operandList[0]:
-			myNewInstructionList += self.removeIfs(testInstruction)
+		myNewInstructionList += self.removeIfs(ifx86Node.operandList[0])
+		#for testInstruction in ifx86Node.operandList[0]:
+		#	myNewInstructionList += self.removeIfs(testInstruction)
 		myNewInstructionList += [Jne(elseLabel)]
-		for thenInstruction in ifx86Node.operandList[1]:
-			myNewInstructionList += self.removeIfs(thenInstruction)
+		myNewInstructionList += self.removeIfs(ifx86Node.operandList[1])
+		#for thenInstruction in ifx86Node.operandList[1]:
+		#	myNewInstructionList += self.removeIfs(thenInstruction)
 		myNewInstructionList += [Jmp(endLabel)]
 		myNewInstructionList += [Label(elseLabel)]
-		for elseInstruction in ifx86Node.operandList[2]:
-			myNewInstructionList += self.removeIfs(elseInstruction)
+		myNewInstructionList += self.removeIfs(ifx86Node.operandList[2])
+		#for elseInstruction in ifx86Node.operandList[2]:
+		#	myNewInstructionList += self.removeIfs(elseInstruction)
 		myNewInstructionList += [Label(endLabel)]
 		
 		return myNewInstructionList #list of flat instructions
 	def removeWhileStructure(self, node):
 		myNewInstructionList = []
-		beginLabel = self.__makeLabel()
-		endLabel = self.__makeLabel()
+		beginLabel = "W_"+self.__makeLabel()
+		endLabel = "W_"+self.__makeLabel()
 		myNewInstructionList += [Label(beginLabel)]
-		for testInstruction in node.operandList[0]:
-			myNewInstructionList += self.removeIfs(testInstruction)
+		myNewInstructionList += self.removeIfs(node.operandList[0])
+		#for testInstruction in node.operandList[0]:
+		#	myNewInstructionList += self.removeIfs(testInstruction)
 		myNewInstructionList += [Jne(endLabel)]
-		for bodyInstruction in node.operandList[1]:
-			myNewInstructionList += self.removeIfs(bodyInstruction)
+		myNewInstructionList += self.removeIfs(node.operandList[1])
+		#for bodyInstruction in node.operandList[1]:
+		#	myNewInstructionList += self.removeIfs(bodyInstruction)
 		myNewInstructionList += [Jmp(beginLabel)]
 		myNewInstructionList += [Label(endLabel)]
 		return myNewInstructionList

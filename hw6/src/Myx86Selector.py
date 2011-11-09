@@ -182,7 +182,7 @@ class Myx86Selector:
 							x86.Call('is_true'), \
 							x86.Addl(x86.ConstNode(4), x86.Register('esp')), \
 							x86.Cmpl(x86.ConstNode(1), x86.Register('eax'))]
-			myIRList.append(x86.Whilex86(x86Test + testInstruct, x86Then, x86Else))
+			myIRList.append(x86.Whilex86(x86Test + testInstruct, x86Body))
 			return myIRList
 		elif isinstance(ast, IsCompare):
 			myIRList += self.generate_x86_code(ast.expr)

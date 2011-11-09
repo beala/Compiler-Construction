@@ -21,8 +21,8 @@ class InterferenceGraph(object):
 		self.__ir = IR
 	def __initGraph(self, IR):	
 		for instruction in IR:
-			if isinstance(instruction, Ifx86):
-				for number in range(3):
+			if isinstance(instruction, Ifx86) or isinstance(instruction, Whilex86):
+				for number in range(instruction.numOperands):
 					self.__initGraph(instruction.operandList[number])
 				continue
 			for operand in instruction.operandList: 
@@ -80,16 +80,20 @@ class InterferenceGraph(object):
 #				for iterlAfter in node.liveSetAfter:
 #					self.insertConnection(iterlAfter, node.operandList[0])
 #					self.insertConnection(iterlAfter, node.operandList[1])
-			elif isinstance(node, Ifx86):
+			elif isinstance(node, Ifx86) or isinstance(node, Whilex86):
 				writtenToSet = self.__getWrittenTo(node)
-				for number in range(3):
+				for number in range(node.numOperands):
 					self.drawEdges(node.operandList[number])
 				for iterlAfter in node.liveSetAfter:
 					for writtenToElement in writtenToSet:
 						self.insertConnection(iterlAfter, writtenToElement)
-	def __getWrittenTo(self,ifNode):
+	def __getWrittenTo(self,controlNode):
 		mySet = set()
-		for instruction in ifNode.operandList[1]+ifNode.operandList[2]:
+		if isinstance(controlNode, Ifx86):
+			operands = controlNode.operandList[1] + controlNode.operandList[2]
+		elif isinstance(controlNode, Whilex86):
+			operands = controlNode.operandList[1]
+		for instruction in operands:
 			if isinstance(instruction, Movl):
 				mySet.add(instruction.operandList[1])
 			elif isinstance(instruction, Addl):
@@ -101,7 +105,7 @@ class InterferenceGraph(object):
 			elif isinstance(instruction, Call):
 				for iterReg in self.__registers:
 					mySet.add(iterReg)
-			elif isinstance(instruction, Ifx86):
+			elif isinstance(instruction, Ifx86) or isinstance(instruction, Whilex86):
 				mySet = mySet | self.__getWrittenTo(instruction)
 		return mySet	
 	def __reduceDuplicateMoves(self, irToReduce):

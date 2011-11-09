@@ -17,3 +17,4 @@ class P3Uniquify(P2Uniquify):
 		newStmtList = []
 		for node in ast.nodes:
 			newStmtList.append(self.visit(node,curScopeDict))
+		return Stmt(newStmtList)

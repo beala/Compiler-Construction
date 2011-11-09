@@ -1,6 +1,6 @@
 from compiler.ast import *
 from astvisitor import *
-from p2getfreevars import *
+from p3getfreevars import *
 from p2getlocals import *
 from p2ast import *
 from p1ast import *
@@ -47,7 +47,7 @@ class P2Heapify(ASTVisitor):
 	#	should just return whatever they've recieved from their children. The list of freeVars is a list of *strings* not Name() nodes.
 	
 	def visit_Module(self, ast):
-		freeVarObj = P2GetFreeVars()
+		freeVarObj = P3GetFreeVars()
 		freeVarObj.visit(ast)
 		self._toHeapify |= set(freeVarObj.getVarsToHeapify())
 		if _debug == True:
@@ -63,7 +63,7 @@ class P2Heapify(ASTVisitor):
 		# Get the varaibles that are free IN THE CURRENT SCOPE. These need to be heapified.
 			# Get everything free BELOW AND IN THE CURRENT SCOPE
 			# Subtract out everything LOCAL IN THE CURRENT SCOPE
-		freeVars = P2GetFreeVars().visit(ast)
+		freeVars = P3GetFreeVars().visit(ast)
 		localHere = P2GetLocals().getLocalsInCurrentScope(ast)
 		freeHere = set(freeVars) - set(localHere)
 		self._toHeapify |= freeVars

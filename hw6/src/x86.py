@@ -164,7 +164,7 @@ class Ifx86(x86):
 
 class Whilex86(x86):
 	numOperands = 2
-	def __init__(self, test, then, else_):
+	def __init__(self, test, body):
 		super(Whilex86, self).__init__()
 		self.instrution = "_WHILE"
 		self.operandList = [test, body]

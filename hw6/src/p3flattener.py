@@ -13,7 +13,7 @@ class P3ASTFlattener(P2ASTFlattener):
 		#whileTest = Stmt(se1+[InjectFrom(Const(0),IntegerCompare(fe1, [("==", Const(1))]))])
 		#whileTest = Stmt(se1])
 		#return [While(whileTest, se2, None)]
-		return test_flat + [While(test_result, body_flat, None)]
+		return [While(Stmt(test_flat + [test_result]), body_flat, None)]
 if __name__ == "__main__":
 	import sys 
 	import compiler

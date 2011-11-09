@@ -1,5 +1,5 @@
 from astvisitor import *
-from p2getfreevars import *
+from p3getfreevars import *
 from p1ast import *
 from p2ast import *
 from p2getlocals import *
@@ -44,7 +44,7 @@ class P2Closure(ASTVisitor):
 		# Recurse on the body to get the 'newbody'
 		(newBody, funs) = self.visit(node.code)
 		# Get the freeVars. Needed to create closure.
-		freeVars = P2GetFreeVars().visit(node)
+		freeVars = P3GetFreeVars().visit(node)
 		# Turn it into a list. (A set is unordered, which may cause problems)
 		freeVars = [Name(var) for var in freeVars]
 		# Get a name for this lambda

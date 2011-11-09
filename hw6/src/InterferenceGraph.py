@@ -54,8 +54,8 @@ class InterferenceGraph(object):
 		self.__theGraph[node] = set()
 	def __copylBeforeTolAfter(self, myIR, lAfter = set()):
 		for node in reversed(myIR):
-			if isinstance(node, Ifx86):
-				for number in range(3):
+			if isinstance(node, Ifx86) or isinstance(node, Whilex86):
+				for number in range(node.numOperands):
 					self.__copylBeforeTolAfter(node.operandList[number], lAfter)
 			node.liveSetAfter = lAfter
 			lAfter=node.liveSetBefore
@@ -245,6 +245,14 @@ class InterferenceGraph(object):
 				instruction.operandList[2] = else_ir
 				#Continue to next instruction
 				continue
+			elif isinstance(instruction, Whilex86):
+				(spillFlag, test_ir) = self.__spillAnalysis(instruction.operandList[0], spillFlag)
+				instruction.operandList[0] = test_ir
+				
+				(spillFlag, body_ir) = self.__spillAnalysis(instruction.operandList[1], spillFlag)
+				instruction.operandList[1] = body_ir
+				continue
+
 			#special case for MemLoc nodes
 			if instruction.numOperands == 2 and ((isinstance(instruction.operandList[0], MemLoc) and (isinstance(instruction.operandList[1], VarNode) and instruction.operandList[1].color > self.__regNum)) \
 				or  (isinstance(instruction.operandList[1], MemLoc) and (isinstance(instruction.operandList[0], VarNode) and instruction.operandList[0].color > self.__regNum))):

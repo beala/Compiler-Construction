@@ -1,18 +1,19 @@
 from p2flattener import *
 class P3ASTFlattener(P2ASTFlattener):
 	def visit_If(self, node):
-		(fe1, se1) = self.visit(node.tests[0][0])
-		se2 = self.visit(node.tests[0][1]) #is a Stmt node
-		se3 = self.visit(node.else_) #is a Stmt node
-		newIf = If([(fe1, se2)], se3)
-		return se1 + [newIf]
+		(test_result, test_flat) = self.visit(node.tests[0][0])
+		then_flat = self.visit(node.tests[0][1]) #is a Stmt node
+		else_flat = self.visit(node.else_) #is a Stmt node
+		#newIf = If([(fe1, se2)], se3)
+		#return se1 + [newIf]
+		return test_flat + [If([(test_result, then_flat)], else_flat)]
 	def visit_While(self, node):
-		(fe1, se1) = self.visit(node.test)
-		se2 = self.visit(node.body) #is a Stmt node
+		(test_result, test_flat) = self.visit(node.test)
+		body_flat = self.visit(node.body) #is a Stmt node
 		#whileTest = Stmt(se1+[InjectFrom(Const(0),IntegerCompare(fe1, [("==", Const(1))]))])
-		whileTest = Stmt(se1+ [fe1])
-		return [While(whileTest, se2, None)]
-
+		#whileTest = Stmt(se1])
+		#return [While(whileTest, se2, None)]
+		return test_flat + [While(test_result, body_flat, None)]
 if __name__ == "__main__":
 	import sys 
 	import compiler

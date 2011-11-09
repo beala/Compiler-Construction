@@ -4,11 +4,11 @@ class P3Uniquify(P2Uniquify):
 	def visit_If(self, ast, curScopeDict):
 		newTests = [(self.visit(ast.tests[0][0], curScopeDict), self.visit(ast.tests[0][1], curScopeDict))]
 		ast.tests = newTests
-		ast.else_ = self.visit(ast.else_)
+		ast.else_ = self.visit(ast.else_, curScopeDict)
 		return ast
 	def visit_While(self, ast, curScopeDict):
-		ast.test = self.visit(ast.test)
-		ast.body = self.visit(ast.body)
+		ast.test = self.visit(ast.test, curScopeDict)
+		ast.body = self.visit(ast.body, curScopeDict)
 		return ast
 	# This should only get called if the Stmt node is nested in something
 	# without a scope change (like IF or WHILE). If there's a scope change,
@@ -28,7 +28,7 @@ class P3Uniquify(P2Uniquify):
 				print '\t' * (tabcount) + 'Else: '
 				self.print_ast(node.else_, tabcount+1)
 				print '\t' * (tabcount) + 'End If'
-			if isinstance(node, While):
+			elif isinstance(node, While):
 				print '\t' * tabcount + 'While: ' + str(node.test) + ' then:'
 				self.print_ast(node.body, tabcount+1)
 				print '\t' * (tabcount) + 'End While'

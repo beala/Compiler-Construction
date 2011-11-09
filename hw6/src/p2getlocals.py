@@ -35,8 +35,9 @@ class P2GetLocals(object):
 			# We must account for this in the visitor functions below.
 			local_vars += [node.name]
 			local_vars += node.argnames
-			for stmt in node.code.nodes:
-				local_vars += self._getLocals(stmt, recurDepth + 1)
+			local_vars += self._iterateOverStmt(node.code, recurDepth + 1)
+			#for stmt in node.code.nodes:
+			#	local_vars += self._getLocals(stmt, recurDepth + 1)
 			return local_vars
 		elif isinstance(node, Lambda):
 			# Don't recurse into nested scopes if doSubScopes is False
@@ -44,15 +45,17 @@ class P2GetLocals(object):
 				return []
 			# Iterate through statements if there's a statement node below.
 			if isinstance(node.code, Stmt):
-				for stmt in node.code.nodes:
-					local_vars += self._getLocals(stmt, recurDepth + 1)
+				local_vars += self._iterateOverStmt(node.code, recurDepth + 1)
+				#for stmt in node.code.nodes:
+				#	local_vars += self._getLocals(stmt, recurDepth + 1)
 			else:
 				local_vars += self._getLocals(node.code, recurDepth + 1)
 			local_vars += node.argnames
 			return local_vars
 		elif isinstance(node, Module):
-			for stmt in node.node.nodes:
-				local_vars += self._getLocals(stmt, recurDepth + 1)
+			#for stmt in node.node.nodes:
+			#	local_vars += self._getLocals(stmt, recurDepth + 1)
+			local_vars += self._iterateOverStmt(node.node, recurDepth + 1)
 			return local_vars
 		elif isinstance(node, IfExp):
 			local_vars += self._getLocals(node.test, recurDepth + 1)
@@ -60,15 +63,23 @@ class P2GetLocals(object):
 			local_vars += self._getLocals(node.else_, recurDepth + 1)
 			return local_vars
 		elif isinstance(node, If):
-			# I don't think there can be an assign inside IfExpr, but just in case...
 			local_vars += self._getLocals(node.tests[0][0], recurDepth + 1)
-			local_vars += self._getLocals(node.tests[0][1], recurDepth + 1)
-			local_vars += self._getLocals(node.else_, recurDepth + 1)
+			local_vars += self._iterateOverStmt(node.tests[0][1], recurDepth + 1)
+			local_vars += self._iterateOverStmt(node.else_, recurDepth + 1)
+			#local_vars += self._getLocals(node.tests[0][1], recurDepth + 1)
+			#local_vars += self._getLocals(node.else_, recurDepth + 1)
 			return local_vars
 		elif isinstance(node, While):
 			local_vars += self._getLocals(node.test, recurDepth + 1)
 			#node.body is a Stmt object, so we have to loop through the elements
-			for element in node.body.nodes:
-				local_vars += self._getLocals(element, recurDepth + 1)
-			return local_vars
+			local_vars += self._iterateOverStmt(node.body, recurDepth + 1)
+			#for element in node.body.nodes:
+			#	local_vars += self._getLocals(element, recurDepth + 1)
+			#return local_vars
 		return []
+
+	def _iterateOverStmt(self, stmtNode, recurDepth):
+		local_vars = []
+		for stmt in stmtNode.nodes:
+			local_vars += self._getLocals(stmt, recurDepth)
+		return local_vars

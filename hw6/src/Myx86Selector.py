@@ -152,17 +152,21 @@ class Myx86Selector:
 			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			return myIRList
 		elif isinstance(ast, Return):
+			ir_list = []
 			ir_list = self.generate_x86_code(ast.value)
 			return ir_list + [x86.Movl(self.getTmpVar(),x86.Register('eax'))]
 		elif isinstance(ast, Stmt):
+			myIRList = []
 			for node in ast.nodes:
 				myIRList += self.generate_x86_code(node)
 			return myIRList
 		elif isinstance(ast, Discard):
+			myIRList = []
 			# Nothing to do. Just go to the next node.
 			myIRList += self.generate_x86_code(ast.expr)
 			return myIRList
 		elif isinstance(ast, If):
+			myIRList = []
 			x86Test = self.generate_x86_code(ast.tests[0][0])
 			resultTmpVar = self.getTmpVar()
 			x86Then = self.generate_x86_code(ast.tests[0][1])
@@ -175,6 +179,7 @@ class Myx86Selector:
 			#myIRList.append(x86.Ifx86(x86Test + compareInstruct, [x86.Addl(x86.ConstNode(4), x86.Register('esp'))] + x86Then,x86Else))
 			return myIRList
 		elif isinstance(ast, While):
+			myIRList = []
 			x86Test = self.generate_x86_code(ast.test)
 			testTmpVar = self.getTmpVar()
 			x86Body = self.generate_x86_code(ast.body)

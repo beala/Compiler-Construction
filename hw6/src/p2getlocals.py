@@ -76,7 +76,7 @@ class P2GetLocals(object):
 			#for element in node.body.nodes:
 			#	local_vars += self._getLocals(element, recurDepth + 1)
 			#return local_vars
-		return []
+		return local_vars
 
 	def _iterateOverStmt(self, stmtNode, recurDepth):
 		local_vars = []

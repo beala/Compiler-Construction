@@ -12,6 +12,7 @@ import compiler
 import InterferenceGraph
 import p1removex86ifs
 import p1explicate
+from p3testast import *
 class csci4555_compiler:
 	myGraph = None
 	def __init__(self,codefile):
@@ -33,34 +34,37 @@ class csci4555_compiler:
 	def getColoredIR(self):
 		return ".globl main\nmain:\n"+self.my_graph.emitColoredIR()+"\tleave\n\tret\n"
 		#print x86IRObj.emitx86Text()
-
 if __name__ == "__main__":
-	import sys 
-	import compiler
-	import os
-	from p3uniquify import *
-	from p3explicate import *
-	from p3closure import *
-	from p3flattener import *
-	from Myx86Selector import *
-	from InterferenceGraph import *
-	from p3removestructuredcontrolflow import *
-	from p3heapify import *
-	myfile = sys.argv[1]
-	basename = myfile[:len(myfile)-3]
-	to_explicate = compiler.parseFile(sys.argv[1])
-	to_explicate = P3Uniquify().visit(to_explicate)
-	to_heapify = P3Explicate().visit(to_explicate)
-	to_closure_convert = P3Heapify().visit(to_heapify)
-	(ast, fun_list) = P3Closure().visit(to_closure_convert)
-	to_flatten = P3Closure().doClosure(to_closure_convert)
-	flattened = P3ASTFlattener().visit(to_flatten)
-	file = open(basename+".s","w")
-	for func in flattened:
-		tmpIR = Myx86Selector().generate_x86_code(func)
-		ig = InterferenceGraph(tmpIR)
-		coloredIR=ig.allocateRegisters()
-		no_ifs = P3RemoveStructuredControlFlow().removeIfs(coloredIR)
-		ig.setIR(no_ifs)
-		file.write(ig.emitColoredIR())
-	file.close()
+	myTester = P3TestAST()
+	myTester.compileToStage(sys.argv[1],'print',False)
+
+#if __name__ == "__main__":
+#	import sys 
+#	import compiler
+#	import os
+#	from p3uniquify import *
+#	from p3explicate import *
+#	from p3closure import *
+#	from p3flattener import *
+#	from Myx86Selector import *
+#	from InterferenceGraph import *
+#	from p3removestructuredcontrolflow import *
+#	from p3heapify import *
+#	myfile = sys.argv[1]
+#	basename = myfile[:len(myfile)-3]
+#	to_explicate = compiler.parseFile(sys.argv[1])
+#	to_explicate = P3Uniquify().visit(to_explicate)
+#	to_heapify = P3Explicate().visit(to_explicate)
+#	to_closure_convert = P3Heapify().visit(to_heapify)
+#	(ast, fun_list) = P3Closure().visit(to_closure_convert)
+#	to_flatten = P3Closure().doClosure(to_closure_convert)
+#	flattened = P3ASTFlattener().visit(to_flatten)
+#	file = open(basename+".s","w")
+#	for func in flattened:
+#		tmpIR = Myx86Selector().generate_x86_code(func)
+#		ig = InterferenceGraph(tmpIR)
+#		coloredIR=ig.allocateRegisters()
+#		no_ifs = P3RemoveStructuredControlFlow().removeIfs(coloredIR)
+#		ig.setIR(no_ifs)
+#		file.write(ig.emitColoredIR())
+#	file.close()

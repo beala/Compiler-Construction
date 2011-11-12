@@ -185,6 +185,39 @@ class Ifx86(x86):
 				myString +=  "-"*(number+1) + ">" + str(instruction)+"\n"
 		return myString
 
+class LiveSetWhile(object):
+	#JOSH revised while liveness analysis
+	def __init__(self, instruction):
+		#initialize our livesets to null sets
+		self.L0 = set([])
+		self.L1 = set([])
+		self.L2 = set([])
+		self.L3 = set([])
+		self.L4 = set([])
+		self.OLD_L1 = set([])
+		self.instruction = instruction
+	def doCalculateLiveSet(self, liveSetBefore):
+		self.L4 = liveSetBefore
+		firstPass = 1
+		while True:
+			self.L1 = self.L4 | self.L2 | self._doCalculateLiveSetSubList(self.instruction.operandList[0])
+			if not firstPass and self.OLD_L1 == self.L1:
+				break
+			else:
+				self.OLD_L1 = self.L1
+				firstPass = 0
+			self.L3 = self.L1
+			self.L2 = self._doCalculateLiveSetSubList(self.instruction.operandList[1],self.L3)
+		self.L0 = self.L1
+		return self.L0
+
+	def _doCalculateLiveSetSubList(self, subList, lAfter=set([])):
+		#if lAfter is an empty set, treat like vars() function
+		previousLiveSet = lAfter
+		for instruction in reversed(subList):
+			previousLiveSet = instruction.doCalculateLiveSet(previousLiveSet)
+		return previousLiveSet
+	
 class Whilex86(x86):
 	numOperands = 2
 	def __init__(self, test, body):
@@ -192,11 +225,16 @@ class Whilex86(x86):
 		self.instrution = "_WHILE"
 		self.operandList = [test, body]
 	def doCalculateLiveSet(self, previousLiveSet):
-		liveSetAlg = LiveSetAlg()
-		liveSetAlg.setInstrNode(self)
-		self.liveSetBefore = liveSetAlg.doCalcLiveSetIfWhile(previousLiveSet)
+		#liveSetAlg = LiveSetAlg()
+		#liveSetAlg.setInstrNode(self)
+		#self.liveSetBefore = liveSetAlg.doCalcLiveSetIfWhile(previousLiveSet)
+		#return self.liveSetBefore
+
+		#Josh added: - BROKEN as of now
+		liveSetBeh = LiveSetWhile(self)
+		self.liveSetBefore = liveSetBeh.doCalculateLiveSet(previousLiveSet)
 		return self.liveSetBefore
-		
+
 #		liveSetAll = set()
 #		# Iterate through if, then, else.
 #		for i in range(2):

@@ -145,11 +145,17 @@ class P3Declassify(ASTVisitor):
 		return Not(newExpr)
 
 	def visit_Function(self, ast, curClass):
-		newFuncName = self._makeTmpMethod()
+		# Only rename and do AssAttr if we're inside a class.
+		# Otherwise, we still need to visit the function to make sure there
+		# aren't classes nested in it.
 		newCode = self.visit(ast.code, curClass)
-		newFunc = Function(ast.decorators, newFuncName, ast.argnames, ast.defaults, ast.flags, ast.doc, newCode)
-		newAssign = self._makeAssignAssAttr(curClass, ast.name, Name(newFuncName))
-		return [newFunc] + [newAssign]
+		if curClass != None:
+			newFuncName = self._makeTmpMethod()
+			newFunc = Function(ast.decorators, newFuncName, ast.argnames, ast.defaults, ast.flags, ast.doc, newCode)
+			newAssign = self._makeAssignAssAttr(curClass, ast.name, Name(newFuncName))
+			return [newFunc] + [newAssign]
+		else:
+			return Function(ast.decorators, ast.name, ast.argnames, ast.defaults, ast.flags, ast.doc, newCode)
 
 	def visit_Lambda(self, ast, curClass):
 		newCode = self.visit(ast.code, curClass)

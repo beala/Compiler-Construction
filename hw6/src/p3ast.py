@@ -6,3 +6,9 @@ class CreateClass(Node):
 		self.bases = bases
 	def __repr__(self):
 		return "CreateClass(" + str(self.bases) + ")"
+class HasAttr(Node):
+	def __init__(self, expr, attrname):
+		self.expr = expr
+		self.attrname = attrname
+	def __repr__(self):
+		return "HasAttr(" + str(self.expr) + ", " + str(self.attrname) + ")"

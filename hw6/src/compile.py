@@ -36,7 +36,11 @@ class csci4555_compiler:
 		#print x86IRObj.emitx86Text()
 if __name__ == "__main__":
 	myTester = P3TestAST()
-	myTester.compileToStage(sys.argv[1],'print',False)
+	output = myTester.compileToStage(sys.argv[1],'print',False)
+	basename = sys.argv[1][:len(sys.argv[1])-3]
+	file = open(basename + ".s", "w")
+	file.write(output)
+	file.close()
 
 #if __name__ == "__main__":
 #	import sys 

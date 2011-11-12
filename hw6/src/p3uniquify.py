@@ -29,6 +29,9 @@ class P3Uniquify(P2Uniquify):
 	def visit_Getattr(self, ast, curScopeDict):
 		newExpr = self.visit(ast.expr, curScopeDict)
 		return Getattr(newExpr, ast.attrname)
+	def visit_HasAttr(self, ast, curScopeDict):
+		newExpr = self.visit(ast.expr, curScopeDict)
+		return HasAttr(newExpr, ast.attrname)
 	# Debugging methods: #############################################################################
 	def print_ast(self, stmt_ast, tabcount=0):
 		for node in stmt_ast.nodes:

@@ -23,6 +23,8 @@ class P2GetLocals(object):
 		if isinstance(node, Assign):
 			if isinstance(node.nodes[0], AssName):
 				local_vars += [node.nodes[0].name]
+			elif isinstance(node.nodes[0], AssAttr):
+				local_vars += [node.nodes[0].expr.name]
 			elif isinstance(node.nodes[0], Name):
 				local_vars += [node.nodes[0].name]
 			elif isinstance(node.nodes[0], Subscript):
@@ -76,6 +78,9 @@ class P2GetLocals(object):
 			#for element in node.body.nodes:
 			#	local_vars += self._getLocals(element, recurDepth + 1)
 			#return local_vars
+		elif isinstance(node, And) or isinstance(node, Or):
+			local_vars += self._getLocals(node.left, recurDepth + 1)
+			local_vars += self._getLocals(node.right, recurDepth + 1)
 		return local_vars
 
 	def _iterateOverStmt(self, stmtNode, recurDepth):

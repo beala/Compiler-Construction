@@ -18,8 +18,13 @@ class P3Heapify(P2Heapify):
 		return(testFreeBelow + thenFreeBelow+ else_FreeBelow, If([(testBody, thenBody)], else_Body))
 
 	def visit_CreateClass(self, ast):
-		(basesFreeBelow, basesBody) = self.visit(ast.bases)
-		return ( basesFreeBelow, CreateClass(basesBody) )
+		basesFreeBelowList = []
+		basesBodyList = []
+		for base in ast.bases:
+			(basesFreeBelow, basesBody) = self.visit(base)
+			basesFreeBelowList += basesFreeBelow
+			basesBodyList.append(basesBody)
+		return ( basesFreeBelowList, CreateClass(basesBodyList) )
 
 	def visit_Getattr(self, ast):
 		(exprFreeBelow, exprBody) = self.visit(ast.expr)

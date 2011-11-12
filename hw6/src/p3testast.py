@@ -45,7 +45,7 @@ class P3TestAST(object):
 		if self.stageDict[stage] < self.stageDict["close"]: return
 		(ast, fun_list) = P3Closure().visit(to_closure_convert)
 		to_flatten = P3Closure().doClosure(to_closure_convert)
-		if debug: self.print_ast(to_flatten, "Closure Conversion")
+		if debug: self.print_ast(Stmt(to_flatten), "Closure Conversion")
 		if self.stageDict[stage] < self.stageDict["flatten"]: return
 		flattened = P3ASTFlattener().visit(to_flatten)
 		if debug: self.print_ast(flattened, "Flattened AST")

@@ -1,5 +1,5 @@
 from p2uniquify import *
-
+from p3ast import *
 class P3Uniquify(P2Uniquify):
 	def visit_If(self, ast, curScopeDict):
 		newTests = [(self.visit(ast.tests[0][0], curScopeDict), self.visit(ast.tests[0][1], curScopeDict))]
@@ -18,7 +18,17 @@ class P3Uniquify(P2Uniquify):
 		for node in ast.nodes:
 			newStmtList.append(self.visit(node,curScopeDict))
 		return Stmt(newStmtList)
-	
+	def visit_CreateClass(self, ast, curScopeDict):
+		newBases = []
+		for node in ast.bases:
+			newBases.append(self.visit(node, curScopeDict))
+		return CreateClass(newBases)
+	def visit_AssAttr(self, ast, curScopeDict):
+		newExpr = self.visit(ast.expr, curScopeDict)
+		return AssAttr(newExpr, ast.attrname, ast.flags)
+	def visit_Getattr(self, ast, curScopeDict):
+		newExpr = self.visit(ast.expr, curScopeDict)
+		return Getattr(newExpr, ast.attrname)
 	# Debugging methods: #############################################################################
 	def print_ast(self, stmt_ast, tabcount=0):
 		for node in stmt_ast.nodes:

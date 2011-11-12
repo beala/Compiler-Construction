@@ -1,4 +1,5 @@
 from p2explicate import *
+from p3ast import *
 class P3Explicate(P2Explicate):
 
 	def _iterateOverAndVisit(self, toIterate):
@@ -23,8 +24,10 @@ class P3Explicate(P2Explicate):
 		return While(myTest, myBody, None)
 
 	def visit_CreateClass(self, node):
-		newBases = self.visit(node.bases)
-		return CreateClass(newBases)
+		newBases = []
+		for base in node.bases:
+			newBases.append(self.visit(base))
+		return InjectFrom(self._typeMap['big'],CreateClass(newBases))
 	
 	def visit_AssAttr(self, node):
 		newExpr = self.visit(node.expr)

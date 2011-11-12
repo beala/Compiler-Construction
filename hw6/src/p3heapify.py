@@ -1,4 +1,5 @@
 from p2heapify import *
+from p3ast import *
 
 class P3Heapify(P2Heapify):
 	# Visitor Methods: #########################################################################################
@@ -15,3 +16,17 @@ class P3Heapify(P2Heapify):
 		(thenFreeBelow, thenBody) = self.visit(ast.tests[0][1])
 		(else_FreeBelow, else_Body) = self.visit(ast.else_)
 		return(testFreeBelow + thenFreeBelow+ else_FreeBelow, If([(testBody, thenBody)], else_Body))
+
+	def visit_CreateClass(self, ast):
+		(basesFreeBelow, basesBody) = self.visit(ast.bases)
+		return ( basesFreeBelow, CreateClass(basesBody) )
+
+	def visit_Getattr(self, ast):
+		(exprFreeBelow, exprBody) = self.visit(ast.expr)
+		return (exprFreeBelow, Getattr(exprBody, ast.attrname))
+
+	def visit_AssAttr(self, ast):
+		(exprFreeBelow, exprBody) = self.visit(ast.expr)
+		return (exprFreeBelow, AssAttr(exprBody, ast.attrname, ast.flags))
+
+	

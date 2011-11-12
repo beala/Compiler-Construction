@@ -1,7 +1,7 @@
 from p2explicate import *
 class P3Explicate(P2Explicate):
 
-	def _iterateOverAndVisit(self, toIterate)
+	def _iterateOverAndVisit(self, toIterate):
 		result = []
 		for item in toIterate:
 			result.append(self.visit(item))

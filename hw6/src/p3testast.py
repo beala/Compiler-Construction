@@ -124,7 +124,7 @@ if __name__ == "__main__":
 	myfile = sys.argv[1]
 	programString = P3TestAST().compileToStage(myfile, sys.argv[2], sys.argv[3])
 	
-	if sys.argv[3]  == "print":
+	if sys.argv[2]  == "print":
 		basename = myfile[:len(myfile)-3]
 		file = open(basename + ".s", "w")
 		file.write(programString)

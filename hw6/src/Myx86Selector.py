@@ -178,7 +178,10 @@ class Myx86Selector:
 			x86Test = self.generate_x86_code(ast.tests[0][0])
 			resultTmpVar = self.getTmpVar()
 			x86Then = self.generate_x86_code(ast.tests[0][1])
-			x86Else = self.generate_x86_code(ast.else_)
+			if ast.else_ != None:
+				x86Else = self.generate_x86_code(ast.else_)
+			else:
+				x86Else = []
 			compareInstruct = [x86.Pushl(resultTmpVar), \
 								x86.Call('is_true'), \
 								x86.Addl(x86.ConstNode(4), x86.Register('esp')), \

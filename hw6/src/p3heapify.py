@@ -14,7 +14,11 @@ class P3Heapify(P2Heapify):
 		# the second element is the "then" (what executes if the test passes)
 		(testFreeBelow, testBody) = self.visit(ast.tests[0][0])
 		(thenFreeBelow, thenBody) = self.visit(ast.tests[0][1])
-		(else_FreeBelow, else_Body) = self.visit(ast.else_)
+		if ast.else_ != None:
+			(else_FreeBelow, else_Body) = self.visit(ast.else_)
+		else:
+			else_FreeBelow = []
+			else_Body = None
 		return(testFreeBelow + thenFreeBelow+ else_FreeBelow, If([(testBody, thenBody)], else_Body))
 
 	def visit_CreateClass(self, ast):

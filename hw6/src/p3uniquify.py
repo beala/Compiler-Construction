@@ -4,7 +4,8 @@ class P3Uniquify(P2Uniquify):
 	def visit_If(self, ast, curScopeDict):
 		newTests = [(self.visit(ast.tests[0][0], curScopeDict), self.visit(ast.tests[0][1], curScopeDict))]
 		ast.tests = newTests
-		ast.else_ = self.visit(ast.else_, curScopeDict)
+		if ast.else_ != None:
+			ast.else_ = self.visit(ast.else_, curScopeDict)
 		return ast
 	def visit_While(self, ast, curScopeDict):
 		ast.test = self.visit(ast.test, curScopeDict)

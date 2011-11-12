@@ -4,7 +4,10 @@ class P3ASTFlattener(P2ASTFlattener):
 	def visit_If(self, node):
 		(test_result, test_flat) = self.visit(node.tests[0][0])
 		then_flat = self.visit(node.tests[0][1]) #is a Stmt node
-		else_flat = self.visit(node.else_) #is a Stmt node
+		if node.else_ != None:
+			else_flat = self.visit(node.else_) #is a Stmt node
+		else:
+			else_flat = None
 		#newIf = If([(fe1, se2)], se3)
 		#return se1 + [newIf]
 		return test_flat + [If([(test_result, then_flat)], else_flat)]

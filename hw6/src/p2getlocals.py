@@ -70,7 +70,8 @@ class P2GetLocals(object):
 		elif isinstance(node, If):
 			local_vars += self._getLocals(node.tests[0][0], recurDepth + 1)
 			local_vars += self._iterateOverStmt(node.tests[0][1], recurDepth + 1)
-			local_vars += self._iterateOverStmt(node.else_, recurDepth + 1)
+			if node.else_ != None:
+				local_vars += self._iterateOverStmt(node.else_, recurDepth + 1)
 			#local_vars += self._getLocals(node.tests[0][1], recurDepth + 1)
 			#local_vars += self._getLocals(node.else_, recurDepth + 1)
 			return local_vars

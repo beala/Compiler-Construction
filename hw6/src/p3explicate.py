@@ -11,7 +11,10 @@ class P3Explicate(P2Explicate):
 	def visit_If(self,node):
 		myTest = self.visit(node.tests[0][0])
 		myThen = self.visit(node.tests[0][1])
-		myElse_ = self.visit(node.else_)
+		if node.else_ != None:
+			myElse_ = self.visit(node.else_)
+		else:
+			myElse_ = None
 		#tmpMyTest = Name(self._makeTmpVar())
 		#return Let( tmpMyTest, myTest, If([(tmpMyTest,myThen)],myElse_))
 		return If([(myTest,myThen)],myElse_)

@@ -18,7 +18,9 @@ class Myx86Selector:
 	__dict_vars = {} #dictionary (associative array) of variable names to memory locations relative to ebp
 	__currentTmpVar = 0
 	_currentLabelNum = 0
+	_currentStrLblNum = 0
 	_calleeSaveRegisters = [x86.Register('ebx'),x86.Register('esi'),x86.Register('edi')]
+	dataSection = ""
 	def emitSetVarNodeText(self,mySet):
 		myList = []
 		for item in mySet:
@@ -63,8 +65,13 @@ class Myx86Selector:
 
 	def _makeLabel():
 		return 'label' + str(self._currentLabelNum)	
-
-    #TODO: Do something about this.
+	def _addString(self, myString):
+		#return a label for a string and add it to the object data section
+		self._currentStrLblNum += 1
+		self.dataSection += "\n.UserGenStr"+str(self._currentStrLblNum)+":"
+		self.dataSection += "\n\t.string \""+myString+"\""
+		return ".UserGenStr"+str(self._currentStrLblNum)
+	#TODO: Do something about this.
 	#def _encapsulate_generated_code(self):
 	#	self.__generated_code = ".globl main\nmain:\npushl %ebp\nmovl %esp, %ebp\nsubl $"+str(self.__stack_offset)+",%esp\n" + self.__generated_code + "movl $0, %eax\nleave\nret\n"
 	def generate_x86_code(self, ast):
@@ -435,6 +442,17 @@ class Myx86Selector:
 				var_LHSnode = self._update_dict_vars(var_name)
 				#self.__generated_code += "movl %eax, -"+str(var_offset)+"(%ebp)\n"
 				myIRList.append(x86.Movl(self.getTmpVar(), var_LHSnode))
+			elif isinstance(ast.nodes[0], AssAttr):
+				strLabel = self._addString(ast.nodes[0].attrname)
+				myIRList += self.generate_x86_code(ast.expr)
+				lhs = self.getTmpVar()
+				myIRList += self.generate_x86_code(ast.nodes[0].expr)
+				rhs = self.getTmpVar()
+				myIRList.append(x86.Pushl(lhs))
+				myIRList.append(x86.Pushl(x86.AddressLabel(strLabel)))
+				myIRList.append(x86.Pushl(rhs))
+				myIRList.append(x86.Call('set_attr'))
+				myIRList.append(x86.Addl(x86.ConstNode(12),x86.Register('esp')))
 			elif isinstance(ast.nodes[0], Subscript):
 				#generate code for our RHS and get temp var
 				myIRList += self.generate_x86_code(ast.expr)
@@ -501,10 +519,19 @@ class Myx86Selector:
 			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
 			myIRList.append(x86.Movl(x86.Register('eax'), resultVar))
 			return myIRList
-		elif isinstance(ast, AssAttr):
-			pass
+		#elif isinstance(ast, AssAttr):
+		#	strLabel = self._addString(ast.attrname)	
 		elif isinstance(ast, Getattr):
-			pass
+			strLabel = self._addString(ast.attrname)
+			myIRList = []
+			myIRList += self.generate_x86_code(ast.expr)
+			myIRList.append(x86.Pushl(x86.AddressLabel(strLabel)))
+			myIRList.append(x86.Pushl(self.getTmpVar()))
+			myIRList.append(x86.Call('get_attr'))
+			myIRList.append(x86.Addl(x86.ConstNode(8), x86.Register('esp')))
+			resultVar = self.makeTmpVar()
+			myIRList.append(x86.Movl(x86.Register('eax'), resultVar))
+			return myIRList
 		else:
 			print ast
 			raise Exception("Error: Unrecognized node/object type %s:" % ast.__class__.__name__)

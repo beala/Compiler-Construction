@@ -51,9 +51,11 @@ class P3TestAST(object):
 		if debug: self.print_ast(Stmt(flattened), "Flattened AST")
 		if self.stageDict[stage] < self.stageDict["select"]: return
 		selected = []
+		x86Selector = Myx86Selector()
 		for func in flattened:
-			selected.append(Myx86Selector().generate_x86_code(func))
+			selected.append(x86Selector.generate_x86_code(func))
 			if debug: self.print_ast(selected[-1], "Instruction Selection")
+		if debug: print x86Selector.dataSection
 		if self.stageDict[stage] < self.stageDict["allocate"]: return
 		allocated = []
 		igList = []
@@ -72,7 +74,7 @@ class P3TestAST(object):
 			igList[counter].setIR(func) 
 			returnString += igList[counter].emitColoredIR()
 			counter += 1
-		return returnString
+		return "\n"+x86Selector.dataSection+"\n.text"+returnString
 
 	def print_stage(self, stage):
 		print "-"*20 + str(stage) + "-"*20

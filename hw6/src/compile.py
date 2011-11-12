@@ -39,13 +39,14 @@ if __name__ == "__main__":
 	compiled = myTester.compileToStage(sys.argv[1], 'print', False)
 	basename = sys.argv[1][:len(sys.argv[1])-3]
 	asmFile = open(basename + ".s", "w")
-	file.write(output)
-	file.close()
+	asmFile.write(compiled)
+	asmFile.close()
 
 #if __name__ == "__main__":
 #	import sys 
 #	import compiler
 #	import os
+#	from p3declassify import *
 #	from p3uniquify import *
 #	from p3explicate import *
 #	from p3closure import *
@@ -56,11 +57,12 @@ if __name__ == "__main__":
 #	from p3heapify import *
 #	myfile = sys.argv[1]
 #	basename = myfile[:len(myfile)-3]
-#	to_explicate = compiler.parseFile(sys.argv[1])
-#	to_explicate = P3Uniquify().visit(to_explicate)
+#	parsed = compiler.parseFile(sys.argv[1])
+#	declassified = P3Declassify().visit(parsed, None)
+#	to_explicate = P3Uniquify().visit(declassified)
 #	to_heapify = P3Explicate().visit(to_explicate)
 #	to_closure_convert = P3Heapify().visit(to_heapify)
-#	(ast, fun_list) = P3Closure().visit(to_closure_convert)
+#	#(ast, fun_list) = P3Closure().visit(to_closure_convert)
 #	to_flatten = P3Closure().doClosure(to_closure_convert)
 #	flattened = P3ASTFlattener().visit(to_flatten)
 #	file = open(basename+".s","w")

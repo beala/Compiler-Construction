@@ -1,6 +1,18 @@
 from p2uniquify import *
 from p3ast import *
 class P3Uniquify(P2Uniquify):
+	# Private Functions: ###############################################################
+
+	# Desc: Take a variable name that hasn't be renamed yet, and return
+	#			what it should be renamed to.
+	# Args:	A variable's name, as a string.
+	# Ret:	The variable's new uniquified name (as a string).
+	def renameToUnique(self, curScopeDict, nameStr):
+		if curScopeDict.has_key(nameStr):
+			return curScopeDict[nameStr]
+		else:
+			return nameStr
+	
 	def visit_If(self, ast, curScopeDict):
 		newTests = [(self.visit(ast.tests[0][0], curScopeDict), self.visit(ast.tests[0][1], curScopeDict))]
 		ast.tests = newTests

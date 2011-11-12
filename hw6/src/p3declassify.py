@@ -66,7 +66,7 @@ class P3Declassify(ASTVisitor):
 		if curClass== None:
 			return ast
 		else:
-			return IfExp(HasAttr(curClass, ast.name), Getattr(curClass, ast.name), ast)
+			return IfExp(HasAttr(Name(curClass), ast.name), Getattr(Name(curClass), ast.name), ast)
 
 	def visit_CallFunc(self, ast, curClass):
 		newArgs = self._iterateOverAndVisit(ast.args, curClass)

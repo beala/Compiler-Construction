@@ -49,6 +49,10 @@ class P0ASTFlattener(ASTVisitor):
 			(subsubs, statement_list_subsubs) = self.visit(node.nodes[0].subs[0])
 			(expr, statement_list) = self.visit(node.expr)
 			return (statement_list + statement_list_subexpr + statement_list_subsubs + [Assign([Subscript(subexpr,'OP_ASSIGN', [subsubs])], expr)])
+		elif isinstance(node.nodes[0], AssAttr):
+			(expr_result, expr_flat) = self.visit(node.nodes[0].expr)
+			(expr, statement_list) = self.visit(node.expr)
+			return (statement_list + expr_flat + [Assign([AssAttr(expr_result, node.nodes[0].attrname, node.nodes[0].flags)], expr)])
 		else:
 			(expr, statement_list) = self.visit(node.expr)
 			newName = self._renameVar(node.nodes[0].name)

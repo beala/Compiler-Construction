@@ -12,6 +12,7 @@ from p2flattener import *
 import p1ast
 import base64
 from p2getlocals import *
+import p3ast
 class Myx86Selector:
 	#class variables
 	__dict_vars = {} #dictionary (associative array) of variable names to memory locations relative to ebp
@@ -491,6 +492,19 @@ class Myx86Selector:
 			big_result_pyobj = self.makeTmpVar()
 			myIRList.append(x86.Movl(x86.Register('eax'), big_result_pyobj))
 			return myIRList
+		elif isinstance(ast, p3ast.CreateClass):
+			myIRList = []
+			myIRList += self.generate_x86_code(ast.bases)
+			myIRList.append(x86.Pushl(self.getTmpVar()))
+			myIRList.append(x86.Call('create_class'))
+			resultVar = self.makeTmpVar()
+			myIRList.append(x86.Addl(x86.ConstNode(4), x86.Register('esp')))
+			myIRList.append(x86.Movl(x86.Register('eax'), resultVar))
+			return myIRList
+		elif isinstance(ast, AssAttr):
+			pass
+		elif isinstance(ast, Getattr):
+			pass
 		else:
 			print ast
 			raise Exception("Error: Unrecognized node/object type %s:" % ast.__class__.__name__)

@@ -48,7 +48,7 @@ class P3TestAST(object):
 		if debug: self.print_ast(Stmt(to_flatten), "Closure Conversion")
 		if self.stageDict[stage] < self.stageDict["flatten"]: return
 		flattened = P3ASTFlattener().visit(to_flatten)
-		if debug: self.print_ast(flattened, "Flattened AST")
+		if debug: self.print_ast(Stmt(flattened), "Flattened AST")
 		if self.stageDict[stage] < self.stageDict["select"]: return
 		selected = []
 		for func in flattened:

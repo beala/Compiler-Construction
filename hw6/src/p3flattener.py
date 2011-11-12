@@ -1,4 +1,5 @@
 from p2flattener import *
+from p3ast import *
 class P3ASTFlattener(P2ASTFlattener):
 	def visit_If(self, node):
 		(test_result, test_flat) = self.visit(node.tests[0][0])
@@ -14,6 +15,22 @@ class P3ASTFlattener(P2ASTFlattener):
 		#whileTest = Stmt(se1])
 		#return [While(whileTest, se2, None)]
 		return [While(Stmt(test_flat + [test_result]), body_flat, None)]
+	def visit_CreateClass(self, node):
+		flattened_result_base_list = []
+		flattened_stmt_base_list = []
+		#for base in node.bases:
+		#	(flattened_result, flattened_stmt) = self.visit(base)
+		#	flattened_result_base_list.append(flattened_result)
+		#	flattened_stmt_base_list += flattened_stmt
+		(flattened_result_base_list, flattened_stmt_base_list) = self.visit(InjectFrom(Const(3), List(node.bases)))
+		tmpVar = self._makeTmpVar()
+		newCreateClass = Assign([AssName(tmpVar, 'OP_ASSIGN')],CreateClass(flattened_result_base_list))
+		return (Name(tmpVar), flattened_stmt_base_list + [newCreateClass])
+	def visit_Getattr(self, node):
+		(expr_result, expr_stmt) = self.visit(node.expr)
+		tmpVar = self._makeTmpVar()
+		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], expr_result)
+		return (Name(tmpVar), expr_stmt + [newAssign])
 if __name__ == "__main__":
 	import sys 
 	import compiler

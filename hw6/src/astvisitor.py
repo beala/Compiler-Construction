@@ -4,7 +4,10 @@ class ASTVisitor(object):
 		# Find a specific visit method. Default to "default".
 		methname = "visit_%s" % node.__class__.__name__
 		method = getattr(self, methname, self.default)
-		return method(node, *extra)
+		if len(extra) > 0:
+			return method(node, *extra)
+		else:
+			return method(node)
 	
 	def default(self, node, *extra):
 		'''Visit node children'''

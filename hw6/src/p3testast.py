@@ -10,12 +10,12 @@ from Myx86Selector import *
 from InterferenceGraph import *
 from p3removestructuredcontrolflow import *
 from p3heapify import *
-
+import x86
 class P3TestAST(object):
 
 	stageDict = { 	"parse"		: 0,
 					"declassify"	: 1,
-					"uniquify"	: 2
+					"uniquify"	: 2,
 					"explicate"	: 3,
 					"heapify"	: 4,
 					"close"		: 5,
@@ -30,43 +30,43 @@ class P3TestAST(object):
 
 		to_declassify = compiler.parseFile(program)
 		if debug: self.print_ast(to_declassify, "Parsed")
-		if stageDict[stage] < stageDict["declassify"]: return
-		to_uniquify = P3Declassify().visit(to_declassify)
+		if self.stageDict[stage] < self.stageDict["declassify"]: return
+		to_uniquify = P3Declassify().visit(to_declassify, None)
 		if debug: self.print_ast(to_uniquify, "Declassified")
-		if stageDict[stage] < stageDict["uniquify"]: return
+		if self.stageDict[stage] < self.stageDict["uniquify"]: return
 		to_explicate = P3Uniquify().visit(to_uniquify)
 		if debug: self.print_ast(to_explicate, "Uniquified")
-		if stageDict[stage] < stageDict["explicate"]: return
+		if self.stageDict[stage] < self.stageDict["explicate"]: return
 		to_heapify = P3Explicate().visit(to_explicate)
 		if debug: self.print_ast(to_heapify, "Explicated")
-		if stageDict[stage] < stageDict["heapify"]: return
+		if self.stageDict[stage] < self.stageDict["heapify"]: return
 		to_closure_convert = P3Heapify().visit(to_heapify)
 		if debug: self.print_ast(to_closure_convert, "Heapified")
-		if stageDict[stage] < stageDict["close"]: return
+		if self.stageDict[stage] < self.stageDict["close"]: return
 		(ast, fun_list) = P3Closure().visit(to_closure_convert)
 		to_flatten = P3Closure().doClosure(to_closure_convert)
 		if debug: self.print_ast(to_flatten, "Closure Conversion")
-		if stageDict[stage] < stageDict["flatten"]: return
+		if self.stageDict[stage] < self.stageDict["flatten"]: return
 		flattened = P3ASTFlattener().visit(to_flatten)
 		if debug: self.print_ast(flattened, "Flattened AST")
-		if stageDict[stage] < stageDict["select"]: return
+		if self.stageDict[stage] < self.stageDict["select"]: return
 		selected = []
 		for func in flattened:
 			selected.append(Myx86Selector().generate_x86_code(func))
 			if debug: self.print_ast(selected[-1], "Instruction Selection")
-		if stageDict[stage] < stageDict["allocate"]: return
+		if self.stageDict[stage] < self.stageDict["allocate"]: return
 		allocated = []
 		igList = []
 		for func in selected:
 			igList.append(InterferenceGraph(func))
 			allocated.append(igList[-1].allocateRegisters())
 			if debug: self.print_ast(allocated[-1], "Register Allocation")
-		if stageDict[stage] < stageDict["remove"]: return
+		if self.stageDict[stage] < self.stageDict["remove"]: return
 		removed = []
 		for func in allocated:
 			removed.append(P3RemoveStructuredControlFlow().removeIfs(func))
 			if debug: self.print_ast(removed[-1], "Remove Struct Control Flow")
-		if stageDict[stage] < stageDict["print"]: return
+		if self.stageDict[stage] < self.stageDict["print"]: return
 		counter = 0
 		for func in removed:
 			igList[counter].setIR(func) 
@@ -80,17 +80,25 @@ class P3TestAST(object):
 	def print_ast(self, stmt_ast, stage, tabcount=0):
 		if tabcount == 0:
 			self.print_stage(stage)
+		if not isinstance(stmt_ast, Stmt):
+			if isinstance(stmt_ast, Function):
+				stmt_ast = stmt_ast.code
+			elif isinstance(stmt_ast, Module):
+				stmt_ast = stmt_ast.node
+			else:
+				print "\t" * tabcount + str(stmt_ast)
+				return
 		for node in stmt_ast.nodes:
-			if isinstance(instruction, x86.Ifx86):
-				print "\t" * indents + "If: " + str(instruction.operandList[0])
-				self.print_ast(instruction.operandList[1], stage, indents+1)
-				print "\t" * indents + "Else:"
-				self.print_ast(instruction.operandList[2], stage, indents+1)
-				print "\t" * indents + "EndIf"
-			elif isinstance(instruction, x86.Whilex86):
-				print "\t" * indents + "While: " + str(instruction.operandList[0])
-				self.prettyPrint(instruction.operandList[1], stage, indents+1)
-				print "\t" * indents + "EndWhile"
+			if isinstance(node, x86.Ifx86):
+				print "\t" * tabcount + "If: " + str(node.operandList[0])
+				self.print_ast(node.operandList[1], stage, tabcount+1)
+				print "\t" * tabcount + "Else:"
+				self.print_ast(node.operandList[2], stage, tabcount+1)
+				print "\t" * tabcount + "EndIf"
+			elif isinstance(node, x86.Whilex86):
+				print "\t" * tabcount + "While: " + str(node.operandList[0])
+				self.prettyPrint(node.operandList[1], stage, tabcount+1)
+				print "\t" * tabcount + "EndWhile"
 			elif isinstance(node, If):
 				print '\t' * tabcount + 'If: ' + str(node.tests[0][0]) + ' then:'
 				self.print_ast(node.tests[0][1], stage, tabcount+1)

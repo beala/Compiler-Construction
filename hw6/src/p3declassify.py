@@ -9,7 +9,7 @@ class P3Declassify(ASTVisitor):
 	# Private Methods: #########################################################################################
 	def _makeTmpVar(self):
 		self._curTmpVar += 1
-		return "declass_tmp_" + str(self._curTmpVar)
+		return Name("declass_tmp_" + str(self._curTmpVar))
 	def _makeTmpMethod(self):
 		self._curTmpMethod += 1
 		return "declass_tmp_method" + str(self._curTmpMethod)
@@ -20,7 +20,7 @@ class P3Declassify(ASTVisitor):
 	def _iterateOverAndVisit(self, toIterate, curClass):
 		result = []
 		for item in toIterate:
-			newItem = self.visit(item, curClass):
+			newItem = self.visit(item, curClass)
 			if isinstance(newItem, list):
 				result += newItem
 			else:
@@ -35,19 +35,25 @@ class P3Declassify(ASTVisitor):
 		# Declassify the body and pass down the current class name.
 		tmpBody = self.visit(ast.code, classTmp)
 		# Assign the tmpVar to the class's real name
-		classAssign = self._makeAssign(ast.name, classTmp)
+		classAssign = self._makeAssign(Name(ast.name), classTmp)
 		# Return class creation + the body + the class assignment
 		return [tmpAssign] + tmpBody.nodes + [classAssign]
 
 	def visit_Assign(self, ast, curClass):
 		newAssignExpr = self.visit(ast.expr, curClass)
 		# If it's an AssAttr, then call the correct runtime func (SetAttr)
-		if isinstance(ast.nodes[1], AssAttr):
-			assAttrNode = ast.nodes[1]
+		#	also happens if we are in a class scope!
+		if isinstance(ast.nodes[0], AssAttr):
+			assAttrNode = ast.nodes[0]
 			# Declassify the exprs
-			newAssAttrExpr = self.visit(assAttrNode.expr, curClass)
+			newAssignExpr = self.visit(ast.expr, curClass)
 			# Return the new SetAttr node to replace the assign node.
-			return SetAttr(newAssAttrExpr, assAttrNode.attrname, newAssignExpr)
+			return Assign(AssAttr(assAttrNode.expr, assAttrNode.attrname, assAttrNode.flags), newAssignExpr)
+		elif curClass != None:
+			#inside a class, so we must convert into an AssAttr
+			assNameNode = ast.nodes[0]
+			newAssignExpr = self.visit(ast.expr, curClass)
+			return Assign(AssAttr(curClass, assNameNode.name, assNameNode.flags), newAssignExpr)
 		else:
 			# Do ast.nodes need to be declassified? I don't think so.
 			return Assign(ast.nodes, newAssignExpr)
@@ -70,15 +76,15 @@ class P3Declassify(ASTVisitor):
 	
 	def visit_Module(self, ast, curClass):
 		# Not in a class at the module level, so pass down None
-		return self.visit(ast.node, None)
-
+		return Module(None,self.visit(ast.node, None))
+	
 	def visit_Stmt(self, ast, curClass):
 		newNodes = self._iterateOverAndVisit(ast.nodes, curClass)
 		return Stmt(newNodes)
 
-	def visit_Println(self, ast, curClass):
+	def visit_Printnl(self, ast, curClass):
 		newNodes = self.visit(ast.nodes[0], curClass)
-		return Println([newNodes], ast.dest)
+		return Printnl([newNodes], ast.dest)
 
 	def visit_AssName(self, ast, curClass):
 		newName = self.visit(ast.name, curClass)
@@ -142,8 +148,8 @@ class P3Declassify(ASTVisitor):
 	def visit_Function(self, ast, curClass):
 		newFuncName = self._makeTmpMethod()
 		newCode = self.visit(ast.code, curClass)
-		newFunc = Function(newFuncName, ast.argnames, ast.defaults, ast.flags, ast.doc, newCode)
-		newAssign = self._makeNewAssignAssAttr(curClass, ast.name, newFuncName)
+		newFunc = Function(ast.decorators, newFuncName, ast.argnames, ast.defaults, ast.flags, ast.doc, newCode)
+		newAssign = self._makeAssignAssAttr(curClass, ast.name, newFuncName)
 		return [newFunc] + [newAssign]
 	def visit_Lambda(self, ast, curClass):
 		newCode = self.visit(ast.code, curClass)
@@ -158,3 +164,5 @@ class P3Declassify(ASTVisitor):
 		newTest = self.visit(ast.test, curClass)
 		newBody = self.visit(ast.body, curClass)
 		return While(newTest, newBody, None)
+
+

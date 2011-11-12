@@ -39,6 +39,10 @@ class P3Declassify(ASTVisitor):
 		# Return class creation + the body + the class assignment
 		return [tmpAssign] + tmpBody.nodes + [classAssign]
 
+	def visit_Return(self, ast, curClass):
+		newValue = self.visit(ast.value, curClass)
+		return Return(newValue)
+
 	def visit_Assign(self, ast, curClass):
 		newAssignExpr = self.visit(ast.expr, curClass)
 		# If it's an AssAttr, then call the correct runtime func (SetAttr)

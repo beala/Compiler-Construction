@@ -145,16 +145,21 @@ class P3Declassify(ASTVisitor):
 		return Not(newExpr)
 
 	def visit_Function(self, ast, curClass):
-		newFuncName = self._makeTmpMethod()
-		newCode = self.visit(ast.code, curClass)
-		newFunc = Function(ast.decorators, newFuncName, ast.argnames, ast.defaults, ast.flags, ast.doc, newCode)
-		newAssign = self._makeAssignAssAttr(curClass, ast.name, Name(newFuncName))
-		return [newFunc] + [newAssign]
+		if curClass != None:
+			newFuncName = self._makeTmpMethod()
+			newCode = self.visit(ast.code, curClass)
+			newFunc = Function(ast.decorators, newFuncName, ast.argnames, ast.defaults, ast.flags, ast.doc, newCode)
+			newAssign = self._makeAssignAssAttr(curClass, ast.name, Name(newFuncName))
+			return [newFunc] + [newAssign]
+		else:
+			return ast
 
 	def visit_Lambda(self, ast, curClass):
 		newCode = self.visit(ast.code, curClass)
 		return Lambda(ast.argnames, ast.defaults, ast.flags, newCode)
-	
+	def visit_Return(self, ast, curClass):
+		newCode = self.visit(ast.value, curClass)
+		return Return(newCode)	
 	def visit_If(self, ast, curClass):
 		newTest = self.visit(ast.tests[0][0], curClass)
 		newThen = self.visit(ast.tests[0][1], curClass)

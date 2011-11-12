@@ -24,7 +24,10 @@ class P2GetLocals(object):
 			if isinstance(node.nodes[0], AssName):
 				local_vars += [node.nodes[0].name]
 			elif isinstance(node.nodes[0], AssAttr):
-				local_vars += [node.nodes[0].expr.name]
+				if isinstance(node.nodes[0].expr, Name):
+					local_vars += [node.nodes[0].expr.name]
+				else:
+					local_vars += self._getLocals(node.nodes[0].expr, recurDepth +1)
 			elif isinstance(node.nodes[0], Name):
 				local_vars += [node.nodes[0].name]
 			elif isinstance(node.nodes[0], Subscript):

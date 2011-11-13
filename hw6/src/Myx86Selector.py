@@ -13,6 +13,7 @@ import p1ast
 import base64
 from p2getlocals import *
 import p3ast
+import random
 class Myx86Selector:
 	#class variables
 	__dict_vars = {} #dictionary (associative array) of variable names to memory locations relative to ebp
@@ -68,9 +69,9 @@ class Myx86Selector:
 	def _addString(self, myString):
 		#return a label for a string and add it to the object data section
 		self._currentStrLblNum += 1
-		self.dataSection += "\n.UserGenStr"+str(self._currentStrLblNum)+":"
+		self.dataSection += "\n.UserGenStr"+str(self._currentStrLblNum)+self._randomNonce+":"
 		self.dataSection += "\n\t.string \""+myString+"\""
-		return ".UserGenStr"+str(self._currentStrLblNum)
+		return ".UserGenStr"+str(self._currentStrLblNum)+self._randomNonce
 	#TODO: Do something about this.
 	#def _encapsulate_generated_code(self):
 	#	self.__generated_code = ".globl main\nmain:\npushl %ebp\nmovl %esp, %ebp\nsubl $"+str(self.__stack_offset)+",%esp\n" + self.__generated_code + "movl $0, %eax\nleave\nret\n"
@@ -547,8 +548,7 @@ class Myx86Selector:
 			print ast
 			raise Exception("Error: Unrecognized node/object type %s:" % ast.__class__.__name__)
 	def __init__(self):
-		pass	
-
+		self._randomNonce = str(random.randint(1, 1000))
 	# Debug Functions: #############################################################################
 	def prettyPrint(self, ir_to_print, indents=0):
 		for instruction in ir_to_print:

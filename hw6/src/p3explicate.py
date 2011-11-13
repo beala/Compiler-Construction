@@ -38,4 +38,4 @@ class P3Explicate(P2Explicate):
 		return Getattr(newExpr, node.attrname)
 	def visit_HasAttr(self, node):
 		newExpr = self.visit(node.expr)
-		return HasAttr(newExpr, node.attrname)	
+		return InjectFrom(self._typeMap['int'], HasAttr(newExpr, node.attrname))

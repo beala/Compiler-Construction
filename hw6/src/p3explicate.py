@@ -36,7 +36,6 @@ class P3Explicate(P2Explicate):
 	def visit_Getattr(self, node):
 		newExpr = self.visit(node.expr)
 		return Getattr(newExpr, node.attrname)
-
-	
-	
-		
+	def visit_HasAttr(self, node):
+		newExpr = self.visit(node.expr)
+		return HasAttr(newExpr, node.attrname)	

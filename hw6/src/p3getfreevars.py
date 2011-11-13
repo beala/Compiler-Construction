@@ -14,6 +14,7 @@ class P3GetFreeVars(P2GetFreeVars):
 
 	def visit_Getattr(self, node):
 		return self.visit(node.expr)
-
+	def visit_HasAttr(self, node):
+		return self.visit(node.expr)
 	def visit_AssAttr(self, node):
 		return self.visit(node.expr)

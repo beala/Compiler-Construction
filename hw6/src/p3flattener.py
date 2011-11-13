@@ -31,6 +31,12 @@ class P3ASTFlattener(P2ASTFlattener):
 		tmpVar = self._makeTmpVar()
 		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], Getattr(expr_result, node.attrname))
 		return (Name(tmpVar), expr_stmt + [newAssign])
+	
+	def visit_HasAttr(self, node):
+		(expr_result, expr_stmt) = self.visit(node.expr)
+		tmpVar = self._makeTmpVar()
+		newAssign = Assign([AssName(tmpVar, 'OP_ASSIGN')], HasAttr(expr_result, node.attrname))
+		return (Name(tmpVar), expr_stmt + [newAssign])
 if __name__ == "__main__":
 	import sys 
 	import compiler

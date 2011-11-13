@@ -25,7 +25,9 @@ class P3Closure(P2Closure):
 	def visit_Getattr(self, node):
 		(body_expr, funs_expr) = self.visit(node.expr)
 		return ( Getattr(body_expr, node.attrname), funs_expr )
-
+	def visit_HasAttr(self, node):
+		(body_expr, funs_expr) = self.visit(node.expr)
+		return ( HasAttr(body_expr, node.attrname), funs_expr )
 	def visit_AssAttr(self, node):
 		(body_expr, funs_expr) = self.visit(node.expr)
 		return ( AssAttr(body_expr, node.attrname, node.flags), funs_expr )

@@ -29,7 +29,9 @@ class P3Heapify(P2Heapify):
 	def visit_Getattr(self, ast):
 		(exprFreeBelow, exprBody) = self.visit(ast.expr)
 		return (exprFreeBelow, Getattr(exprBody, ast.attrname))
-
+	def visit_HasAttr(self, ast):
+		(exprFreeBelow, exprBody) = self.visit(ast.expr)
+		return (exprFreeBelow, HasAttr(exprBody, ast.attrname))
 	def visit_AssAttr(self, ast):
 		(exprFreeBelow, exprBody) = self.visit(ast.expr)
 		return (exprFreeBelow, AssAttr(exprBody, ast.attrname, ast.flags))

@@ -532,6 +532,17 @@ class Myx86Selector:
 			resultVar = self.makeTmpVar()
 			myIRList.append(x86.Movl(x86.Register('eax'), resultVar))
 			return myIRList
+		elif isinstance(ast, p3ast.HasAttr):
+			strLabel = self._addString(ast.attrname)
+			myIRList = []
+			myIRList += self.generate_x86_code(ast.expr)
+			myIRList.append(x86.Pushl(x86.AddressLabel(strLabel)))
+			myIRList.append(x86.Pushl(self.getTmpVar()))
+			myIRList.append(x86.Call('has_attr'))
+			myIRList.append(x86.Addl(x86.ConstNode(8), x86.Register('esp')))
+			resultVar = self.makeTmpVar()
+			myIRList.append(x86.Movl(x86.Register('eax'), resultVar))
+			return myIRList
 		else:
 			print ast
 			raise Exception("Error: Unrecognized node/object type %s:" % ast.__class__.__name__)

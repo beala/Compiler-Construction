@@ -419,8 +419,12 @@ class Myx86Selector:
 			return myIRList
 		elif isinstance(ast, CallFunc):
 			# CallFunc always refers to an input() (in P0, at least).
+			for arg in reversed(ast.args):
+				myIRList += self.generate_x86_code(arg)
+				myIRList.append(x86.Pushl(self.getTmpVar()))
 			myIRList.append(x86.Call(ast.node.name))
 			myIRList.append(x86.Movl(x86.Register('eax'),self.makeTmpVar()))
+			myIRList.append(x86.Addl(x86.ConstNode(4*len(ast.args)), x86.Register('esp')))
 			return myIRList
 		elif isinstance(ast, Printnl):
 			#process children

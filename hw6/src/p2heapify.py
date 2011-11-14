@@ -11,7 +11,7 @@ class P2Heapify(ASTVisitor):
 	# Private Attributes: ##########################################################################################################	
 	_argRenameCounter = 0
 	_toHeapify = set() 
-
+	_reservedFuns = ['input', 'type_error', 'create_class', 'create_object', 'is_class', 'get_function']
 	# Private Methods: #############################################################################################################
 	def _renameArg(self, nameStr):
 		self._argRenameCounter += 1
@@ -248,6 +248,9 @@ class P2Heapify(ASTVisitor):
 		return (argsFreeBelow + nodeFreeBelow, makeNodeFunc(nodeBody, argsBody))
 		
 	def visit_CallFunc(self, ast):
+		if isinstance(ast.node, Name) and ast.node.name in self._reservedFuns:
+			(argsFreeBelow, argsBody) = self._iterate_over_and_visit(ast.args)
+			return (argsFreeBelow, CallFunc(ast.node, argsBody))
 		return self._visit_Calls(ast, lambda node, args: CallFunc(node, args))
 
 	def visit_CallUserDef(self, ast):

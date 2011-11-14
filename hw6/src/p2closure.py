@@ -8,7 +8,7 @@ class P2Closure(ASTVisitor):
 	_globalFunctionCounter = 0
 	_globalFVSCounter = 0
 	_curTmpVar = 0
-
+	_reservedFuns = ['input', 'type_error', 'create_class', 'create_object', 'is_class', 'get_function']
 	# Private Methods: ######################################################################################
 	def _makeGlobalName(self):
 		self._globalFunctionCounter += 1
@@ -61,7 +61,7 @@ class P2Closure(ASTVisitor):
 		newFunDef = Function(None, Name(globalName), [freeVarsName] + node.argnames, node.defaults, node.flags, None, Stmt(newCodeHeader + newCode))
 		return (CreateClosure(Name(globalName), InjectFrom(Const(3), List(freeVars))), funs + [newFunDef])
 	def visit_CallFunc(self, node):
-		if isinstance(node.node, Name) and (node.node.name == 'input' or node.node.name == 'type_error'):
+		if isinstance(node.node, Name) and (node.node.name in self._reservedFuns):
 			return (node, [])
 		
 		# Recurse into name and arguments

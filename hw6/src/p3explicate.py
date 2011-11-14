@@ -60,8 +60,11 @@ class P3Explicate(P2Explicate):
 			Let(tmpO, InjectFrom(self._typeMap['big'],CallFunc(Name('create_object'), [tmpFunName])), \
 			IfExp(InjectFrom(self._typeMap['int'], HasAttr(tmpFunName, '__init__')), \
 			Let(tmpIni, InjectFrom(self._typeMap['fun'],CallFunc(Name('get_function'),[Getattr(tmpFunName,'__init__')])) \
-			,Let(tmp_, CallFunc(tmpIni, [tmpO] + tmpLettedArgs), tmpO)), tmpO)) \
-			,CallFunc(tmpFunName, tmpLettedArgs))
+			,Let(tmp_, CallFunc(tmpIni, [tmpO] + tmpLettedArgs), tmpO)), tmpO)), \
+				IfExp( InjectFrom(self._typeMap['int'], CallFunc(Name('is_bound_method'),[tmpFunName])), \
+								InjectFrom(self._typeMap['fun'],CallFunc(Name('get_function'),[InjectFrom(self._typeMap['big'], CallFunc(Name('get_receiver'), [tmpFunName]))]+tmpLettedArgs))  , \
+				IfExp(InjectFrom(self._typeMap['int'], CallFunc(Name('is_unbound_method'),[tmpFunName])), InjectFrom(self._typeMap['fun'],CallFunc(Name('get_function'),tmpLettedArgs)) ,CallFunc(tmpFunName, tmpLettedArgs)) \
+			))
 		encapsBody = body
 		counter = 0
 		for element in node.args:

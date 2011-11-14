@@ -8,7 +8,7 @@ class P2Closure(ASTVisitor):
 	_globalFunctionCounter = 0
 	_globalFVSCounter = 0
 	_curTmpVar = 0
-	_reservedFuns = ['input', 'type_error', 'create_class', 'create_object', 'is_class', 'get_function']
+	_reservedFuns = ['input', 'type_error', 'create_class', 'create_object', 'is_class', 'get_function', 'get_receiver', 'is_bound_method', 'is_unbound_method']
 	# Private Methods: ######################################################################################
 	def _makeGlobalName(self):
 		self._globalFunctionCounter += 1

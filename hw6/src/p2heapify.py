@@ -11,7 +11,7 @@ class P2Heapify(ASTVisitor):
 	# Private Attributes: ##########################################################################################################	
 	_argRenameCounter = 0
 	_toHeapify = set() 
-	_reservedFuns = ['input', 'type_error', 'create_class', 'create_object', 'is_class', 'get_function']
+	_reservedFuns = ['input', 'type_error', 'create_class', 'create_object', 'is_class', 'get_function', 'get_receiver', 'is_bound_method', 'is_unbound_method']
 	# Private Methods: #############################################################################################################
 	def _renameArg(self, nameStr):
 		self._argRenameCounter += 1

@@ -83,6 +83,7 @@ class x86(object):
 	numOperands = 0
 	liveSetBefore = set()
 	liveSetAfter = set()
+	optimizeBehavior = True
 	def __init__(self):
 		self.instruction = ""
 		self.operandList = []
@@ -108,7 +109,6 @@ class x86(object):
 		return "%s" % self.instruction
 	def __repr__(self):
 		return self.__str__()
-
 class LiveSetAlg(object):
 	_instrNode = None
 	def setInstrNode(self, instructNode):
@@ -159,25 +159,30 @@ class Ifx86(x86):
 		self.instruction = "_IF"
 		self.operandList = [test, then, else_]
 	def doCalculateLiveSet(self, previousLiveSet):
-		liveSetAlg = LiveSetAlg()
-		liveSetAlg.setInstrNode(self)
-		self.liveSetBefore = liveSetAlg.doCalcLiveSetIfWhile(previousLiveSet)
-		return self.liveSetBefore
-
-#		liveSetAll = set()
-#		# Iterate through if, then, else.
-#		for number in reversed(range(3)):
-#			# Calculate the l_before of each.
-#			# previousLiveSet = set()
-#			for instruction in reversed(self.operandList[number]):
-#				previousLiveSet = instruction.doCalculateLiveSet(previousLiveSet)
-#			# Union it into the l_before of the if instruction
-#			liveSetAll = liveSetAll | previousLiveSet
-#		
-#		self.liveSetBefore = set(liveSetAll)
-#		self.liveSetBefore &= previousLiveSet
-#		#import pdb; pdb.set_trace()
+#		liveSetAlg = LiveSetAlg()
+#		liveSetAlg.setInstrNode(self)
+#		self.liveSetBefore = liveSetAlg.doCalcLiveSetIfWhile(previousLiveSet)
 #		return self.liveSetBefore
+
+		liveSetAll = set()
+		# Iterate through if, then, else.
+		originalLiveSet = previousLiveSet
+		for number in reversed(range(3)):
+			# Calculate the l_before of each.
+			# previousLiveSet = set()
+			if number == 1:
+				previousLiveSet = originalLiveSet
+			if number == 0:
+				previousLiveSet = self.operandList[1][0].liveSetBefore | (self.operandList[2][0].liveSetBefore if len(self.operandList[2]) > 0 else set([]))
+			for instruction in reversed(self.operandList[number]):
+				previousLiveSet = instruction.doCalculateLiveSet(previousLiveSet)
+			# Union it into the l_before of the if instruction
+			liveSetAll = liveSetAll | previousLiveSet
+		
+		self.liveSetBefore = set(liveSetAll)
+		self.liveSetBefore &= previousLiveSet
+		#import pdb; pdb.set_trace()
+		return self.liveSetBefore
 	def __str__(self):
 		myString = ""
 		for number in range(3):
@@ -280,14 +285,21 @@ class Movl(x86):
 			self.operandList.append(operand2)
 		else:
 			self.operandList.append(Node)
+		self.isDeadWrite = False
 	def doCalculateLiveSet(self,currentLiveSet):
 		self.liveSetBefore = currentLiveSet
+		if (self.optimizeBehavior) and (isinstance(self.operandList[1], VarNode)) and (self.operandList[1] not in currentLiveSet):
+			#import pdb; pdb.set_trace()
+			self.isDeadWrite = True
+			return self.liveSetBefore
 		if isinstance(self.operandList[1],VarNode):
 			self.liveSetBefore = self.liveSetBefore - set([self.operandList[1]])
 		if isinstance(self.operandList[0],VarNode):
 			self.liveSetBefore = self.liveSetBefore | set([self.operandList[0]])
 		return self.liveSetBefore
 	def __str__(self):
+		if self.optimizeBehavior and self.isDeadWrite:
+			return "# removed dead write! " + "%s %s,%s" % (self.instruction, self.operandList[0], self.operandList[1])
 		return "%s %s,%s" % (self.instruction, self.operandList[0], self.operandList[1])
 	
 
@@ -387,7 +399,9 @@ class CallStar(Call):
 		self.operandList.append(operand1)
 	def __str__(self):
 		return "%s %s" % (self.instruction, self.operandList[0])
-
+	def doCalculateLiveSet(self, currentLiveSet):
+		self.liveSetBefore = currentLiveSet | set([self.operandList[0]])
+		return self.liveSetBefore
 class Leave(x86):
 	numOperands = 0
 	def __init__(self):

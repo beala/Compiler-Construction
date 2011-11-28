@@ -10,20 +10,23 @@ from Myx86Selector import *
 from InterferenceGraph import *
 from p3removestructuredcontrolflow import *
 from p3heapify import *
+from tailcallanalysis import *
 import x86
 class P3TestAST(object):
 
-	stageDict = { 	"parse"		: 0,
-					"declassify"	: 1,
-					"uniquify"	: 2,
-					"explicate"	: 3,
-					"heapify"	: 4,
-					"close"		: 5,
-					"flatten"	: 6,
-					"select"	: 7,
-					"allocate"	: 8,
-					"remove"	: 9,
-					"print"		: 10,	}
+	stageDict = { 	"parse"				: 0,
+					"declassify"		: 1,
+					"uniquify"			: 2,
+					"explicate"			: 3,
+					"heapify"			: 4,
+					"close"				: 5,
+					"flatten"			: 6,
+					"tailcallanalyze"	: 7,
+					"tailcalloptimize"	: 8,
+					"select"			: 9,
+					"allocate"			: 10,
+					"remove"			: 11,
+					"print"				: 12,	}
 
 	def compileToStage(self, program,  stage, debug = False):
 		returnString = ""
@@ -55,6 +58,17 @@ class P3TestAST(object):
 		if self.stageDict[stage] < self.stageDict["flatten"]: return
 		flattened = P3ASTFlattener().visit(to_flatten)
 		if debug: self.print_ast(Stmt(flattened), "Flattened AST")
+
+		if self.stageDict[stage] < self.stageDict["tailcallanalyze"] : return
+		tailCallDict = {}
+		analyzed = TailCallAnalysis().visit(flattened, tailCallDict)
+		if debug: 
+			self.print_ast(Stmt(analyzed), "Analyzed AST")
+			print tailCallDict
+
+		if self.stageDict[stage] < self.stageDict["tailcalloptimize"] : return
+		#analyzed = TailCallAnalysis().visit(flattened)
+		#if debug: self.print_ast(Stmt(analyzed), "Optimized AST")
 
 		asmString = ""
 		data_section = ""

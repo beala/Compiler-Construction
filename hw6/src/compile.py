@@ -35,9 +35,15 @@ class csci4555_compiler:
 		return ".globl main\nmain:\n"+self.my_graph.emitColoredIR()+"\tleave\n\tret\n"
 		#print x86IRObj.emitx86Text()
 if __name__ == "__main__":
+	if sys.argv[1] == "-O":
+		x86.x86.optimizeBehavior = True
+		srcFile = sys.argv[2]
+	else:
+		x86.x86.optimizeBehavior = False 
+		srcFile = sys.argv[1]
 	myTester = P3TestAST()
-	compiled = myTester.compileToStage(sys.argv[1], 'print', False)
-	basename = sys.argv[1][:len(sys.argv[1])-3]
+	compiled = myTester.compileToStage(srcFile, 'print', False)
+	basename = srcFile[:len(srcFile)-3]
 	asmFile = open(basename + ".s", "w")
 	asmFile.write(compiled)
 	asmFile.close()

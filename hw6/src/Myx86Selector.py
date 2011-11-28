@@ -552,7 +552,7 @@ class Myx86Selector:
 			print ast
 			raise Exception("Error: Unrecognized node/object type %s:" % ast.__class__.__name__)
 	def __init__(self):
-		self._randomNonce = str(random.randint(1, 1000))
+		self._randomNonce = str(random.randint(1, 1000000))
 	# Debug Functions: #############################################################################
 	def prettyPrint(self, ir_to_print, indents=0):
 		for instruction in ir_to_print:

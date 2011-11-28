@@ -336,6 +336,7 @@ class InterferenceGraph(object):
 		import Myx86Selector
 		self.__initGraph(self.__ir)
 		self.__calculateLiveSets()
+		self.__ir = self._removeDeadWrites(self.__ir)
 		self.drawEdges(self.__ir)
 		while True:
 			#self.__ir = self.__reduceDuplicateMoves(self.__ir)
@@ -357,6 +358,17 @@ class InterferenceGraph(object):
 			#else:
 				#self.__theGraph = {}
 		return self.__ir
+
+	def _removeDeadWrites(self, ir):
+		newIR = []
+		for inst in ir:
+			if isinstance(inst, Movl) and inst.isDeadWrite == True:
+				continue
+			if isinstance(inst, Ifx86):
+				for op in range(3):
+					inst.operandList[op] = self._removeDeadWrites(inst.operandList[op])
+			newIR.append(inst)
+		return newIR
 
 
 if __name__ == "__main__":

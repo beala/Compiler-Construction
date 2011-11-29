@@ -1,5 +1,5 @@
 from compiler.ast import *
-
+from p2ast import *
 class CreateClass(Node):
 	bases = None
 	def __init__(self, bases):

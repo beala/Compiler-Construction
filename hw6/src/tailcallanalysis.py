@@ -10,9 +10,9 @@ from prjast import *
 #							   }
 
 class TailCallAnalysis(ASTVisitor):
-	contRetFlag = { 'True' => True,
-					'False' => False,
-					'Sometimes' => "Sometimes" } 
+	contRetFlag = { 'True' : True,
+					'False' : False,
+					'Sometimes' : "Sometimes" } 
 	def _iterateAndVisit(self, astList, globalDict):
 		for element in astList:
 			self.visit(element, globalDict)
@@ -30,9 +30,9 @@ class TailCallAnalysis(ASTVisitor):
 				if varDict['containsReturn'] == False:
 					varDict['containsReturn'] = contRetFlat['Sometimes'] 
 			else:
-				varDict = { 'assign' => set([ast]),
-							'isReturned' => False,
-							'containsReturn' => True }
+				varDict = { 'assign' : set([ast]),
+							'isReturned' : False,
+							'containsReturn' : True }
 				globalDict[ast.nodes[0].name] = varDict
 			#If, not in dictionary:
 			#	Add to dict (Add assign, isReturned->False, containsReturn->True)
@@ -44,18 +44,21 @@ class TailCallAnalysis(ASTVisitor):
 			if globalDict.has_key(ast.expr.name):
 				if globalDict.has_key(ast.nodes[0].name):
 					for element in globalDict[ast.expr.name]['assign']:
-						globalDict[ast.nodes[0].name]['assign'].append(element)
+						globalDict[ast.nodes[0].name]['assign'].add(element)
 				else:
-					varDict = { 'assign' => set([ast])
-								'isReturned' => False
-								'containsReturn' => True
+					varDict = { 'assign' : set([ast]),
+								'isReturned' : False,
+								'containsReturn' : True
 									}
 					for element in globalDict[ast.expr.name]['assign']:
-						varDict['assign'].append(element)
+						varDict['assign'].add(element)
 					globalDict[ast.nodes[0].name] = varDict
 	def visit_Return(self, ast, globalDict):
 		if isinstance(ast.value, Name) and globalDict.has_key(ast.value.name):
 			globalDict[ast.value.name]['isReturned'] = True
+
+	def visit_list(self, ast, globalDict):
+		self._iterateAndVisit(ast, globalDict)
 
 	def default(self, node, *extra):
 		pass
@@ -65,7 +68,7 @@ class TailCallAnalysis(ASTVisitor):
 	def visit_Module(self, ast, globalDict):
 		self.visit(ast.node, globalDict)
 	def visit_Printnl(self, ast, globalDict):
-		self.visit(ast.nodes[0], globalDict))
+		self.visit(ast.nodes[0], globalDict)
 	def visit_Discard(self, ast, globalDict):
 		self.visit(ast.expr, globalDict)
 	def visit_If(self, ast, globalDict):

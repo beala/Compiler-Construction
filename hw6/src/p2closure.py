@@ -44,7 +44,7 @@ class P2Closure(ASTVisitor):
 		# Recurse on the body to get the 'newbody'
 		(newBody, funs) = self.visit(node.code)
 		# Get the freeVars. Needed to create closure.
-		freeVars = P3GetFreeVars().visit(node)
+		freeVars = P3GetFreeVars().visit(node) - set(self._reservedFuns)
 		# Turn it into a list. (A set is unordered, which may cause problems)
 		freeVars = [Name(var) for var in freeVars]
 		# Get a name for this lambda

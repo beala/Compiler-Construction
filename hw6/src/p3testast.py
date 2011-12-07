@@ -61,10 +61,12 @@ class P3TestAST(object):
 
 		if self.stageDict[stage] < self.stageDict["tailcallanalyze"] : return
 		tailCallDict = {}
-		TailCallAnalysis().visit(flattened, tailCallDict)
+		analysisObj = TailCallAnalysis()
+		analysisObj.visit(flattened, [], tailCallDict)
 		if debug: 
 			self.print_ast(Stmt(flattened), "Analyzed AST")
 			print tailCallDict
+			print analysisObj.getNodesToOptimize()
 
 		if self.stageDict[stage] < self.stageDict["tailcalloptimize"] : return
 		#analyzed = TailCallAnalysis().visit(flattened)

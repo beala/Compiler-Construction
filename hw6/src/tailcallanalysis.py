@@ -1,5 +1,6 @@
 from astvisitor import *
 from prjast import *
+from compiler.ast import *
 
 ## Dictionary notation
 #	Flow Sensitive Global Dictionary
@@ -19,21 +20,15 @@ class TailCallAnalysis(ASTVisitor):
 	def getNodesToOptimize(self): return self._nodesToOptimize
 
 	# Private Methods: #########################################################################################
-	def _visitAndAddToDict(self, toVisit, rBefore, globalDicti, visitFunc = self.visit):
-		nodeDict['before'] = rBefore
-		rAfter = visitFunc(toVisit, rBefore, globalDict):
-		nodeDict['after'] = rAfter
-		globalDict[toVisit] = nodeDict
-		return rAfter
-
 	def _makeNodeDict(self):
 		nodeDict = {}
 		nodeDict['before'] = []
 		nodeDict['after'] = []
+		return nodeDict
 
 	def _searchListForVarDict(name, list_):
 		for element in list_:
-			if element.has_key(name)
+			if element.has_key(name):
 				return element
 		return False
 
@@ -120,18 +115,17 @@ class TailCallAnalysis(ASTVisitor):
 		globalDict[ast] = nodeDict
 		return rAfter
 
-	def visit_list(self, ast, rBefore, globalDict):
-		self._iterateAndVisit(ast, rBefore, globalDict)
-
 	# For all other nodes, set rAfter to empty.
 	def default(self, node, *extra):
+		rBefore = extra[0]
+		globalDict = extra[1]
+
 		nodeDict = self._makeNodeDict()
-		nodeDict['before'] = extra[0]
+		nodeDict['before'] = rBefore
 		nodeDict['after'] = []
 		globalDict[node] = nodeDict
 		return []
 
 	# Other statements that need recursion
-
 	def visit_Module(self, ast, globalDict):
 		self.visit(ast.node, globalDict)

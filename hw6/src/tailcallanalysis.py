@@ -2,79 +2,136 @@ from astvisitor import *
 from prjast import *
 
 ## Dictionary notation
-#   Global-level dictionary -> { 'varName' ->
-#								 	{ 'assign' -> [AssignNode1, AssignNode2, ...]
-#								 	  'isReturned' -> False
-#									  'containsReturn' -> True/False/Maybe
-#									}
-#							   }
+#	Flow Sensitive Global Dictionary
+#		{'node' ->
+#			{'before' -> [varDict, varDict, varDict],
+#			 'after' -> [varDict, varDict, varDict]
+#			}
+#		}
+#
+#	varDict
+#		{varName -> name		#The name of the var, as a string	
+#	 	 assNode -> AssNode } 	#The original assignment node where the CallFunc happens
 
 class TailCallAnalysis(ASTVisitor):
-	contRetFlag = { 'True' : True,
-					'False' : False,
-					'Sometimes' : "Sometimes" } 
-	def _iterateAndVisit(self, astList, globalDict):
+	
+	_nodesToOptimize = set()
+	def getNodesToOptimize(self): return self._nodesToOptimize
+
+	# Private Methods: #########################################################################################
+	def _visitAndAddToDict(self, toVisit, rBefore, globalDicti, visitFunc = self.visit):
+		nodeDict['before'] = rBefore
+		rAfter = visitFunc(toVisit, rBefore, globalDict):
+		nodeDict['after'] = rAfter
+		globalDict[toVisit] = nodeDict
+		return rAfter
+
+	def _makeNodeDict(self):
+		nodeDict = {}
+		nodeDict['before'] = []
+		nodeDict['after'] = []
+
+	def _searchListForVarDict(name, list_):
+		for element in list_:
+			if element.has_key(name)
+				return element
+		return False
+
+	def _iterateAndVisit(self, astList, rBefore, globalDict):
 		for element in astList:
-			self.visit(element, globalDict)
-	def visit_Function(self, ast, globalDict):
-		self.visit(ast.code, globalDict)
-	def visit_Stmt(self, ast, globalDict):
-		self._iterateAndVisit(ast.nodes, globalDict)
+			rAfter = self._visitAndAddToDict(element, rBefore, globalDict)
+			rBefore = rAfter
+		return rAfter
 
-	def visit_Assign(self, ast, globalDict):			
-		if isinstance(ast.expr, CallFunc) or isinstance(ast.expr, CallUserDef):
-			#Look up in dictionary.
-			if globalDict.has_key(ast.nodes[0].name):
-				varDict = globalDict[ast.nodes[0].name]
-				varDict['assign'].append(ast)
-				if varDict['containsReturn'] == False:
-					varDict['containsReturn'] = contRetFlat['Sometimes'] 
-			else:
-				varDict = { 'assign' : set([ast]),
-							'isReturned' : False,
-							'containsReturn' : True }
-				globalDict[ast.nodes[0].name] = varDict
-			#If, not in dictionary:
-			#	Add to dict (Add assign, isReturned->False, containsReturn->True)
-			#else
-			#	Add current assign node to 'assign'
-			#	containsReturn: If 'false' change to 'maybe'
+	# Visitor Methods: #########################################################################################
+	def visit_Function(self, ast, rBefore, globalDict):
+		nodeDict = self._makeNodeDict()
+		nodeDict['before'] = rBefore
+		self._visit(ast.code, {}, globalDict)	# Kill everything at the beginning of a function.
+		nodeDict['after'] = []	# Kill everything at the end of a function
+		globalDict[ast] = nodeDict
+		return []
 
-		elif isinstance(ast.expr, Name):
-			if globalDict.has_key(ast.expr.name):
-				if globalDict.has_key(ast.nodes[0].name):
-					for element in globalDict[ast.expr.name]['assign']:
-						globalDict[ast.nodes[0].name]['assign'].add(element)
-				else:
-					varDict = { 'assign' : set([ast]),
-								'isReturned' : False,
-								'containsReturn' : True
-									}
-					for element in globalDict[ast.expr.name]['assign']:
-						varDict['assign'].add(element)
-					globalDict[ast.nodes[0].name] = varDict
-	def visit_Return(self, ast, globalDict):
-		if isinstance(ast.value, Name) and globalDict.has_key(ast.value.name):
-			globalDict[ast.value.name]['isReturned'] = True
+	def visit_Stmt(self, ast, rBefore, globalDict):
+		nodeDict = self._makeNodeDict()
+		nodeDict['before'] = rBefore
+		rAfter = self._iterateAndVisit(ast.nodes, rBefore, globalDict) 
+		nodeDict['after'] = rAfter
+		globalDict[ast] = nodeDict
+		return rAfter
 
-	def visit_list(self, ast, globalDict):
-		self._iterateAndVisit(ast, globalDict)
+	def visit_Assign(self, ast, rBefore, globalDict):
+		nodeDict = self._makeNodeDict()
+		nodeDict['before'] = rBefore
+		rAfter = []
+		# If the assign is a copy from a var in rBefore
+		if isinstance(ast.expr, Name) and (self._searchListForVarDict(ast.expr.name, rBefore)):
+			copiedFrom = self._searchListForVarDict(ast.expr.name, rBefore)
+			newVarDict = {} # New varDict for the variable in the RHS of the assignment
+			newVarDict['varName'] = ast.expr.name
+			newVarDict['assNode'] = copiedFrom['assNode']
+			rAfter.append(newVarDict)
+		# Elif the assign is from a CallUserDef
+		elif isinstance(ast.expr, CallFunc) or isinstance(ast.expr, CallUserDef):
+			varDict = {}
+			varDict['varName'] = ast.expr.node[0].name
+			varDict['assNode'] = ast
+			rAfter.append(varDict)
+		# Else kill everthing in R_after
+		else:
+			pass # rAfter already empty
 
+		nodeDict['after'] = rAfter
+		globalDict[ast] = nodeDict
+		return rAfter
+
+	def visit_Return(self, ast, rBefore, globalDict):
+		nodeDict = self._makeNodeDict()
+		nodeDict['before'] = rBefore
+		# If a variable holding a return value is returned
+		if isinstance(ast.value, Name) and self._searchListForDictVar(ast.value.name, rBefore):
+			varReturned = self._searchListForDictVar(ast.value.name, rBefore)
+			self._nodesToOptimize.add(varReturned['assNode']) # Add to the set of nodes to be optimized.
+		
+		# rAfter is always empty after return
+		rAfter = []
+		nodeDict['after'] = rAfter
+		globalDict[ast] = nodeDict
+		return rAfter
+
+	def visit_If(self, ast, rBefore, globalDict):
+		nodeDict = self._makeNodeDict()
+		nodeDict['before'] = rBefore
+		ifAfter = self.visit(ast.tests[0][1], rBefore, globalDict)
+		elseAfter = self.visit(ast.else_, rBefore, globalDict)
+		rAfter = set(ifAfter) | set(elseAfter)
+		nodeDict['after'] = rAfter
+
+		globalDict[ast] = nodeDict
+		return rAfter
+
+	# This is not functioning. Just getting the skeleton here for consistency.
+	def visit_While(self, ast, rBefore, globalDict):
+		nodeDict = self._makeNodeDict()
+		nodeDict['before'] = rBefore
+		rAfter = self.visit(ast.body, rBefore, globalDict)
+		nodeDict['after'] = rAfter
+
+		globalDict[ast] = nodeDict
+		return rAfter
+
+	def visit_list(self, ast, rBefore, globalDict):
+		self._iterateAndVisit(ast, rBefore, globalDict)
+
+	# For all other nodes, set rAfter to empty.
 	def default(self, node, *extra):
-		pass
+		nodeDict = self._makeNodeDict()
+		nodeDict['before'] = extra[0]
+		nodeDict['after'] = []
+		globalDict[node] = nodeDict
+		return []
 
 	# Other statements that need recursion
 
 	def visit_Module(self, ast, globalDict):
 		self.visit(ast.node, globalDict)
-	def visit_Printnl(self, ast, globalDict):
-		self.visit(ast.nodes[0], globalDict)
-	def visit_Discard(self, ast, globalDict):
-		self.visit(ast.expr, globalDict)
-	def visit_If(self, ast, globalDict):
-		self.visit(ast.tests[0][0], globalDict)
-		self.visit(ast.tests[0][1], globalDict)
-		self.visit(ast.else_, globalDict)
-	def visit_While(self, ast, globalDict):
-		self.visit(ast.test, globalDict)
-		self.visit(ast.body, globalDict)

@@ -41,6 +41,9 @@ class P2Heapify(ASTVisitor):
 	def _assignInitList(self, lhs):
 		return self._makeAssign(lhs, InjectFrom(Const(3), List([InjectFrom(Const(0), Const(0))])))
 
+	def _removeReservedFuns(self, items):
+		return set(items) - set(self._reservedFuns)
+
 	# Visitor Methods: #############################################################################################################
 	# Notes: Return a tuple of the values that are free in the current scope and below, along with the AST modified in the necessary
 	# 	ways. Only nodes that are the beginning of a new scope should add names to the first element of the tuple (other nodes
@@ -50,22 +53,22 @@ class P2Heapify(ASTVisitor):
 		freeVarObj = P3GetFreeVars()
 		freeVarObj.visit(ast)
 		self._toHeapify |= set(freeVarObj.getVarsToHeapify())
+		self._toHeapify = self._removeReservedFuns(self._toHeapify)
 		if _debug == True:
 			print self._toHeapify
 		(freeBelow, body) = self.visit(ast.node)
 		localInits = []
-		for var in set(freeBelow):
+		for var in self._removeReservedFuns(freeBelow):
 			localInits.append(self._assignInitList(var))
-			#localInits.append(self._makeAssign(var, List([Const(0)])))
 		return Module(None, Stmt(localInits + body.nodes))
 
 	def visit_Lambda(self, ast):
 		# Get the varaibles that are free IN THE CURRENT SCOPE. These need to be heapified.
 			# Get everything free BELOW AND IN THE CURRENT SCOPE
 			# Subtract out everything LOCAL IN THE CURRENT SCOPE
-		freeVars = P3GetFreeVars().visit(ast)
+		freeVars = P3GetFreeVars().visit(ast) - set(self._reservedFuns)
 		localHere = P2GetLocals().getLocalsInCurrentScope(ast)
-		freeHere = set(freeVars) - set(localHere)
+		freeHere = set(freeVars) - set(localHere) - set(self._reservedFuns)
 		self._toHeapify |= freeVars
 		# Get the parameters that need to be heapified: P_h
 		argsToHeapify = set(ast.argnames) & self._toHeapify #freeHere
@@ -83,11 +86,11 @@ class P2Heapify(ASTVisitor):
 			renamedArgNames[argToRename] = newName
 		# Assign a one element list to each element in P_h: paramAllocs
 		paramAllocs = []
-		for arg in set(argsToHeapify):
+		for arg in self._removeReservedFuns(argsToHeapify):
 			paramAllocs.append(self._assignInitList(arg))
 		# Set the variables in P_h (argsToHeapify) to the cooresponding parameters in P' (new argnames) (assign to the first element in each P_h element)
 		paramInits = []
-		for arg in set(argsToHeapify):
+		for arg in self._removeReservedFuns(argsToHeapify):
 			paramInits.append(self._makeSubAssign(arg, 0, Name(paramNameMap[arg])))
 		# Get the local variables that need to be heapified: L_h. These are variables that are local here, but free below.
 			# Get variables local to JUST THIS subscope.
@@ -96,7 +99,7 @@ class P2Heapify(ASTVisitor):
 		(freeBelow, body) = self.visit(ast.code)
 		heapifyHere = (self._toHeapify & set(localHere)) - set(ast.argnames)
 		localInits = []
-		for var in set(heapifyHere):
+		for var in self._removeReservedFuns(heapifyHere):
 			localInits.append(self._assignInitList(var))
 		newLambda = Lambda(renamedArgNames, ast.defaults, ast.flags, Stmt( paramAllocs + localInits + paramInits + body.nodes ))
 		return (self._setToList(freeHere), newLambda)

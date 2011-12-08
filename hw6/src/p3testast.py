@@ -62,12 +62,15 @@ class P3TestAST(object):
 		if self.stageDict[stage] < self.stageDict["tailcallanalyze"] : return
 		tailCallDict = {}
 		analysisObj = TailCallAnalysis()
+		#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO: Get this to analyze more than the first func in the list
 		analysisObj.visit(flattened[0], [], tailCallDict)
 		if debug: 
 			self.print_ast(Stmt(flattened), "Analyzed AST")
 			for k in tailCallDict:
 				print str(k) + " : " + str(tailCallDict[k])
-			print analysisObj.getNodesToOptimize()
+			print "Nodes to opt:"
+			for node in analysisObj.getNodesToOptimize():
+				print node
 
 		if self.stageDict[stage] < self.stageDict["tailcalloptimize"] : return
 		#analyzed = TailCallAnalysis().visit(flattened)

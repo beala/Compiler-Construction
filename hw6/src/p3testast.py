@@ -56,16 +56,17 @@ class P3TestAST(object):
 		if debug: self.print_ast(Stmt(to_flatten), "Closure Conversion")
 
 		if self.stageDict[stage] < self.stageDict["flatten"]: return
-		flattened = P3ASTFlattener().visit(to_flatten)
+		flattened = P3ASTFlattener().visit(to_flatten) #a list of functions
 		if debug: self.print_ast(Stmt(flattened), "Flattened AST")
 
 		if self.stageDict[stage] < self.stageDict["tailcallanalyze"] : return
 		tailCallDict = {}
 		analysisObj = TailCallAnalysis()
-		analysisObj.visit(flattened, [], tailCallDict)
+		analysisObj.visit(flattened[0], [], tailCallDict)
 		if debug: 
 			self.print_ast(Stmt(flattened), "Analyzed AST")
-			print tailCallDict
+			for k in tailCallDict:
+				print str(k) + " : " + str(tailCallDict[k])
 			print analysisObj.getNodesToOptimize()
 
 		if self.stageDict[stage] < self.stageDict["tailcalloptimize"] : return

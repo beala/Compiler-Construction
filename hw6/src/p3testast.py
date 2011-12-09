@@ -60,17 +60,23 @@ class P3TestAST(object):
 		if debug: self.print_ast(Stmt(flattened), "Flattened AST")
 
 		if self.stageDict[stage] < self.stageDict["tailcallanalyze"] : return
-		tailCallDict = {}
-		analysisObj = TailCallAnalysis()
-		#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO: Get this to analyze more than the first func in the list
-		analysisObj.visit(flattened[0], [], tailCallDict)
-		if debug: 
-			self.print_ast(Stmt(flattened), "Analyzed AST")
-			for k in tailCallDict:
-				print str(k) + " : " + str(tailCallDict[k])
-			print "Nodes to opt:"
-			for node in analysisObj.getNodesToOptimize():
-				print node
+		optimized = flattened
+		for func in flattened:
+			TailCallAnalysis().visit(func, [], {})
+		if debug:
+			self.print_ast(Stmt(optimized), "Optimized AST")
+
+#		tailCallDict = {}
+#		analysisObj = TailCallAnalysis()
+#		#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO: Get this to analyze more than the first func in the list
+#		analysisObj.visit(flattened[0], [], tailCallDict)
+#		if debug: 
+#			self.print_ast(Stmt(flattened), "Analyzed AST")
+#			for k in tailCallDict:
+#				print str(k) + " : " + str(tailCallDict[k])
+#			print "Nodes to opt:"
+#			for node in analysisObj.getNodesToOptimize():
+#				print node
 
 		if self.stageDict[stage] < self.stageDict["tailcalloptimize"] : return
 		#analyzed = TailCallAnalysis().visit(flattened)
@@ -168,6 +174,8 @@ class P3TestAST(object):
 				print '\t' * tabcount + 'def ' + str(node.name) + '(' + str(node.argnames) + '):'
 				self.print_ast(node.code, stage, tabcount+1)
 				print '\t' * tabcount + 'EndFunc'
+			elif isinstance(node, Assign) and hasattr(node, 'tailCall'):
+				print '\t' * tabcount + "!" * 40  + str(node) + "!" * 40 + " - Tail Call"
 			else:
 				print '\t' * (tabcount) + str(node)
 

@@ -100,6 +100,8 @@ class TailCallAnalysis(ASTVisitor):
 			varsReturned = self._searchListForVarTup(ast.value.name, rBefore)
 			for varTup in varsReturned:
 				self._nodesToOptimize += varTup[1] # Add to the set of nodes to be optimized.
+				for node in varTup[1]:
+					node.tailCall = True # Mark the node as being a tail call
 		
 		# rAfter is always empty after return
 		rAfter = []

@@ -22,13 +22,12 @@ class P3TestAST(object):
 					"close"				: 5,
 					"flatten"			: 6,
 					"tailcallanalyze"	: 7,
-					"tailcalloptimize"	: 8,
-					"select"			: 9,
-					"allocate"			: 10,
-					"remove"			: 11,
-					"print"				: 12,	}
+					"select"			: 8,
+					"allocate"			: 9,
+					"remove"			: 10,
+					"print"				: 11,	}
 
-	def compileToStage(self, program,  stage, debug = False):
+	def compileToStage(self, program,  stage, debug = False, optimizeBehavior = True):
 		returnString = ""
 
 		to_declassify = compiler.parseFile(program)
@@ -59,28 +58,13 @@ class P3TestAST(object):
 		flattened = P3ASTFlattener().visit(to_flatten) #a list of functions
 		if debug: self.print_ast(Stmt(flattened), "Flattened AST")
 
-		if self.stageDict[stage] < self.stageDict["tailcallanalyze"] : return
-		optimized = flattened
-		for func in flattened:
-			TailCallAnalysis().visit(func, [], {})
-		if debug:
-			self.print_ast(Stmt(optimized), "Optimized AST")
-
-#		tailCallDict = {}
-#		analysisObj = TailCallAnalysis()
-#		#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO: Get this to analyze more than the first func in the list
-#		analysisObj.visit(flattened[0], [], tailCallDict)
-#		if debug: 
-#			self.print_ast(Stmt(flattened), "Analyzed AST")
-#			for k in tailCallDict:
-#				print str(k) + " : " + str(tailCallDict[k])
-#			print "Nodes to opt:"
-#			for node in analysisObj.getNodesToOptimize():
-#				print node
-
-		if self.stageDict[stage] < self.stageDict["tailcalloptimize"] : return
-		#analyzed = TailCallAnalysis().visit(flattened)
-		#if debug: self.print_ast(Stmt(analyzed), "Optimized AST")
+		if optimizeBehavior == True :
+			if self.stageDict[stage] < self.stageDict["tailcallanalyze"] : return
+			optimized = flattened
+			for func in flattened:
+				TailCallAnalysis().visit(func, [], {})
+			if debug:
+				self.print_ast(Stmt(optimized), "Optimized AST")
 
 		asmString = ""
 		data_section = ""

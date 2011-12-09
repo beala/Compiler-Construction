@@ -37,12 +37,14 @@ class csci4555_compiler:
 if __name__ == "__main__":
 	if sys.argv[1] == "-O":
 		x86.x86.optimizeBehavior = True
+		tailCallOpt = True
 		srcFile = sys.argv[2]
 	else:
-		x86.x86.optimizeBehavior = False 
+		x86.x86.optimizeBehavior = False
+		tailCallOpt = False 
 		srcFile = sys.argv[1]
 	myTester = P3TestAST()
-	compiled = myTester.compileToStage(srcFile, 'print', False)
+	compiled = myTester.compileToStage(srcFile, 'print', False, tailCallOpt)
 	basename = srcFile[:len(srcFile)-3]
 	asmFile = open(basename + ".s", "w")
 	asmFile.write(compiled)

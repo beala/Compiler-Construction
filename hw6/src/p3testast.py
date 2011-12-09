@@ -62,7 +62,7 @@ class P3TestAST(object):
 			if self.stageDict[stage] < self.stageDict["tailcallanalyze"] : return
 			optimized = flattened
 			for func in flattened:
-				TailCallAnalysis().visit(func, [], {})
+				TailCallAnalysis().visit(func)
 			if debug:
 				self.print_ast(Stmt(optimized), "Optimized AST")
 
@@ -159,7 +159,7 @@ class P3TestAST(object):
 				self.print_ast(node.code, stage, tabcount+1)
 				print '\t' * tabcount + 'EndFunc'
 			elif isinstance(node, Assign) and hasattr(node, 'tailCall'):
-				print '\t' * tabcount + "!" * 40  + str(node) + "!" * 40 + " - Tail Call"
+				print '\t' * tabcount + "!" * 40  + str(node) + "!" * 40 + " - Tail Call Arg Num: " + str(node.callerArgNum)
 			else:
 				print '\t' * (tabcount) + str(node)
 

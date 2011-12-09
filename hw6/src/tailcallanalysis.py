@@ -32,30 +32,31 @@ class TailCallAnalysis(ASTVisitor):
 				varsFound.append(element)
 		return varsFound
 
-	def _iterateAndVisit(self, astList, rBefore, globalDict):
+	def _iterateAndVisit(self, astList, rBefore, globalDict, callerArgNum):
 		for element in astList:
-			rAfter = self.visit(element, rBefore, globalDict)
+			rAfter = self.visit(element, rBefore, globalDict, callerArgNum)
 			rBefore = rAfter
 		return rAfter
 
 	# Visitor Methods: #########################################################################################
-	def visit_Function(self, ast, rBefore, globalDict):
+	def visit_Function(self, ast, rBefore = [], globalDict = {}, callerArgNum = 0):
+		callerArgNum = len(ast.argnames)
 		nodeDict = self._makeNodeDict()
 		nodeDict['before'] = rBefore
-		self.visit(ast.code, {}, globalDict)	# Kill everything at the beginning of a function.
+		self.visit(ast.code, {}, globalDict, callerArgNum)	# Kill everything at the beginning of a function.
 		nodeDict['after'] = []	# Kill everything at the end of a function
 		globalDict[ast] = nodeDict
 		return []
 
-	def visit_Stmt(self, ast, rBefore, globalDict):
+	def visit_Stmt(self, ast, rBefore, globalDict, callerArgNum):
 		nodeDict = self._makeNodeDict()
 		nodeDict['before'] = rBefore
-		rAfter = self._iterateAndVisit(ast.nodes, rBefore, globalDict) 
+		rAfter = self._iterateAndVisit(ast.nodes, rBefore, globalDict, callerArgNum) 
 		nodeDict['after'] = rAfter
 		#globalDict[ast] = nodeDict
 		return rAfter
 
-	def visit_Assign(self, ast, rBefore, globalDict):
+	def visit_Assign(self, ast, rBefore, globalDict, callerArgNum):
 		nodeDict = self._makeNodeDict()
 		nodeDict['before'] = rBefore
 		rAfter = []
@@ -92,7 +93,7 @@ class TailCallAnalysis(ASTVisitor):
 		globalDict[ast] = nodeDict
 		return rAfter
 
-	def visit_Return(self, ast, rBefore, globalDict):
+	def visit_Return(self, ast, rBefore, globalDict, callerArgNum):
 		nodeDict = self._makeNodeDict()
 		nodeDict['before'] = rBefore
 		# If a variable holding a return value is returned
@@ -101,6 +102,7 @@ class TailCallAnalysis(ASTVisitor):
 			for varTup in varsReturned:
 				self._nodesToOptimize += varTup[1] # Add to the set of nodes to be optimized.
 				for node in varTup[1]:
+					node.callerArgNum = callerArgNum
 					node.tailCall = True # Mark the node as being a tail call
 		
 		# rAfter is always empty after return
@@ -109,11 +111,11 @@ class TailCallAnalysis(ASTVisitor):
 		globalDict[ast] = nodeDict
 		return rAfter
 
-	def visit_If(self, ast, rBefore, globalDict):
+	def visit_If(self, ast, rBefore, globalDict, callerArgNum):
 		nodeDict = self._makeNodeDict()
 		nodeDict['before'] = rBefore
-		ifAfter = self.visit(ast.tests[0][1], rBefore, globalDict)
-		elseAfter = self.visit(ast.else_, rBefore, globalDict)
+		ifAfter = self.visit(ast.tests[0][1], rBefore, globalDict, callerArgNum)
+		elseAfter = self.visit(ast.else_, rBefore, globalDict, callerArgNum)
 		#import pdb; pdb.set_trace()
 		rAfter = ifAfter + elseAfter
 		nodeDict['after'] = rAfter
@@ -122,10 +124,10 @@ class TailCallAnalysis(ASTVisitor):
 		return rAfter
 
 	# This is not functioning. Just getting the skeleton here for consistency.
-	def visit_While(self, ast, rBefore, globalDict):
+	def visit_While(self, ast, rBefore, globalDict, callerArgNum):
 		nodeDict = self._makeNodeDict()
 		nodeDict['before'] = rBefore
-		rAfter = self.visit(ast.body, rBefore, globalDict)
+		rAfter = self.visit(ast.body, rBefore, globalDict, callerArgNum)
 		nodeDict['after'] = rAfter
 
 		globalDict[ast] = nodeDict
@@ -135,6 +137,7 @@ class TailCallAnalysis(ASTVisitor):
 	def default(self, node, *extra):
 		rBefore = extra[0]
 		globalDict = extra[1]
+		callerArgNum = extra[2]
 
 		nodeDict = self._makeNodeDict()
 		nodeDict['before'] = rBefore
@@ -143,5 +146,6 @@ class TailCallAnalysis(ASTVisitor):
 		return []
 
 	# Other statements that need recursion
-	def visit_Module(self, ast, globalDict):
-		self.visit(ast.node, globalDict)
+	# Node possibly no longer exists at this point.
+	def visit_Module(self, ast, globalDict, callerArgNum):
+		self.visit(ast.node, globalDict, callerArgNum)

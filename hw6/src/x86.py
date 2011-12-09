@@ -252,6 +252,18 @@ class Jmp(x86):
 		return "%s %s" % (self.instruction, self.operandList[0])
 	def doCalculateLiveSet(self):
 		pass
+class JmpStar(Jmp):
+	numOperands = 1
+	def __init__(self, operand1):
+		super(JmpStar, self).__init__(operand1)
+		self.instruction = "jmp *"
+		self.operandList.append(operand1)
+		self.operandList[0].spillable = False
+	def __str__(self):
+		return "%s %s" % (self.instruction, self.operandList[0])
+	def doCalculateLiveSet(self, currentLiveSet):
+		self.liveSetBefore = currentLiveSet | set([self.operandList[0]])
+		return self.liveSetBefore
 class Jne(x86):
 	numOperands = 1
 	def __init__(self,label):

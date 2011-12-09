@@ -437,7 +437,32 @@ class Myx86Selector:
 			return myIRList
 		elif isinstance(ast, Assign):
 			# Get the name of the variable being assigned to (l value)
-			if isinstance(ast.nodes[0], AssName):
+			if getattr(ast, "tailCall", False):
+				callFuncNode = ast.expr
+				#restore callee save registers
+				for register in reversed(self._calleeSaveRegisters):
+					myIRList.append(x86.Popl(register))
+			
+				#save eip and ebp
+				newFrameOffset = (len(ast.expr.args) - ast.callerArgNum) * 4
+				frameAdjTmpVar = self.makeTmpVar()
+				myIRList.append(x86.Movl(x86.MemLoc(0), frameAdjTmpVar)) #save previous ebp
+				myIRList.append(x86.Movl(frameAdjTmpVar, x86.MemLoc(newFrameOffset)))	
+				myIRList.append(x86.Movl(x86.MemLoc(4), frameAdjTmpVar)) #save previous eip
+				myIRList.append(x86.Movl(frameAdjTmpVar, x86.MemLoc(newFrameOffset+4)))
+				myIRList.append(x86.Addl(x86.ConstNode(newFrameOffset),x86.Register('ebp')))
+
+				#handle arguments
+				counter = 4
+				for arg in ast.expr.args:
+					myIRList += self.generate_x86_code(arg)
+					myIRList.append(x86.Movl(self.getTmpVar(),x86.MemLoc(counter)))		
+					counter += 4
+				#jump to tailcall-ee (after the frame realloc)
+				myIRList += self.generate_x86_code(ast.expr.node)
+				myIRList.append(x86.JmpStar(self.getTmpVar()))
+				return myIRList
+			elif isinstance(ast.nodes[0], AssName):
 				var_name = ast.nodes[0].name
 			
 				#emit our expression (RHS)

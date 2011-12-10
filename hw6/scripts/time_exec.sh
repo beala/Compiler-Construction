@@ -5,6 +5,7 @@
 # Init
 PROG1="$1"
 PROG2="$2"
+echo $PROG1 , $PROG2
 DATA_FILE="$3"
 # If you don't specify the number of trails, set it to 100
 if [ $# -eq 4 ]; then

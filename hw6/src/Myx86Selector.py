@@ -440,14 +440,15 @@ class Myx86Selector:
 			if getattr(ast, "tailCall", False):
 				callFuncNode = ast.expr
 				
-				#save eip and ebp
+				#save eip and ebp and restore to correct place if necessary.
 				newFrameOffset = (len(ast.expr.args) - ast.callerArgNum) * 4
-				frameAdjTmpVar = self.makeTmpVar()
-				myIRList.append(x86.Movl(x86.MemLoc(0), frameAdjTmpVar)) #save previous ebp
-				myIRList.append(x86.Movl(frameAdjTmpVar, x86.MemLoc(newFrameOffset)))	
-				myIRList.append(x86.Movl(x86.MemLoc(4), frameAdjTmpVar)) #save previous eip
-				myIRList.append(x86.Movl(frameAdjTmpVar, x86.MemLoc(newFrameOffset+4)))
-				myIRList.append(x86.Addl(x86.ConstNode(newFrameOffset),x86.Register('ebp')))
+				if newFrameOffset != 0:
+					frameAdjTmpVar = self.makeTmpVar()
+					myIRList.append(x86.Movl(x86.MemLoc(0), frameAdjTmpVar)) #save previous ebp
+					myIRList.append(x86.Movl(frameAdjTmpVar, x86.MemLoc(newFrameOffset)))	
+					myIRList.append(x86.Movl(x86.MemLoc(4), frameAdjTmpVar)) #save previous eip
+					myIRList.append(x86.Movl(frameAdjTmpVar, x86.MemLoc(newFrameOffset+4)))
+					myIRList.append(x86.Addl(x86.ConstNode(newFrameOffset),x86.Register('ebp')))
 
 				#handle arguments
 				counter = 8

@@ -35,12 +35,11 @@ class csci4555_compiler:
 		return ".globl main\nmain:\n"+self.my_graph.emitColoredIR()+"\tleave\n\tret\n"
 		#print x86IRObj.emitx86Text()
 if __name__ == "__main__":
+	x86.x86.optimizeBehavior = True
 	if sys.argv[1] == "-O":
-		x86.x86.optimizeBehavior = True
 		tailCallOpt = True
 		srcFile = sys.argv[2]
 	else:
-		x86.x86.optimizeBehavior = False
 		tailCallOpt = False 
 		srcFile = sys.argv[1]
 	myTester = P3TestAST()

@@ -5,7 +5,6 @@
 # Init
 PROG1="$1"
 PROG2="$2"
-echo $PROG1 , $PROG2
 DATA_FILE="$3"
 # If you don't specify the number of trails, set it to 100
 if [ $# -eq 4 ]; then
@@ -25,9 +24,11 @@ function get_wall_exec_time(){
 }
 
 # MAIN PROGRAM
+echo "$PROG1 , $PROG2"
+echo "$PROG1 , $PROG2" >> "$DATA_FILE"
 for i in $( seq 1 "$TRIALS" ); do 
 	P1_TIME=$(get_wall_exec_time "$PROG1")
 	P2_TIME=$(get_wall_exec_time "$PROG2")
 	echo "$P1_TIME , $P2_TIME" >> "$DATA_FILE"
-	echo "$P1_TIME , $P2_TIME"
+	echo " $i: $P1_TIME , $P2_TIME"
 done

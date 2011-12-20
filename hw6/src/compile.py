@@ -1,4 +1,5 @@
 import sys
+import argparse
 
 import parse
 import declassify
@@ -35,6 +36,21 @@ class Compiler(object):
         self.outFilename = filename
 
 if __name__ == "__main__":
-    compiler = Compiler(sys.argv[1], sys.argv[2])
+    arg_parser = argparse.ArgumentParser(description="A Toy Python Compiler")
+    arg_parser.add_argument(
+                'input_file',
+                help='The python file to be compiled.')
+    arg_parser.add_argument(
+                'output_file', 
+                nargs="?", 
+                default='out.s',
+                help='The filename of the compiled program.')
+    arg_parser.add_argument(
+                '-O',
+                action='store_true',
+                help='Enable optimizations.')
+    options = arg_parser.parse_args()
+
+    compiler = Compiler(options.input_file, options.output_file)
     compiler.compile()
     compiler.write()

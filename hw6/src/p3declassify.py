@@ -1,9 +1,11 @@
+import stage
 from astvisitor import *
 from compiler.ast import *
 from p3ast import *
 
-class P3Declassify(ASTVisitor):
+class P3Declassify(ASTVisitor, stage.Stage):
     # Private Attributes: ######################################################################################
+    _ast = None
     _curTmpVar = 0
     _curTmpMethod = 0
     # Private Methods: #########################################################################################
@@ -26,6 +28,13 @@ class P3Declassify(ASTVisitor):
             else:
                 result.append(newItem)
         return result
+
+    # Public Methods:
+    def __init__(self, ast):
+        self.ast = ast
+
+    def do(self):
+        return self.visit(self._ast, None)
 
     # Visitor Methods: #########################################################################################
     def visit_Class(self, ast, curClass):
